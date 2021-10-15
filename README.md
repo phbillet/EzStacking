@@ -7,7 +7,7 @@ A notebook generated with EZStacking contains:
   * compression
   * cleaning
   * ranking / correlation
-* a modelling of the data:
+* a modelling:
   * with or without stacked generalization
   * with or without Keras
   * with or without XGBoost

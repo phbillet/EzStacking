@@ -11,7 +11,7 @@ A notebook generated with EZStacking contains:
   * with or without stacked generalization, Keras, XGBoost or Pipeline
   * model evaluation.
 
-_Note: **EZStacking must be used with *.csv dataset**._
+_Note: EZStacking must be used with *.csv dataset._
 
 # EZStacking - What will you need?
 |Package                                                    | Version |
@@ -59,7 +59,7 @@ Now, let's choose the options:
 
 _Notes:_ 
 * _the processing options XGBoost and Keras must not be both checked if Stacking option is not checked_
-* _if the processing option Pipeline is checked, you may have to modify preprocessors_
+* _if the processing option Pipeline is checked, you may have to modify preprocessors._
 
 ## Visualization options
 |Option        | Notes                                                              |
@@ -67,12 +67,14 @@ _Notes:_
 |Yellow bricks | The graphics will be constructed with Matplotlib and Yellow bricks |
 |Seaborn       | The graphics will be constructed with Matplotlib and Seaborn       |
 
-_Note: the visualisation option Seaborn can produce time consuming graphics
+_Note: the visualisation option Seaborn can produce time consuming graphics._
 
 ## Thresholds
 ![EZStacking Thresholds](/screenshots/EZStacking_thresholds.png)
 
 _Notes:_
-* threshold_cat: threshold for categorical data, if the number of different values in a column is less than this number, the column will be considered as a categorical column.
-* threshold_NaN: threshold for NaN, if the proportion of NaN is greater than this number the column will be dropped
-* threshold_Z: threshold for outliers, if the Z_score is greater than this number, the row will be dropped
+* _threshold_cat: threshold for categorical data, if the number of different values in a column is less than this number, the column will be considered as a categorical column_
+* _threshold_NaN: threshold for NaN, if the proportion of NaN is greater than this number the column will be dropped_
+* _threshold_Z: threshold for outliers, if the Z_score is greater than this number, the row will be dropped._
+
+

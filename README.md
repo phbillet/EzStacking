@@ -1,5 +1,5 @@
 # EZStacking
-EZStacking is Jupyter notebook generator for machine learning.
+EZStacking is Jupyter notebook generator for machine learning (classification or regression problems).
 
 A notebook generated with EZStacking contains: 
 * an exploratory data analysis EDA:
@@ -12,4 +12,8 @@ A notebook generated with EZStacking contains:
   * with or without Keras
   * with or without XGBoost
 
-First read the small documentation and follow the steps. 
+# EZStacking - How to use it
+
+In Jupyter, first open the notebook named EZStacking.ipynb :
+![First launch](./screenshotss/EZStacking_first_launch.png)
+

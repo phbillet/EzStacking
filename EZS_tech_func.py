@@ -7,25 +7,23 @@ import ipywidgets as widgets
 from IPython.display import display
 from ipyfilechooser import FileChooser
 
-def analyze(problem_type, stacking, data_size, with_keras, with_xgb, yb, seaborn, file, target_col,\
-            user_drop_cols, threshold_NaN, threshold_cat, threshold_Z):
+def analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file,\
+            target_col, user_drop_cols, threshold_NaN, threshold_cat, threshold_Z):
 
-    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_keras, with_xgb, problem_type,\
-                                                                   stacking, yb, seaborn, data_size)
+    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_keras, with_xgb, with_pipeline,\
+                                                                            problem_type, stacking, yb, seaborn, data_size)
     
     nb = nbf.v4.new_notebook()
     nb['cells'] = []
     
-    text = "# EDA & modelization"
-    nb['cells'].append(nbf.v4.new_markdown_cell(text))
-
-    nb = load_package(nb, pd_pk_import, pd_pk_from)
-       
     for index, row in pd_document.iterrows():
-#        print("row =", row)
+#        print("index = ", index)
+#        print("row = ", row)
+        if index == 1:
+           nb = load_package(nb, pd_pk_import, pd_pk_from) 
         if row[1] != 'None':
            if row[0] == ' ': 
-              text = row[1]            
+              text = str(row[1])            
            else:
               text = str(row[0]) + ' ' + str(row[1])
            nb['cells'].append(nbf.v4.new_markdown_cell(text))
@@ -35,7 +33,7 @@ def analyze(problem_type, stacking, data_size, with_keras, with_xgb, yb, seaborn
 
     return nb
 
-def set_config(with_keras, with_xgb, problem_type, stacking, yb, seaborn, data_size):
+def set_config(with_keras, with_xgb, with_pipeline, problem_type, stacking, yb, seaborn, data_size):
     xls = pd.ExcelFile('EZStacking_config.xlsx')
     meta_package = pd.read_excel(xls, 'meta_package')
     package_source = pd.read_excel(xls, 'package_source')
@@ -45,6 +43,7 @@ def set_config(with_keras, with_xgb, problem_type, stacking, yb, seaborn, data_s
     meta_package.loc[meta_package['meta_package_index'] == 'STACK', ['meta_package_valid']] = stacking
     meta_package.loc[meta_package['meta_package_index'] == 'KER', ['meta_package_valid']] = with_keras
     meta_package.loc[meta_package['meta_package_index'] == 'XGB', ['meta_package_valid']] = with_xgb
+    meta_package.loc[meta_package['meta_package_index'] == 'PIP', ['meta_package_valid']] = with_pipeline
     meta_package.loc[meta_package['meta_package_index'] == 'YB', ['meta_package_valid']] = yb
     meta_package.loc[meta_package['meta_package_index'] == 'SNS', ['meta_package_valid']] = seaborn
                      
@@ -98,11 +97,7 @@ def set_config(with_keras, with_xgb, problem_type, stacking, yb, seaborn, data_s
                                 left_on  = 'meta_package_index', \
                                 right_on = 'meta_package_index', \
                                 how = 'inner') \
-                         .merge(meta_package[meta_package.meta_package_valid == True], \
-                                left_on  = 'meta_package_index', \
-                                right_on = 'meta_package_index', \
-                                how = 'inner') \
-                        [[ 'package_index', 'package_code']].drop_duplicates()
+                        [[ 'package_index', 'package_code', 'meta_package_tree']].drop_duplicates()
     
     pd_tree = package[(package.package_type == 'estimator') & \
                       (package.package_problem == problem) & \
@@ -111,14 +106,10 @@ def set_config(with_keras, with_xgb, problem_type, stacking, yb, seaborn, data_s
                              left_on='package_source_index', \
                              right_on='package_source_index',\
                              how='inner') \
-                      .merge(meta_package[(meta_package.meta_package_valid == True) & \
+                      .merge(meta_package[(meta_package.meta_package_tree == True) & \
+                                          (meta_package.meta_package_valid == True) & \
                                           ((meta_package.meta_package_data_size == 'both') | \
                                           (meta_package.meta_package_data_size == data_size))], \
-                             left_on  = 'meta_package_index', \
-                             right_on = 'meta_package_index', \
-                             how = 'inner') \
-                      .merge(meta_package[(meta_package.meta_package_valid == True) & \
-                                          (meta_package.meta_package_tree == True)], \
                              left_on  = 'meta_package_index', \
                              right_on = 'meta_package_index', \
                              how = 'inner') \
@@ -139,6 +130,11 @@ def set_config(with_keras, with_xgb, problem_type, stacking, yb, seaborn, data_s
                            (document.document_xgb == \
                             meta_package[meta_package.meta_package_index == 'XGB']\
                             ['meta_package_valid'].tolist()[0]\
+                           )) & \
+                           ((document.document_pipeline == 'both') | \
+                           (document.document_pipeline == \
+                            meta_package[meta_package.meta_package_index == 'PIP']\
+                            ['meta_package_valid'].tolist()[0]\
                            )) \
                           ].merge(meta_package[meta_package.meta_package_valid == True], \
                                                left_on  = 'meta_package_index', \
@@ -150,7 +146,7 @@ def set_config(with_keras, with_xgb, problem_type, stacking, yb, seaborn, data_s
     return pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree
 
 def load_package(nb, pd_pk_import, pd_pk_from):
-    text = "## Loading main packages "
+    text = "## Package loading"
     nb['cells'].append(nbf.v4.new_markdown_cell(text))
     
     string = '' 
@@ -172,13 +168,14 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     
     return nb
 
-def keras_nn_class(stacking):
+def keras_nn_class(stacking, with_pipeline):
     code_stack = "def K_Class(X=X, y=y): \n" + \
                  "    keras.backend.clear_session() \n" + \
                  "#   neural network architecture: start \n" + \
                  "    model = Sequential() \n" + \
                  "    model.add(Dense(len(X.columns.tolist()) + len(df[target_col].unique()) + 2, \n" + \
                  "              input_dim=len(X.columns.tolist()), activation='relu')) \n" + \
+                 "    model.add(BatchNormalization()) \n" + \
                  "    model.add(Dense(len(df[target_col].unique()), activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])\n" + \
@@ -195,19 +192,20 @@ def keras_nn_class(stacking):
                  "model.add(Dense(len(df[target_col].unique()), activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])"
-    if stacking:
+    if stacking or with_pipeline:
        code = code_stack
     else:
        code = code_simpl 
     return code
 
-def keras_nn_regre(stacking):
+def keras_nn_regre(stacking, with_pipeline):
     code_stack = "def K_Regre(X=X, y=y): \n" + \
                  "    keras.backend.clear_session()\n" + \
                  "#   neural network architecture: start  \n" + \
                  "    model = Sequential() \n" + \
                  "    model.add(Dense(len(X.columns.tolist()) + 1 + 2, input_dim=len(X.columns.tolist()), \n" + \
                  "              activation='relu')) \n" + \
+                 "    model.add(BatchNormalization()) \n" + \
                  "#   model.add(Dense(len(X.columns.tolist()) + 1 + 2, activation='relu')) \n" + \
                  "    model.add(Dense(1)) \n" + \
                  "    model.compile(loss='mean_squared_error', optimizer='adam') \n" + \
@@ -225,7 +223,7 @@ def keras_nn_regre(stacking):
                  "#   model.add(Dense(len(X.columns.tolist()) + 1 + 2, activation='relu')) \n" + \
                  "model.add(Dense(1)) \n" + \
                  "model.compile(loss='mean_squared_error', optimizer='adam')"
-    if stacking:
+    if stacking or with_pipeline:
        code = code_stack
     else:
        code = code_simpl 
@@ -234,9 +232,22 @@ def keras_nn_regre(stacking):
 def level_0(pd_level_0):
        string = "level_0 = [ \n"
        for index, row in pd_level_0.iterrows():
-           string = string +  "          ( '" + str(row[0]) + "' , "  + str(row[1]) +  " ), \n"  
+           string = string +  "          ('" + str(row[0]) + "', "  + str(row[1]) +  "), \n"  
        string = string + "          ]"  
        return string
+    
+def pipe_level_0(pd_level_0):
+       string = "level_0 = [ \n"
+       for index, row in pd_level_0.iterrows():
+           if row[2] == True:
+              string = string +  "          ('" + str(row[0]) + "', make_pipeline(tree_preprocessor, " \
+                       + str(row[1]) +  ")), \n"  
+           else:
+              string = string +  "          ('" + str(row[0]) + "', make_pipeline(ntree_preprocessor, " \
+                       + str(row[1]) +  ")), \n"  
+       string = string + "          ]"  
+       return string
+    
 
 def list_model(pd_level_0):
        string = ""
@@ -245,10 +256,10 @@ def list_model(pd_level_0):
               string = string + "# " + str(row[1]) + "\n"  
        return string    
 
-def generate(problem_type, stacking, data_size, with_keras, with_xgb, yb, seaborn, file, target_col,\
+def generate(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file, target_col,\
              threshold_NaN, threshold_cat, threshold_Z, output):
     user_drop_cols=[]
-    nb = analyze(problem_type, stacking, data_size, with_keras, with_xgb, yb, seaborn, file, target_col,\
+    nb = analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file, target_col,\
                   user_drop_cols, threshold_NaN, threshold_cat, threshold_Z)
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
@@ -258,6 +269,15 @@ def generate(problem_type, stacking, data_size, with_keras, with_xgb, yb, seabor
 caption_fc = widgets.Label(value='Select your input file:')
 fc = FileChooser('./')
 file = widgets.VBox([caption_fc, fc])
+
+caption_target = widgets.Label(value='Enter target name:')
+target_cl = widgets.Text(
+                value='column name',
+                placeholder='Type something',
+                description='Target:',
+                disabled=False   
+                )
+target = widgets.VBox([caption_target, target_cl]) 
 
 caption_problem_type = widgets.Label(value='Select your problem type:')
 problem_type = widgets.RadioButtons(
@@ -297,12 +317,20 @@ xgboost = widgets.Checkbox(
                 disabled=False,
                 indent=False
                 )
-model_option = widgets.VBox([model_caption_option, stacking, keras, xgboost])
+pipeline = widgets.Checkbox(
+                value=False,
+                description='Pipeline',
+                disabled=False,
+                indent=False
+                )
+model_option1 = widgets.HBox([stacking, keras])
+model_option2 = widgets.HBox([xgboost, pipeline])
+model_option = widgets.VBox([model_caption_option, model_option1, model_option2])
 
 visualizer_caption_option = widgets.Label(value='Visualizers:')
 yb = widgets.Checkbox(
                 value=True,
-                description='Yellow bricks',
+                description='Yellow Brick',
                 disabled=False,
                 indent=False
                 )
@@ -316,15 +344,6 @@ seaborn = widgets.Checkbox(
 visualizer_option = widgets.VBox([visualizer_caption_option, yb, seaborn])
 
 option = widgets.VBox([caption_option, widgets.HBox([model_option, visualizer_option])])
-
-caption_target = widgets.Label(value='Enter target name:')
-target_cl = widgets.Text(
-                value='column name',
-                placeholder='Type something',
-                description='Target:',
-                disabled=False   
-                )
-target = widgets.VBox([caption_target, target_cl]) 
 
 caption_threshold = widgets.Label(value='Fix your thresholds:')
 threshold_NaN = widgets.FloatSlider(
@@ -377,15 +396,15 @@ run = widgets.Button(
                 )
 generator = widgets.VBox([caption_output_file, output, run])
 
-def on_button_clicked(b, problem_type, stacking, data_size, keras, xgboost, fc, yb,\
+def on_button_clicked(b, problem_type, stacking, data_size, keras, xgboost, pipeline, fc, yb,\
                       seaborn, target, threshold_NaN, threshold_cat, threshold_Z, output):
 
-    generate(problem_type.value, stacking.value, data_size.value, keras.value, xgboost.value, yb.value,\
+    generate(problem_type.value, stacking.value, data_size.value, keras.value, xgboost.value, pipeline.value, yb.value,\
              seaborn.value, fc.selected, target_cl.value, threshold_NaN.value, threshold_cat.value,\
              threshold_Z.value, output.value)
 
 run.on_click(functools.partial(on_button_clicked, problem_type=problem_type, stacking=stacking,\
-                               data_size=data_size,keras=keras, xgboost=xgboost, yb=yb,\
+                               data_size=data_size,keras=keras, xgboost=xgboost, pipeline=pipeline, yb=yb,\
                                seaborn=seaborn,  fc=fc, target=target, threshold_NaN=threshold_NaN,\
                                threshold_cat=threshold_cat, threshold_Z=threshold_Z, output=output))
 

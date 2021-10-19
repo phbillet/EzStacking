@@ -35,10 +35,15 @@ _Note: Yellow Brick must be installed from source._
 
 # EZStacking - How to use it
 
+## Input file and problem characteristics
+
 In Jupyter, first open the notebook named EZStacking.ipynb:
 ![First launch](/screenshots/EZStacking_first_launch.png)
+
 Then run all:
+
 ![EZStacking GUI](/screenshots/EZStacking_gui.png)
+
 First select you file, fill the target name, the problem type and the data size:
 ![EZStacking GUI](/screenshots/EZStacking_file_selection.png)
 
@@ -61,7 +66,7 @@ _Notes:_
 * _the processing options XGBoost and Keras must not be both checked if Stacking option is not checked_
 * _if the processing option Pipeline is checked, you may have to modify preprocessors._
 
-## Visualization options
+### Visualization options
 |Option        | Notes                                                              |
 |--------------|--------------------------------------------------------------------|
 |Yellow bricks | The graphics will be constructed with Matplotlib and Yellow bricks |
@@ -77,4 +82,10 @@ _Notes:_
 * _threshold_NaN: threshold for NaN, if the proportion of NaN is greater than this number the column will be dropped_
 * _threshold_Z: threshold for outliers, if the Z_score is greater than this number, the row will be dropped._
 
+## Output file name
+Simply enter a file name:
 
+![EZStacking Output](/screenshots/EZStacking_output.png)
+
+## Notebook generation
+Just click on the button ![EZStacking Generate](/screenshots/EZStacking_generate.png), you should find your notebook in the current folder (otherwise a Python error and maybe an issue in Github).

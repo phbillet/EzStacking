@@ -47,7 +47,27 @@ Then run all:
 First select you file, fill the target name, the problem type and the data size:
 ![EZStacking GUI](/screenshots/EZStacking_file_selection.png)
 
-_Note: the data size is "small", if the row number is less than 3000._
+_Notes:_ 
+* _the data size is "small", if the row number is less than 3000._
+* _models depending on data size:_
+
+|Model	                |Data size |
+|----------------------|----------|
+|XGBoost	              |both      |
+|polylearn	            |small     |
+|Keras	                |both      |
+|Gaussian Process	     |small     |
+|Decision Tree	        |small     |
+|Random Forest	        |both      |
+|AdaBoost	             |both      |
+|SGD	                  |large     |
+|Logistic Regression	  |small     |
+|Linear Regression	    |small     |
+|ElasticNet	           |both      |
+|Multilayer Perceptron	|small     |
+|KNeighbors	           |small     |
+|Gaussian Naive Bayes	 |small     |
+|Support vector	       |large     |
 
 ## Options
 Now, let's choose the options:

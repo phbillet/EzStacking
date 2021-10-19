@@ -44,11 +44,11 @@ First select you file, fill the target name, the problem type and the data size:
 
 _Note: the data size is "small", if the row number is less than 3000._
 
-Now let's choose the options:
+## Options
+Now, let's choose the options:
 
 ![EZStacking GUI](/screenshots/EZStacking_options.png)
 
-## Options
 ### Processing options
 |Option   | Notes                                                   |
 |---------|---------------------------------------------------------|
@@ -74,5 +74,5 @@ _Note: the visualisation option Seaborn can produce time consuming graphics
 
 _Notes:_
 * threshold_cat: threshold for categorical data, if the number of different values in a column is less than this number, the column will be considered as a categorical column.
-* threshold_NaN: hreshold for NaN, if the proportion of NaN is greater than this number the column will be dropped
+* threshold_NaN: threshold for NaN, if the proportion of NaN is greater than this number the column will be dropped
 * threshold_Z: threshold for outliers, if the Z_score is greater than this number, the row will be dropped

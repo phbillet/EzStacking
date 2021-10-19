@@ -14,22 +14,15 @@ A notebook generated with EZStacking contains:
 _Note: EZStacking must be used with *.csv dataset._
 
 # EZStacking - What will you need?
-|Package                                                    | Version |
-|-----------------------------------------------------------|---------|
-|[pandas](https://pandas.pydata.org/)                       | 1.3.3   | 
-|[scikit-learn](https://scikit-learn.org/)                  | 0.24.1  |
-|[keras](https://keras.io/)                                 | 2.4.3   |
-|[xgboost](https://xgboost.readthedocs.io/en/latest/)       | 1.3.3   |
-|[polylearn](https://contrib.scikit-learn.org/polylearn/)   | 0.1     |
-|[scipy](https://www.scipy.org)                             | 1.6.0   |
-|[yellowbrick](https://www.scikit-yb.org)                   | dev     |
-|[matplotlib](https://matplotlib.org/)                      | 3.4.2   |
-|[seaborn](https://seaborn.pydata.org/)                     | 0.11.2  |
-|[graphviz](https://graphviz.org/)                          | 2.40.1  |
-|[python-graphviz](https://graphviz.org/)                   | 0.16    |
-|[nbformat](https://nbformat.readthedocs.io/en/latest/)     | 5.1.2   |
-|[ipywidgets](https://ipywidgets.readthedocs.io/en/latest/) | 7.6.3   |
-|[ipyfilechooser](https://github.com/crahan/ipyfilechooser) | 0.6.0   |
+|Package                                                    | Version | |Package                                                    | Version |
+|-----------------------------------------------------------|---------|-|-----------------------------------------------------------|---------| 
+|[pandas](https://pandas.pydata.org/)                       | 1.3.3   | |[matplotlib](https://matplotlib.org/)                      | 3.4.2   | 
+|[scikit-learn](https://scikit-learn.org/)                  | 0.24.1  | |[seaborn](https://seaborn.pydata.org/)                     | 0.11.2  |
+|[keras](https://keras.io/)                                 | 2.4.3   | |[graphviz](https://graphviz.org/)                          | 2.40.1  |
+|[xgboost](https://xgboost.readthedocs.io/en/latest/)       | 1.3.3   | |[python-graphviz](https://graphviz.org/)                   | 0.16    |
+|[polylearn](https://contrib.scikit-learn.org/polylearn/)   | 0.1     | |[nbformat](https://nbformat.readthedocs.io/en/latest/)     | 5.1.2   |
+|[scipy](https://www.scipy.org)                             | 1.6.0   | |[ipywidgets](https://ipywidgets.readthedocs.io/en/latest/) | 7.6.3   |
+|[yellowbrick](https://www.scikit-yb.org)                   | dev     | |[ipyfilechooser](https://github.com/crahan/ipyfilechooser) | 0.6.0   |
 
 _Note: Yellow Brick must be installed from source._
 
@@ -44,30 +37,23 @@ Then run all:
 
 ![EZStacking GUI](/screenshots/EZStacking_gui.png)
 
-First select you file, fill the target name, the problem type and the data size:
+First select your file, fill the target name, the problem type and the data size:
 ![EZStacking GUI](/screenshots/EZStacking_file_selection.png)
 
 _Notes:_ 
 * _the data size is "small", if the row number is less than 3000._
 * _models depending on data size:_
 
-|Model	                |Data size |
-|----------------------|----------|
-|XGBoost	              |both      |
-|polylearn	            |small     |
-|Keras	                |both      |
-|Gaussian Process	     |small     |
-|Decision Tree	        |small     |
-|Random Forest	        |both      |
-|AdaBoost	             |both      |
-|SGD	                  |large     |
-|Logistic Regression	  |small     |
-|Linear Regression	    |small     |
-|ElasticNet	           |both      |
-|Multilayer Perceptron	|small     |
-|KNeighbors	           |small     |
-|Gaussian Naive Bayes	 |small     |
-|Support vector	       |large     |
+|Model	                |Data size | |Model                 |Data size |
+|----------------------|----------|-|----------------------|----------|
+|XGBoost	              |both      | |SGD	                  |large     |
+|polylearn	            |small     | |Logistic Regression	  |small     |
+|Keras	                |both      | |Linear Regression	    |small     |
+|Gaussian Process	     |small     | |ElasticNet	           |both      |
+|Decision Tree	        |small     | |Multilayer Perceptron	|small     |
+|Random Forest	        |both      | |KNeighbors	           |small     |
+|AdaBoost	             |both      | |Gaussian Naive Bayes	 |small     |
+|Support vector	       |large     | |
 
 ## Options
 Now, let's choose the options:
@@ -77,7 +63,7 @@ Now, let's choose the options:
 ### Processing options
 |Option   | Notes                                                   |
 |---------|---------------------------------------------------------|
-|Stacking | the model will be built using stacked generalization    |
+|Stacking | the model is based on stacked generalization            |
 |XGBoost  | the model will be built using gradient boosting         |
 |Keras    | the model will be a neural network based on Keras       |
 |Pipeline | the model will be built integrating a preprocessing step|

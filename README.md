@@ -44,16 +44,16 @@ _Notes:_
 * _the data size is "small", if the row number is less than 3000._
 * _models depending on data size:_
 
-|Model	                |Data size | |Model                 |Data size |
-|----------------------|----------|-|----------------------|----------|
-|XGBoost	              |both      | |SGD	                  |large     |
-|polylearn	            |small     | |Logistic Regression	  |small     |
-|Keras	                |both      | |Linear Regression	    |small     |
-|Gaussian Process	     |small     | |ElasticNet	           |both      |
-|Decision Tree	        |small     | |Multilayer Perceptron	|small     |
-|Random Forest	        |both      | |KNeighbors	           |small     |
-|AdaBoost	             |both      | |Gaussian Naive Bayes	 |small     |
-|Support vector	       |large     | |
+|Model	|Data size | |Model |Data size |
+|------|----------|-|------|----------|
+|[XGBoost](https://arxiv.org/abs/1603.02754)	|both | |[SGD](https://scikit-learn.org/stable/modules/linear_model.html#stochastic-gradient-descent-sgd)	|large |
+|[polylearn](https://mblondel.org/publications/mblondel-icml2016.pdf)	|small | |[Logistic Regression](https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression)	|small |
+|[Keras](https://keras.io/guides/)	|both | |[Linear Regression](https://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares)	|small |
+|[Gaussian Process](https://scikit-learn.org/stable/modules/gaussian_process.html)	|small | |[ElasticNet](https://scikit-learn.org/stable/modules/linear_model.html#elastic-net) |both |
+|[Decision Tree](https://scikit-learn.org/stable/modules/tree.html)	|small | |[Multilayer Perceptron](https://scikit-learn.org/stable/modules/neural_networks_supervised.html)	|small |
+|[Random Forest](https://scikit-learn.org/stable/modules/ensemble.html#forests-of-randomized-trees) |both | |[KNeighbors](https://scikit-learn.org/stable/modules/neighbors.html) |small |
+|[AdaBoost](https://scikit-learn.org/stable/modules/ensemble.html#adaboost)	|both | |[Gaussian Naive Bayes](https://scikit-learn.org/stable/modules/naive_bayes.html)	|small     |
+|[Support vector](https://scikit-learn.org/stable/modules/svm.html)	|large | |
 
 ## Options
 Now, let's choose the options:

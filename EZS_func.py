@@ -229,7 +229,7 @@ def score_stacking_r(model, X_train, y_train, X_test, y_test):
     return res_stack
 
 def plot_perm_imp(model, X, y, scoring):
-    result = permutation_importance(model, X, y, scoring, n_repeats=10)
+    result = permutation_importance(model, X, y, scoring, n_repeats=10, n_jobs=-1)
     sorted_idx = result.importances_mean.argsort()
     fig, ax = plt.subplots()
     ax.barh(X.columns[sorted_idx], result.importances[sorted_idx].mean(axis=1).T)

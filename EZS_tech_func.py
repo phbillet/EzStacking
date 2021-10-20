@@ -176,6 +176,7 @@ def keras_nn_class(stacking, with_pipeline):
                  "    model.add(Dense(len(X.columns.tolist()) + len(df[target_col].unique()) + 2, \n" + \
                  "              input_dim=len(X.columns.tolist()), activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
+                 "#    model.add(LayerNormalization()) \n" + \
                  "    model.add(Dense(len(df[target_col].unique()), activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])\n" + \
@@ -189,6 +190,7 @@ def keras_nn_class(stacking, with_pipeline):
                  "model.add(Dense(len(X.columns.tolist()) + len(df[target_col].unique()) + 2, \n" + \
                  "          input_dim=len(X.columns.tolist()), activation='relu')) \n" + \
                  "model.add(BatchNormalization()) \n" + \
+                 "# model.add(LayerNormalization()) \n" + \
                  "model.add(Dense(len(df[target_col].unique()), activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])"
@@ -206,6 +208,7 @@ def keras_nn_regre(stacking, with_pipeline):
                  "    model.add(Dense(len(X.columns.tolist()) + 1 + 2, input_dim=len(X.columns.tolist()), \n" + \
                  "              activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
+                 "#    model.add(LayerNormalization()) \n" + \
                  "#   model.add(Dense(len(X.columns.tolist()) + 1 + 2, activation='relu')) \n" + \
                  "    model.add(Dense(1)) \n" + \
                  "    model.compile(loss='mean_squared_error', optimizer='adam') \n" + \
@@ -220,6 +223,7 @@ def keras_nn_regre(stacking, with_pipeline):
                  "model.add(Dense(len(X.columns.tolist()) + 1 + 2, input_dim=len(X.columns.tolist()), \n" + \
                  "          activation='relu')) \n" + \
                  "model.add(BatchNormalization()) \n" + \
+                 "# model.add(LayerNormalization()) \n" + \
                  "#   model.add(Dense(len(X.columns.tolist()) + 1 + 2, activation='relu')) \n" + \
                  "model.add(Dense(1)) \n" + \
                  "model.compile(loss='mean_squared_error', optimizer='adam')"

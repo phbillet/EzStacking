@@ -95,3 +95,6 @@ Simply enter a file name:
 
 ## Notebook generation
 Just click on the button ![EZStacking Generate](/screenshots/EZStacking_generate.png), you should find your notebook in the current folder (otherwise a Python error and maybe an issue in Github).
+
+## Some results
+Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/examples).

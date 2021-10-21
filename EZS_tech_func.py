@@ -169,15 +169,14 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     return nb
 
 def keras_nn_class(stacking, with_pipeline):
-    code_stack = "def K_Class(X=X, y=y): \n" + \
+    code_stack = "def K_Class(): \n" + \
                  "    keras.backend.clear_session() \n" + \
                  "#   neural network architecture: start \n" + \
                  "    model = Sequential() \n" + \
-                 "    model.add(Dense(len(X.columns.tolist()) + len(df[target_col].unique()) + 2, \n" + \
-                 "              input_dim=len(X.columns.tolist()), activation='relu')) \n" + \
+                 "    model.add(Dense(d_F + d_T + 2, input_dim=d_F, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
-                 "    model.add(Dense(len(df[target_col].unique()), activation='softmax')) \n" + \
+                 "    model.add(Dense(d_T, activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])\n" + \
                  "    return model\n" + \
@@ -187,11 +186,10 @@ def keras_nn_class(stacking, with_pipeline):
     code_simpl = "keras.backend.clear_session() \n" + \
                  "#   neural network architecture: start \n" + \
                  "model = Sequential() \n" + \
-                 "model.add(Dense(len(X.columns.tolist()) + len(df[target_col].unique()) + 2, \n" + \
-                 "          input_dim=len(X.columns.tolist()), activation='relu')) \n" + \
+                 "model.add(Dense(d_F + d_T + 2, input_dim=d_F, activation='relu')) \n" + \
                  "model.add(BatchNormalization()) \n" + \
                  "# model.add(LayerNormalization()) \n" + \
-                 "model.add(Dense(len(df[target_col].unique()), activation='softmax')) \n" + \
+                 "model.add(Dense(d_T, activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])"
     if stacking or with_pipeline:
@@ -201,15 +199,14 @@ def keras_nn_class(stacking, with_pipeline):
     return code
 
 def keras_nn_regre(stacking, with_pipeline):
-    code_stack = "def K_Regre(X=X, y=y): \n" + \
+    code_stack = "def K_Regre(): \n" + \
                  "    keras.backend.clear_session()\n" + \
                  "#   neural network architecture: start  \n" + \
                  "    model = Sequential() \n" + \
-                 "    model.add(Dense(len(X.columns.tolist()) + 1 + 2, input_dim=len(X.columns.tolist()), \n" + \
-                 "              activation='relu')) \n" + \
+                 "    model.add(Dense(d_F + 1 + 2, input_dim=d_F, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
-                 "#   model.add(Dense(len(X.columns.tolist()) + 1 + 2, activation='relu')) \n" + \
+                 "#   model.add(Dense(d_F + 1 + 2, activation='relu')) \n" + \
                  "    model.add(Dense(1)) \n" + \
                  "    model.compile(loss='mean_squared_error', optimizer='adam') \n" + \
                  "#   neural network architecture: end   \n" + \
@@ -220,11 +217,10 @@ def keras_nn_regre(stacking, with_pipeline):
     code_simpl = "keras.backend.clear_session()\n" + \
                  "#   neural network architecture: start  \n" + \
                  "model = Sequential() \n" + \
-                 "model.add(Dense(len(X.columns.tolist()) + 1 + 2, input_dim=len(X.columns.tolist()), \n" + \
-                 "          activation='relu')) \n" + \
+                 "model.add(Dense(d_F + 1 + 2, input_dim=d_F, activation='relu')) \n" + \
                  "model.add(BatchNormalization()) \n" + \
                  "# model.add(LayerNormalization()) \n" + \
-                 "#   model.add(Dense(len(X.columns.tolist()) + 1 + 2, activation='relu')) \n" + \
+                 "#   model.add(Dense(d_F + 1 + 2, activation='relu')) \n" + \
                  "model.add(Dense(1)) \n" + \
                  "model.compile(loss='mean_squared_error', optimizer='adam')"
     if stacking or with_pipeline:
@@ -328,7 +324,7 @@ pipeline = widgets.Checkbox(
                 indent=False
                 )
 model_option1 = widgets.HBox([stacking, keras])
-model_option2 = widgets.HBox([xgboost, pipeline])
+model_option2 = widgets.HBox([pipeline, xgboost])
 model_option = widgets.VBox([model_caption_option, model_option1, model_option2])
 
 visualizer_caption_option = widgets.Label(value='Visualizers:')

@@ -5,6 +5,7 @@ import seaborn as sns
 from scipy import stats
 from pandas.api.types import is_numeric_dtype
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import ConfusionMatrixDisplay, classification_report
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.inspection import permutation_importance
@@ -244,3 +245,49 @@ def plot_history(history):
     plt.ylabel("Score")
     plt.legend()
     plt.show()
+    
+def K_confusion_matrix(model, X_train, y_train, X_test, y_test):
+    from sklearn.metrics import confusion_matrix
+    y_pred = model.predict(X_train)
+    if len(y_pred.shape)>1:
+       y_pred = np.around(y_pred).astype(int)
+       y_pred = np.argmax(y_pred, axis=1)
+       y_train = y_train.idxmax(axis=1)
+    cm = confusion_matrix(y_train, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot()
+    plt.title('Confusion matrix on train set')
+    plt.show()
+    y_pred = model.predict(X_test)
+    if len(y_pred.shape)>1:
+       y_pred = np.around(y_pred).astype(int)
+       y_pred = np.argmax(y_pred, axis=1)
+       y_test = y_test.idxmax(axis=1)
+    cm = confusion_matrix(y_test, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot()
+    plt.title('Confusion matrix on test set')
+    plt.show()
+    
+def K_classification_report(model, X_train, y_train, X_test, y_test):
+    y_pred = model.predict(X_train)
+    if len(y_pred.shape)>1:
+       y_pred = np.around(y_pred).astype(int)
+       y_pred = np.argmax(y_pred, axis=1)
+       y_train = y_train.idxmax(axis=1)
+    cr=classification_report(y_train, y_pred, output_dict=True)
+    display(pd.DataFrame(cr).transpose().style.set_caption("Classification report on train set"))
+    y_pred = model.predict(X_test)
+    if len(y_pred.shape)>1:
+       y_pred = np.around(y_pred).astype(int)
+       y_pred = np.argmax(y_pred, axis=1)
+       y_test = y_test.idxmax(axis=1)
+    cr=classification_report(y_test, y_pred, output_dict=True)
+    display(pd.DataFrame(cr).transpose().style.set_caption("Classification report on test set"))
+    
+def K_r2(model,X_train, y_train, X_test, y_test):
+    y_pred_train = model.predict(X_train)    
+    y_pred_test = model.predict(X_test)
+    dr2={'train': [r2_score(y_train, y_pred_train)],\
+         'test': [r2_score(y_test, y_pred_test)]}
+    display(pd.DataFrame(data=dr2).style.hide_index())

@@ -168,7 +168,7 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     
     return nb
 
-def keras_nn_class(stacking, with_pipeline):
+def keras_nn_class(stacking):
     code_stack = "def K_Class(): \n" + \
                  "    keras.backend.clear_session() \n" + \
                  "#   neural network architecture: start \n" + \
@@ -183,22 +183,25 @@ def keras_nn_class(stacking, with_pipeline):
                  "#   Keras training parameters: epoch and batch_size \n" + \
                  "K_C = KerasClassifier(build_fn=K_Class, epochs=200, batch_size=5, verbose=0) \n" + \
                  "K_C._estimator_type = 'classifier' "
-    code_simpl = "keras.backend.clear_session() \n" + \
+    
+    code_simpl = "def K_Class(): \n" + \
+                 "    keras.backend.clear_session() \n" + \
                  "#   neural network architecture: start \n" + \
-                 "model = Sequential() \n" + \
-                 "model.add(Dense(d_F + d_T + 2, input_dim=d_F, activation='relu')) \n" + \
-                 "model.add(BatchNormalization()) \n" + \
-                 "# model.add(LayerNormalization()) \n" + \
-                 "model.add(Dense(d_T, activation='softmax')) \n" + \
+                 "    model = Sequential() \n" + \
+                 "    model.add(Dense(d_F + d_T + 2, input_dim=d_F, activation='relu')) \n" + \
+                 "    model.add(BatchNormalization()) \n" + \
+                 "#    model.add(LayerNormalization()) \n" + \
+                 "    model.add(Dense(d_T, activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
-                 "model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])"
-    if stacking or with_pipeline:
+                 "    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])\n" + \
+                 "    return model"
+    if stacking:
        code = code_stack
     else:
        code = code_simpl 
     return code
 
-def keras_nn_regre(stacking, with_pipeline):
+def keras_nn_regre(stacking):
     code_stack = "def K_Regre(): \n" + \
                  "    keras.backend.clear_session()\n" + \
                  "#   neural network architecture: start  \n" + \
@@ -214,16 +217,19 @@ def keras_nn_regre(stacking, with_pipeline):
                  "#   Keras training parameters: epoch and batch_size \n" + \
                  "K_R = KerasRegressor(build_fn=K_Regre, epochs=200, batch_size=5, verbose=0) \n" + \
                  "K_R._estimator_type = 'regressor'"
-    code_simpl = "keras.backend.clear_session()\n" + \
+    code_simpl = "def K_Regre(): \n" + \
+                 "    keras.backend.clear_session()\n" + \
                  "#   neural network architecture: start  \n" + \
-                 "model = Sequential() \n" + \
-                 "model.add(Dense(d_F + 1 + 2, input_dim=d_F, activation='relu')) \n" + \
-                 "model.add(BatchNormalization()) \n" + \
-                 "# model.add(LayerNormalization()) \n" + \
+                 "    model = Sequential() \n" + \
+                 "    model.add(Dense(d_F + 1 + 2, input_dim=d_F, activation='relu')) \n" + \
+                 "    model.add(BatchNormalization()) \n" + \
+                 "#    model.add(LayerNormalization()) \n" + \
                  "#   model.add(Dense(d_F + 1 + 2, activation='relu')) \n" + \
-                 "model.add(Dense(1)) \n" + \
-                 "model.compile(loss='mean_squared_error', optimizer='adam')"
-    if stacking or with_pipeline:
+                 "    model.add(Dense(1)) \n" + \
+                 "    model.compile(loss='mean_squared_error', optimizer='adam') \n" + \
+                 "#   neural network architecture: end   \n" + \
+                 "    return model"
+    if stacking:
        code = code_stack
     else:
        code = code_simpl 

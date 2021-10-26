@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 from pandas.api.types import is_numeric_dtype
+from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, recall_score 
+from keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
 
 # Technical functions
 
@@ -162,6 +164,36 @@ def format_test(df, dropped_cols, encoded_cols):
         df[c] = df[c].factorize()[0]
     df = downcast_dtypes(df)
     return df_copy
+
+class KerasBatchClassifier(KerasClassifier, BaseEstimator):
+    def __init__(self, model, **kwargs):
+        super().__init__(model)
+        self.fit_kwargs = kwargs
+        self._estimator_type = 'classifier'
+
+    def fit(self, X, y, *args, **kwargs):
+        # taken from keras.wrappers.scikit_learn.KerasClassifier.fit
+        self.model = self.build_fn(**self.filter_sk_params(self.build_fn))
+        self.classes_ = y.columns
+        self.__history = self.model.fit(X, y, **self.fit_kwargs)
+    
+    def score(self, X, y):
+        return accuracy_score(y, self.predict(X))
+    
+class KerasBatchRegressor(KerasRegressor, BaseEstimator):
+    def __init__(self, model, **kwargs):
+        super().__init__(model)
+        self.fit_kwargs = kwargs
+        self._estimator_type = 'regressor'
+        
+    def fit(self, X, y, *args, **kwargs):
+        # taken from keras.wrappers.scikit_learn.KerasClassifier.fit
+        self.model = self.build_fn(**self.filter_sk_params(self.build_fn))
+        self.classes_ = np.unique(y)
+        self.__history = self.model.fit(X, y, **self.fit_kwargs)
+    
+    def score(self, X, y):
+        return r2_score(y, self.predict(X))
 
 def score_stacking_c(model, X_train, y_train, X_test, y_test):
     nb_estimators = len(model.estimators_)

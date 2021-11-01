@@ -16,12 +16,12 @@ _Note: EZStacking must be used with *.csv dataset._
 # EZStacking - What will you need?
 |Package                                                    | Version | |Package                                                    | Version |
 |-----------------------------------------------------------|---------|-|-----------------------------------------------------------|---------| 
-|[pandas](https://pandas.pydata.org/)                       | 1.3.3   | |[matplotlib](https://matplotlib.org/)                      | 3.4.2   | 
-|[scikit-learn](https://scikit-learn.org/)                  | 0.24.1  | |[seaborn](https://seaborn.pydata.org/)                     | 0.11.2  |
+|[pandas](https://pandas.pydata.org/)                       | 1.3.3   | |[matplotlib](https://matplotlib.org/)                      | 3.4.3   | 
+|[scikit-learn](https://scikit-learn.org/)                  | 1.0.1   | |[seaborn](https://seaborn.pydata.org/)                     | 0.11.2  |
 |[keras](https://keras.io/)                                 | 2.4.3   | |[graphviz](https://graphviz.org/)                          | 2.40.1  |
 |[xgboost](https://xgboost.readthedocs.io/en/latest/)       | 1.3.3   | |[python-graphviz](https://graphviz.org/)                   | 0.16    |
-|[polylearn](https://contrib.scikit-learn.org/polylearn/)   | 0.1     | |[nbformat](https://nbformat.readthedocs.io/en/latest/)     | 5.1.2   |
-|[scipy](https://www.scipy.org)                             | 1.6.0   | |[ipywidgets](https://ipywidgets.readthedocs.io/en/latest/) | 7.6.3   |
+|[polylearn](https://contrib.scikit-learn.org/polylearn/)   | 0.1     | |[nbformat](https://nbformat.readthedocs.io/en/latest/)     | 5.1.3   |
+|[scipy](https://www.scipy.org)                             | 1.6.2   | |[ipywidgets](https://ipywidgets.readthedocs.io/en/latest/) | 7.6.5   |
 |[yellowbrick](https://www.scikit-yb.org)                   | dev     | |[ipyfilechooser](https://github.com/crahan/ipyfilechooser) | 0.6.0   |
 
 _Note: Yellow Brick must be installed from source._

@@ -34,7 +34,7 @@ def analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeli
     return nb
 
 def set_config(with_keras, with_xgb, with_pipeline, problem_type, stacking, yb, seaborn, data_size):
-    xls = pd.ExcelFile('EZStacking_config.xlsx')
+    xls = pd.ExcelFile('EZStacking_config.ods', engine="odf")
     meta_package = pd.read_excel(xls, 'meta_package')
     package_source = pd.read_excel(xls, 'package_source')
     package = pd.read_excel(xls, 'package')
@@ -135,6 +135,11 @@ def set_config(with_keras, with_xgb, with_pipeline, problem_type, stacking, yb, 
                            (document.document_pipeline == \
                             meta_package[meta_package.meta_package_index == 'PIP']\
                             ['meta_package_valid'].tolist()[0]\
+                           )) & \
+                           ((document.document_yb == 'both') | \
+                           (document.document_yb == \
+                            meta_package[meta_package.meta_package_index == 'YB']\
+                            ['meta_package_valid'].tolist()[0]\
                            )) \
                           ].merge(meta_package[meta_package.meta_package_valid == True], \
                                                left_on  = 'meta_package_index', \
@@ -181,7 +186,7 @@ def keras_nn_class(stacking):
                  "    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])\n" + \
                  "    return model\n" + \
                  "#   Keras training parameters: epoch and batch_size \n" + \
-                 "K_C = KerasClassifier(build_fn=K_Class, epochs=200, batch_size=5, verbose=0) \n" + \
+                 "K_C = KerasClassifier(build_fn=K_Class, epochs=1000, batch_size=64, verbose=0) \n" + \
                  "K_C._estimator_type = 'classifier' "
     
     code_simpl = "def K_Class(): \n" + \
@@ -215,7 +220,7 @@ def keras_nn_regre(stacking):
                  "#   neural network architecture: end   \n" + \
                  "    return model  \n" + \
                  "#   Keras training parameters: epoch and batch_size \n" + \
-                 "K_R = KerasRegressor(build_fn=K_Regre, epochs=200, batch_size=5, verbose=0) \n" + \
+                 "K_R = KerasRegressor(build_fn=K_Regre, epochs=1000, batch_size=64, verbose=0) \n" + \
                  "K_R._estimator_type = 'regressor'"
     code_simpl = "def K_Regre(): \n" + \
                  "    keras.backend.clear_session()\n" + \
@@ -285,27 +290,33 @@ target_cl = widgets.Text(
                 )
 target = widgets.VBox([caption_target, target_cl]) 
 
-caption_problem_type = widgets.Label(value='Select your problem type:')
+caption_problem_option = widgets.Label(value='Problem and data characteristics:')
+caption_problem_type = widgets.Label(value='Select your problem type:') 
 problem_type = widgets.RadioButtons(
                 options=['classification', 'regression'],
                 description='Problem type:',
+                description_tooltip='If the target is categorical then choose classification, regression otherwise.',
                 disabled=False
                 )
 problem = widgets.VBox([caption_problem_type, problem_type])
-
 caption_data_size = widgets.Label(value='Select your data size:')
 data_size = widgets.RadioButtons(
                 options=['small', 'large'],
                 description='Data size:',
+                description_tooltip='Choose large, if the file contains more 5000 rows',
                 disabled=False
                 )
 data = widgets.VBox([caption_data_size, data_size])
+
+problem_option1 = widgets.HBox([problem, data])
+problem_option = widgets.VBox([caption_problem_option, problem_option1])
 
 caption_option = widgets.Label(value='Select your options:')
 model_caption_option = widgets.Label(value='Models:')
 stacking = widgets.Checkbox(
                 value=False,
                 description='Stacking',
+                description_tooltip='The model will use stacked generalization',
                 disabled=False,
                 indent=False
                 )
@@ -313,6 +324,7 @@ stacking = widgets.Checkbox(
 keras = widgets.Checkbox(
                 value=False,
                 description='Keras',
+                description_tooltip='The model will use Keras neural network',
                 disabled=False,
                 indent=False
                 )
@@ -320,12 +332,14 @@ keras = widgets.Checkbox(
 xgboost = widgets.Checkbox(
                 value=False,
                 description='XGBoost',
+                description_tooltip='The model will use gradient boosting', 
                 disabled=False,
                 indent=False
                 )
 pipeline = widgets.Checkbox(
                 value=False,
                 description='Pipeline',
+                description_tooltip='The model will contain a preprocessing step',
                 disabled=False,
                 indent=False
                 )
@@ -337,6 +351,7 @@ visualizer_caption_option = widgets.Label(value='Visualizers:')
 yb = widgets.Checkbox(
                 value=True,
                 description='Yellow Brick',
+                description_tooltip='Visulization will use Yellow Brick',
                 disabled=False,
                 indent=False
                 )
@@ -344,6 +359,7 @@ yb = widgets.Checkbox(
 seaborn = widgets.Checkbox(
                 value=False,
                 description='Seaborn',
+                tooltip='Visulization will use Seaborn',                
                 disabled=False,
                 indent=False
                 )
@@ -358,6 +374,7 @@ threshold_NaN = widgets.FloatSlider(
                 max=1,
                 step=0.03,
                 description='Th. NaN:',
+                description_tooltip='If the proportion of NaN is greater than this number the column will be dropped',
                 disabled=False,
                 continuous_update=False,
                 orientation='horizontal',
@@ -368,6 +385,7 @@ threshold_NaN = widgets.FloatSlider(
 threshold_cat = widgets.IntText(
                 value=5,
                 description='Th. Cat:',
+                description_tooltip='If the number of different values in a column is less than this number,\n the column will be considered as a categorical column',
                 disabled=False
                 )
 
@@ -377,6 +395,7 @@ threshold_Z = widgets.FloatSlider(
                 max=10,
                 step=0.1,
                 description='Th. Z:',
+                description_tooltip='If the Z_score is greater than this number, the row will be dropped',
                 disabled=False,
                 continuous_update=False,
                 orientation='horizontal',
@@ -395,9 +414,9 @@ output = widgets.Text(
 
 run = widgets.Button(
                 description='Generate',
+                tooltip='If no error, you should find the generated notebook in the current folder',
                 disabled=False,
                 button_style='success', # 'success', 'info', 'warning', 'danger' or ''
-                tooltip='Run',
                 icon=''
                 )
 generator = widgets.VBox([caption_output_file, output, run])
@@ -414,4 +433,4 @@ run.on_click(functools.partial(on_button_clicked, problem_type=problem_type, sta
                                seaborn=seaborn,  fc=fc, target=target, threshold_NaN=threshold_NaN,\
                                threshold_cat=threshold_cat, threshold_Z=threshold_Z, output=output))
 
-EZS_gui = widgets.VBox([file, target, problem, data, option, threshold, generator])
+EZS_gui = widgets.VBox([file, target, problem_option, option, threshold, generator])

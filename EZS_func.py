@@ -176,6 +176,7 @@ class KerasBatchClassifier(KerasClassifier, BaseEstimator):
         self.model = self.build_fn(**self.filter_sk_params(self.build_fn))
         self.classes_ = y.columns
         self.__history = self.model.fit(X, y, **self.fit_kwargs)
+        return self.__history
     
     def score(self, X, y):
         return accuracy_score(y, self.predict(X))
@@ -191,6 +192,7 @@ class KerasBatchRegressor(KerasRegressor, BaseEstimator):
         self.model = self.build_fn(**self.filter_sk_params(self.build_fn))
         self.classes_ = np.unique(y)
         self.__history = self.model.fit(X, y, **self.fit_kwargs)
+        return self.__history
     
     def score(self, X, y):
         return r2_score(y, self.predict(X))
@@ -198,10 +200,10 @@ class KerasBatchRegressor(KerasRegressor, BaseEstimator):
 def score_stacking_c(model, X_train, y_train, X_test, y_test):
     nb_estimators = len(model.estimators_)
     res_stack = np.empty((nb_estimators + 1, 3), dtype='object')
+    m_t_x_train = model.transform(X_train)
     for j in range(nb_estimators):
         res_stack [j, 0] = [*model.named_estimators_.keys()][j]
-        m_t_x_train = model.transform(X_train)
-        if model.transform(X_train).shape[1] == nb_estimators: 
+        if m_t_x_train.shape[1] == nb_estimators: 
            res_stack [j, 1] = accuracy_score(np.rint(m_t_x_train).T[j], y_train)
            res_stack [j, 2] = accuracy_score(np.rint(model.transform(X_test)).T[j], y_test)
         else: 
@@ -231,9 +233,9 @@ def score_stacking_c(model, X_train, y_train, X_test, y_test):
 def score_stacking_r(model, X_train, y_train, X_test, y_test):
     nb_estimators = len(model.estimators_)
     res_stack = np.empty((nb_estimators + 1, 3), dtype='object')
+    m_t_x_train = model.transform(X_train)
     for j in range(nb_estimators):
         res_stack [j, 0] = [*model.named_estimators_.keys()][j]
-        m_t_x_train = model.transform(X_train)
         if m_t_x_train.shape[1] == nb_estimators: 
            res_stack [j, 1] = r2_score(np.rint(m_t_x_train).T[j], y_train)
            res_stack [j, 2] = r2_score(np.rint(model.transform(X_test)).T[j], y_test)

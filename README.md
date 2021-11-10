@@ -23,6 +23,7 @@ _Note: EZStacking must be used with *.csv dataset._
 |[polylearn](https://contrib.scikit-learn.org/polylearn/)   | 0.1     | |[nbformat](https://nbformat.readthedocs.io/en/latest/)     | 5.1.3   |
 |[scipy](https://www.scipy.org)                             | 1.6.2   | |[ipywidgets](https://ipywidgets.readthedocs.io/en/latest/) | 7.6.5   |
 |[yellowbrick](https://www.scikit-yb.org)                   | dev     | |[ipyfilechooser](https://github.com/crahan/ipyfilechooser) | 0.6.0   |
+|[papermill](https://papermill.readthedocs.io/)             | 2.3.3   |
 
 _Note: Yellow Brick must be installed from source._
 
@@ -93,8 +94,9 @@ Simply enter a file name:
 
 ![EZStacking Output](/screenshots/EZStacking_output.png)
 
-## Notebook generation
+## Notebook generation and execution
 Just click on the button ![EZStacking Generate](/screenshots/EZStacking_generate.png), you should find your notebook in the current folder (otherwise a Python error and maybe an issue in Github).
+If the option ![auto execution](/screenshots/auto_exec.png) is checked, the notebook will be processed.
 
 ## Some results
 Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/examples).

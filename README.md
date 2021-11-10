@@ -39,6 +39,7 @@ Then run all:
 ![EZStacking GUI](/screenshots/EZStacking_gui.png)
 
 First select your file, fill the target name, the problem type and the data size:
+
 ![EZStacking GUI](/screenshots/EZStacking_file_selection.png)
 
 _Notes:_ 

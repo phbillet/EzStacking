@@ -1,4 +1,5 @@
 import io
+import papermill as pm
 import functools
 import pandas as pd
 import numpy as np
@@ -14,6 +15,12 @@ def analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeli
                                                                             problem_type, stacking, yb, seaborn, data_size)
     
     nb = nbf.v4.new_notebook()
+    kernelspec = dict(
+            display_name='python3',
+            name='python3',
+            language='python')
+    nb.metadata['kernelspec'] = kernelspec
+    
     nb['cells'] = []
     
     for index, row in pd_document.iterrows():
@@ -268,13 +275,17 @@ def list_model(pd_level_0):
        return string    
 
 def generate(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file, target_col,\
-             threshold_NaN, threshold_cat, threshold_Z, output):
+             threshold_NaN, threshold_cat, threshold_Z, auto_exec, output):
     user_drop_cols=[]
     nb = analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file, target_col,\
                   user_drop_cols, threshold_NaN, threshold_cat, threshold_Z)
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
          nbf.write(nb, f)
+    pm.execute_notebook(fname,fname)
+
+#    os.system('jupyter execute ' + fname + ' --allow-errors')
+    
             
 # GUI
 caption_fc = widgets.Label(value='Select your input file:')
@@ -412,25 +423,35 @@ output = widgets.Text(
                 disabled=False   
                 )
 
-run = widgets.Button(
+run_button = widgets.Button(
                 description='Generate',
                 tooltip='If no error, you should find the generated notebook in the current folder',
                 disabled=False,
                 button_style='success', # 'success', 'info', 'warning', 'danger' or ''
                 icon=''
                 )
+auto_exec = widgets.Checkbox(
+                value=False,
+                description='Auto execute notebook',
+                description_tooltip='The generated notebook will be automatically executed',
+                disabled=False,
+                indent=False
+                )
+
+run = widgets.HBox([run_button, auto_exec])
+
 generator = widgets.VBox([caption_output_file, output, run])
 
 def on_button_clicked(b, problem_type, stacking, data_size, keras, xgboost, pipeline, fc, yb,\
-                      seaborn, target, threshold_NaN, threshold_cat, threshold_Z, output):
+                      seaborn, target, threshold_NaN, threshold_cat, threshold_Z, auto_exec, output):
 
     generate(problem_type.value, stacking.value, data_size.value, keras.value, xgboost.value, pipeline.value, yb.value,\
              seaborn.value, fc.selected, target_cl.value, threshold_NaN.value, threshold_cat.value,\
-             threshold_Z.value, output.value)
+             threshold_Z.value, auto_exec.value, output.value)
 
-run.on_click(functools.partial(on_button_clicked, problem_type=problem_type, stacking=stacking,\
+run_button.on_click(functools.partial(on_button_clicked, problem_type=problem_type, stacking=stacking,\
                                data_size=data_size,keras=keras, xgboost=xgboost, pipeline=pipeline, yb=yb,\
                                seaborn=seaborn,  fc=fc, target=target, threshold_NaN=threshold_NaN,\
-                               threshold_cat=threshold_cat, threshold_Z=threshold_Z, output=output))
+                               threshold_cat=threshold_cat, threshold_Z=threshold_Z, auto_exec = auto_exec, output=output))
 
 EZS_gui = widgets.VBox([file, target, problem_option, option, threshold, generator])

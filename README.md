@@ -97,7 +97,8 @@ Simply enter a file name:
 
 ## Notebook generation and execution
 Just click on the button ![EZStacking Generate](/screenshots/EZStacking_generate.png), you should find your notebook in the current folder (otherwise a Python error and maybe an issue in Github).
-If the option ![auto execution](/screenshots/auto_exec.png) is checked, the notebook will be processed.
+If the option ![auto execution](/screenshots/auto_exec.png) is checked, the notebook will be processed. 
+If it ends correctly, the result looks like: ![exec_OK](/screenshots/exec_OK.png), otherwise: ![exec_KO](/screenshots/exec_KO.png).
 
 ## Some results
 Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/examples).

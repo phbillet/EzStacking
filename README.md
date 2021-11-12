@@ -102,3 +102,21 @@ If it ends correctly, the result looks like: ![exec_OK](/screenshots/exec_OK.png
 
 ## Some results
 Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/examples).
+
+# Resources used for this project:
+* [Python courses](https://youtu.be/82KLS2C_gNQ) (in French), Guillaume Saint-Cirgue
+* [Machine learning](https://www.coursera.org/learn/machine-learning), Andrew Ng & Stanford University
+* [Deep Learning Specialization](https://www.deeplearning.ai/program/deep-learning-specialization/), Andrew Ng & DeepLearning.ai
+* [Advanced Machine Learning Specialization](https://www.coursera.org/specializations/aml), HSE University
+* [Machine Learning Mastery](https://machinelearningmastery.com/), Jason Brownlee
+* ...
+
+
+
+
+
+
+
+
+
+

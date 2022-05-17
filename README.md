@@ -48,7 +48,7 @@ _Notes:_
 ## Options
 Now, let's choose the options:
 
-![EZStacking GUI](/screenshots/EZStacking_options.png)
+![EZStacking GUI](/screenshots/EZStacking_option.png)
 
 ### Processing options
 |Option   | Notes                                                   |
@@ -98,6 +98,7 @@ If it ends correctly, the result looks like: ![exec_OK](/screenshots/exec_OK.png
 Once the first workbook has been generated, the development process must be launched.
 
 It follows the following workflow:
+
 ![EZStacking_development_process](/screenshots/EZStacking_development_process.png)
 
 ## Data quality & EDA
@@ -115,7 +116,7 @@ This process returns:
 ## Modelling
 The first generated model is structured as follow:
 
-![EZStacking_initial_model](EZStacking_initial_model.png)
+![EZStacking_initial_model](/screenshots/EZStacking_initial_model.png)
 
 This initial model is big, the modelling process reduces its size in terms of models and features as follw:
 1. the whole estimator is trained 
@@ -129,7 +130,8 @@ EZStacking also generates a server based on [FastAPI](https://fastapi.tiangolo.c
 * a list of columns in error (_i.e._ the value does not belong to the domain given in the schema)
 * the elapsed and CPU times.
 
-Example: ![EZStacking_server_response](EZStacking_server_response.png)
+Example: 
+![EZStacking_server_response](/screenshots/EZStacking_server_response.png)
 
 # Some results
 Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/examples).

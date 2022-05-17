@@ -1,0 +1,30 @@
+name: EZStacking
+channels:
+ - defaults
+dependencies:
+ - python=3.8
+ - pip
+ - pip:
+   - jupyter==1.0.0
+   - notebook==6.4.5
+   - nbconvert==6.5.0
+   - yellowbrick==1.4
+   - pandas==1.4.2
+   - scikit-learn==1.1.0
+   - keras==2.7 
+   - xgboost==1.6.1
+   - papermill==2.3.4
+   - seaborn==0.11.2 
+   - graphviz==0.20
+   - ipywidgets==7.7.0
+   - ipyfilechooser==0.6.0
+   - odfpy==1.4.1
+   - ipython==8.3.0
+   - fastapi==0.78.0 
+   - uvicorn==0.17.6
+   - pyngrok==5.1.0
+   - nest_asyncio==1.5.5
+   - loguru==0.6.0
+   - absl-py==1.0.0
+   - six==1.16.0
+

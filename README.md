@@ -1,10 +1,14 @@
 # EZStacking
-EZStacking is **[Jupyter notebook](https://jupyter.org/) generator** for machine learning (classification or regression problems) using [Scikit-Learn](https://scikit-learn.org/stable/) pipelines.
+EZStacking is **[Jupyter notebook](https://jupyter.org/) generator** for [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems using [**Scikit-Learn pipelines**]([https://scikit-learn.org/stable/](https://scikit-learn.org/stable/modules/compose.html#combining-estimators)) and [**stacked generalization**](https://scikit-learn.org/stable/modules/ensemble.html#stacking).
 
-It can also be viewed as a **development tool**, because a notebook generated with EZStacking contains: 
-* an **exploratory data analysis** (EDA) used to analyze quality of data
-* a **modelling** producing a reduced-size stacked estimator  
-* a **server** returning a prediction, a measure of the quality of input data and the execution time.
+EZStacking handles **classification** and **regression** problems for **structured data** (_cf. Notes hereafter_). 
+
+It can also be viewed as a [**development tool**](#ezstacking---as-development-tool), because a notebook generated with EZStacking contains: 
+* an [**exploratory data analysis (EDA)**](#data-quality--eda) used to assess data quality
+* a [**modelling**](#modelling) producing a reduced-size stacked estimator  
+* a [**server**](#serving-the-model) returning a prediction, a measure of the quality of input data and the execution time.
+
+The intrinsic **interactivity** of **notebooks** offers the possibility to **recursively develop** a custom estimator while keeping its **construction process**.
 
 _**Notes:**_ 
 * _EZStacking **must** be used with *.csv dataset using separator ','_  
@@ -12,28 +16,29 @@ _**Notes:**_
 
 # EZStacking - How to install it
 First you have to:
-* install [Anaconda](https://anaconda.org/) 
-* create the virtual environment EZStacking using the following command: `conda env create -f EZStacking.yaml`
-* activate the virtual environment using the following command: `conda activate EZStacking`.
+* install [**Anaconda**](https://anaconda.org/) 
+* create the **virtual environment** EZStacking using the following command: `conda env create -f EZStacking.yaml`
+* **activate** the virtual environment using the following command: `conda activate EZStacking`
+* lanch the **Jupyter server** using the following command: `conda activate EZStacking`jupyter notebook --no-browser`
 
 # EZStacking - How to use it
 
 ## Input file and problem characteristics
 
-In Jupyter, first open the notebook named EZStacking.ipynb:
+In Jupyter, first open the notebook named `EZStacking.ipynb`:
 ![First launch](/screenshots/EZStacking_first_launch.png)
 
-Then run all:
+Then `run all`:
 
 ![EZStacking GUI](/screenshots/EZStacking_gui.png)
 
-First select your file, fill the target name, the problem type and the data size:
+First select your **file**, fill the **target name** (_i.e._ the variable on which we want to make predictions), the **problem type** (_i.e._ **classification** if the target is discrete, **regression** otherwise) and the **data size**:
 
 ![EZStacking GUI](/screenshots/EZStacking_file_selection.png)
 
 _Notes:_ 
-* _the data size is "small", if the row number is less than 3000._
-* _models depending on data size:_
+* _the data size is **small**, if the number of row is smaller than **3000**._
+* _depending on the data size, EZStacking uses those estimators for the level 0:_
 
 |Model	|Data size | |Model |Data size |
 |------|----------|-|------|----------|
@@ -44,6 +49,7 @@ _Notes:_
 |[Decision Tree](https://scikit-learn.org/stable/modules/tree.html)	|small | |[Multilayer Perceptron](https://scikit-learn.org/stable/modules/neural_networks_supervised.html)	|small |
 |[Random Forest](https://scikit-learn.org/stable/modules/ensemble.html#forests-of-randomized-trees) |both | |[KNeighbors](https://scikit-learn.org/stable/modules/neighbors.html) |small |
 |[AdaBoost](https://scikit-learn.org/stable/modules/ensemble.html#adaboost)	|both | |[Gaussian Naive Bayes](https://scikit-learn.org/stable/modules/naive_bayes.html)	|small     |
+|[Histogram-based Gradient Boosting](https://scikit-learn.org/stable/modules/ensemble.html#histogram-based-gradient-boosting)|both |
 
 ## Options
 Now, let's choose the options:
@@ -56,7 +62,7 @@ Now, let's choose the options:
 |XGBoost  | the model will be built using gradient boosting         |
 |Keras    | the model will be a neural network based on Keras       |
 
-_Note: estimators based on Keras benefit from early stopping, those based on XGBoost not_
+_Note: estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on XGBoost not._
 
 ### Visualization options
 |Option        | Notes                                                              |
@@ -71,17 +77,17 @@ _Note: the visualisation option Seaborn can produce time consuming graphics._
 ![EZStacking Thresholds EDA](/screenshots/EZStacking_thresholds_eda.png)
 
 _Notes:_
-* _threshold_cat: threshold for categorical data, if the number of different values in a column is less than this number, the column will be considered as a categorical column_
-* _threshold_NaN: threshold for NaN, if the proportion of NaN is greater than this number the column will be dropped_
-* _threshold_Z: threshold for outliers, if the Z_score is greater than this number, the row will be dropped._
+* _threshold_cat: threshold for categorical data, if the **number of different values** in a column is less than this number, the column will be considered as a **categorical column**_
+* _threshold_NaN: threshold for **NaN**, if the proportion of NaN is greater than this number the column will be **dropped**_
+* _threshold_Z: threshold for **outliers**, if the **Z_score** is greater than this number, the row will be **dropped**._
 
-### Thresholds in EDA
+### Thresholds in modelling
 ![EZStacking Thresholds Modelling](/screenshots/EZStacking_thresholds_mod.png)
 
 _Notes:_
-* _threshold_corr: if the correlation is greater than this number the column will be dropped'_
-* _threshold_model: keep this number of best models_
-* _threshold_score: keep models having test score greater than this number._
+* _threshold_corr: if the **correlation** is greater than this number the column will be **dropped**_
+* _threshold_model: **keep** this number of **best models**_
+* _threshold_score: **keep** models having **test score** greater than this number._
 
 ## Output file name
 Simply enter a file name:
@@ -89,48 +95,49 @@ Simply enter a file name:
 ![EZStacking Output](/screenshots/EZStacking_output.png)
 
 ## Notebook generation and execution
-Just click on the button ![EZStacking Generate](/screenshots/EZStacking_generate.png), you should find your notebook in the current folder (otherwise a Python error and maybe an issue in Github).
+Just click on the button ![EZStacking Generate](/screenshots/EZStacking_generate.png), you should find **your notebook** in the **current folder** (otherwise a Python error and maybe an issue in Github).
 If the option ![auto execution](/screenshots/auto_exec.png) is checked, the notebook will be processed. 
 If it ends correctly, the result looks like: ![exec_OK](/screenshots/exec_OK.png), otherwise: ![exec_KO](/screenshots/exec_KO.png).
 
 # EZStacking - As development tool
 ## Development process
-Once the first workbook has been generated, the development process must be launched.
+Once the first workbook has been generated, the development process can be launched.
 
-It follows the following workflow:
+You simply have to follows the following workflow:
 
-<img src="/screenshots/EZStacking_development_process.png" data-canonical-src="/screenshots/EZStacking_development_process.png" width="50%" height="50%" />
+<img src="/screenshots/EZStacking_development_process.png" data-canonical-src="/screenshots/EZStacking_development_process.png" width="30%" height="30%" />
 
 ## Data quality & EDA
-EDA can be seen as a toolbox to evaluate data quality like: 
-* dataframe statistics
-* compression
-* cleaning
-* ranking / correlation if [Yellow Brick](https://www.scikit-yb.org) option is checked
+EDA can be seen as a **toolbox** to evaluate **data quality** like: 
+* dataframe **statistics**
+* **cleaning** _i.e._ **NaN** and **outlier** dropping
+* ranking / **correlation** if [Yellow Brick](https://www.scikit-yb.org) option is checked
 This process returns:
-* a data schema _i.e._ a description of the input data with data type and associated domain: 
-  * minimum and maximum for continous features, 
-  * a list for categorical features
-* a list of columns that should be suppressed at the departure of the EDA  
+* a **data schema** _i.e._ a description of the input data with data type and associated domain: 
+  * minimum and maximum for **continous features**, 
+  * a list for **categorical features**
+* a list of columns `dropped_cols`, that should be **suppressed**, should be added at the departure of the EDA to variable `user_drop_cols` (then it is necessary to **re-launch** from the EDA). 
+
 
 ## Modelling
-The first generated model is structured as follow:
+The **first step** of modelling is structured as follow:
 
 <img src="/screenshots/EZStacking_initial_model.png" data-canonical-src="/screenshots/EZStacking_initial_model.png" width="50%" height="50%" />
 
-This initial model is big, the modelling process reduces its size in terms of models and features as follw:
-1. the whole estimator is trained 
-2. the set of estimators is reduced according to the scores and the importance of the models
-3. the reduced estimator is trained 
-4. the feature importance graphic gives which columns could also be suppressed.
+This initial model is big, the modelling process **reduces** its size in terms of **models** and **features** as follow:
+1. the set of **estimators** is reduced according to the **test scores** and the **importance** of each level 0 models
+2. the reduced estimator is trained 
+3. the **feature importance** graphic gives which columns could also be **dropped**
+4. those columns could be added to variable `user_drop_cols` at the departure of the EDA (then it is necessary to **re-launch** from the EDA).
 
-## Serving the model:
-EZStacking also generates a server based on [FastAPI](https://fastapi.tiangolo.com/), it returns:
-* a prediction 
-* a list of columns in error (_i.e._ the value does not belong to the domain given in the schema)
-* the elapsed and CPU times.
+## Serving the model
+EZStacking also generates a server based on [**FastAPI**](https://fastapi.tiangolo.com/), it returns:
+* a **prediction** 
+* a list of columns in **error** (_i.e._ the value does not belong to the domain given in the schema)
+* the elapsed and CPU **times**.
 
 Example: 
+
 ![EZStacking_server_response](/screenshots/EZStacking_server_response.png)
 
 # Some results

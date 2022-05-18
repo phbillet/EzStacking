@@ -10,7 +10,7 @@ It can also be viewed as a [**development tool**](#ezstacking---as-development-t
 
 The intrinsic **interactivity** of **notebooks** offers the possibility to **recursively develop** a custom estimator while keeping its **construction process**.
 
-_**Notes:**_ 
+_Notes:_ 
 * _EZStacking **must** be used with *.csv dataset using separator ','_  
 * _the column names **must not** contain spaces (otherwise it will produce error during server generation)._
 
@@ -19,7 +19,7 @@ First you have to:
 * install [**Anaconda**](https://anaconda.org/) 
 * create the **virtual environment** EZStacking using the following command: `conda env create -f EZStacking.yaml`
 * **activate** the virtual environment using the following command: `conda activate EZStacking`
-* launch the **Jupyter server** using the following command: `conda activate EZStacking`jupyter notebook --no-browser`
+* launch the **Jupyter server** using the following command: `jupyter notebook --no-browser`
 
 # EZStacking - How to use it
 
@@ -32,7 +32,7 @@ Then `run all`:
 
 ![EZStacking GUI](/screenshots/EZStacking_gui.png)
 
-First select your **file**, fill the **target name** (_i.e._ the variable on which we want to make predictions), the **problem type** (_i.e._ **classification** if the target is discrete, **regression** otherwise) and the **data size**:
+First select your **file**, fill the **target** name (_i.e._ the variable on which we want to make predictions), the **problem type** (_i.e._ **classification** if the target is discrete, **regression** otherwise) and the **data size**:
 
 ![EZStacking GUI](/screenshots/EZStacking_file_selection.png)
 
@@ -101,7 +101,7 @@ If it ends correctly, the result looks like: ![exec_OK](/screenshots/exec_OK.png
 
 # EZStacking - As development tool
 ## Development process
-Once the first workbook has been generated, the development process can be launched.
+Once the first notebook has been generated, the development process can be launched.
 
 You simply have to follows the following workflow:
 
@@ -118,6 +118,12 @@ This process returns:
   * a list for **categorical features**
 * a list of columns `dropped_cols`, that should be **suppressed**, should be added at the departure of the EDA to variable `user_drop_cols` (then it is necessary to **re-launch** from the EDA). 
 
+_Notes:_ 
+* _The main steps of data **pre-processing**:_
+  1. _not all estimators support **NaN** : they must be corrected using **imputation**_
+  2. _data **normalization** and **encoding** of data are also key points for successful learning_ 
+  3. _only the **correlations** with the target are interesting, the others must be removed (for linear algebra reasons)_
+* _Those steps are implemented in the **modelling pipeline**._
 
 ## Modelling
 The **first step** of modelling is structured as follow:
@@ -130,8 +136,19 @@ This initial model is big, the modelling process **reduces** its size in terms o
 3. the **feature importance** graphic gives which columns could also be **dropped**
 4. those columns could be added to variable `user_drop_cols` at the departure of the EDA (then it is necessary to **re-launch** from the EDA).
 
+_Notes:_ 
+* _the calculation of the **model importance** is based on the coefficients of the regularized linear regression used as level 1 estimator_
+* _the **feature importance** is computed using [permutation importance](https://scikit-learn.org/stable/modules/permutation_importance.html)_
+
 ## Serving the model
-EZStacking also generates a server based on [**FastAPI**](https://fastapi.tiangolo.com/), it returns:
+EZStacking also generates a server based on [**FastAPI**](https://fastapi.tiangolo.com/).
+
+The complete **development process** produces three objects:
+* a **schema**
+* a **model**
+* a **server** source.
+
+They can be used as basic **prediction service** returning:
 * a **prediction** 
 * a list of columns in **error** (_i.e._ the value does not belong to the domain given in the schema)
 * the elapsed and CPU **times**.

@@ -19,7 +19,7 @@ First you have to:
 * install [**Anaconda**](https://anaconda.org/) 
 * create the **virtual environment** EZStacking using the following command: `conda env create -f EZStacking.yaml`
 * **activate** the virtual environment using the following command: `conda activate EZStacking`
-* lanch the **Jupyter server** using the following command: `conda activate EZStacking`jupyter notebook --no-browser`
+* launch the **Jupyter server** using the following command: `conda activate EZStacking`jupyter notebook --no-browser`
 
 # EZStacking - How to use it
 

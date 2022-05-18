@@ -99,7 +99,7 @@ Once the first workbook has been generated, the development process must be laun
 
 It follows the following workflow:
 
-![EZStacking_development_process](/screenshots/EZStacking_development_process.png)
+<img src="/screenshots/EZStacking_development_process.png" data-canonical-src="/screenshots/EZStacking_development_process.png" width="50%" height="50%" />
 
 ## Data quality & EDA
 EDA can be seen as a toolbox to evaluate data quality like: 
@@ -116,7 +116,7 @@ This process returns:
 ## Modelling
 The first generated model is structured as follow:
 
-![EZStacking_initial_model](/screenshots/EZStacking_initial_model.png)
+<img src="/screenshots/EZStacking_initial_model.png" data-canonical-src="/screenshots/EZStacking_initial_model.png" width="50%" height="50%" />
 
 This initial model is big, the modelling process reduces its size in terms of models and features as follw:
 1. the whole estimator is trained 

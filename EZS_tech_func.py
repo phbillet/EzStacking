@@ -186,8 +186,8 @@ def analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeli
     
     nb = nbf.v4.new_notebook()
     kernelspec = dict(
-            display_name='python3',
-            name='python3',
+            display_name='EZStacking',
+            name='ezstacking',
             language='python')
     nb.metadata['kernelspec'] = kernelspec
     

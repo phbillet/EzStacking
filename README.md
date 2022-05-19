@@ -1,5 +1,5 @@
 # EZStacking
-EZStacking is **[Jupyter notebook](https://jupyter.org/) generator** for [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems using [**Scikit-Learn pipelines**]([https://scikit-learn.org/stable/](https://scikit-learn.org/stable/modules/compose.html#combining-estimators)) and [**stacked generalization**](https://scikit-learn.org/stable/modules/ensemble.html#stacking).
+EZStacking is **[Jupyter notebook](https://jupyter.org/) generator** for [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems using [**Scikit-Learn pipelines**](https://scikit-learn.org/stable/modules/compose.html#combining-estimators) and [**stacked generalization**](https://scikit-learn.org/stable/modules/ensemble.html#stacking).
 
 EZStacking handles **classification** and **regression** problems for **structured data** (_cf. Notes hereafter_). 
 
@@ -8,7 +8,7 @@ It can also be viewed as a [**development tool**](#ezstacking---as-development-t
 * a [**modelling**](#modelling) producing a reduced-size stacked estimator  
 * a [**server**](#serving-the-model) returning a prediction, a measure of the quality of input data and the execution time.
 
-The intrinsic **interactivity** of **notebooks** offers the possibility to **recursively develop** a custom estimator while keeping its **construction process**.
+The intrinsic **interactivity** of **notebooks** offers the possibility to **recursively develop** a custom estimator while keeping its **construction process** (simply saving the different relevant versions of the notebook).
 
 _Notes:_ 
 * _EZStacking **must** be used with *.csv dataset using separator ','_  
@@ -111,12 +111,13 @@ You simply have to follows the following workflow:
 EDA can be seen as a **toolbox** to evaluate **data quality** like: 
 * dataframe **statistics**
 * **cleaning** _i.e._ **NaN** and **outlier** dropping
-* ranking / **correlation** if [Yellow Brick](https://www.scikit-yb.org) option is checked
+* ranking / **correlation** (if [Yellow Brick](https://www.scikit-yb.org) option is checked).
+
 This process returns:
 * a **data schema** _i.e._ a description of the input data with data type and associated domain: 
   * minimum and maximum for **continous features**, 
   * a list for **categorical features**
-* a list of columns `dropped_cols`, that should be **suppressed**, should be added at the departure of the EDA to variable `user_drop_cols` (then it is necessary to **re-launch** from the EDA). 
+* a list of columns `dropped_cols` that should be **suppressed** (simply adding at the departure of the EDA this list to the variable `user_drop_cols`, then it is necessary to **re-launch** from the EDA). 
 
 _Notes:_ 
 * _The main steps of data **pre-processing**:_
@@ -167,13 +168,3 @@ Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/e
 * [Advanced Machine Learning Specialization](https://www.coursera.org/specializations/aml), HSE University
 * [Machine Learning Mastery](https://machinelearningmastery.com/), Jason Brownlee
 * ...
-
-
-
-
-
-
-
-
-
-

@@ -8,7 +8,7 @@ It can also be viewed as a [**development tool**](#ezstacking---as-development-t
 * a [**modelling**](#modelling) producing a reduced-size stacked estimator  
 * a [**server**](#serving-the-model) returning a prediction, a measure of the quality of input data and the execution time.
 
-The intrinsic **interactivity** of **notebooks** offers the possibility to **recursively develop** a custom estimator while keeping its **construction process** (simply saving the different relevant versions of the notebook).
+Those three activities and the intrinsic **interactivity** of **notebooks** offer the possibility to **recursively develop** a custom estimator while keeping its **construction process** (simply saving the different relevant versions of the notebook).
 
 _Notes:_ 
 * _EZStacking **must** be used with *.csv dataset using separator ','_  
@@ -111,7 +111,7 @@ You simply have to follows the following workflow:
 EDA can be seen as a **toolbox** to evaluate **data quality** like: 
 * dataframe **statistics**
 * **cleaning** _i.e._ **NaN** and **outlier** dropping
-* ranking / **correlation** (if [Yellow Brick](https://www.scikit-yb.org) option is checked).
+* ranking / **correlation** 
 
 This process returns:
 * a **data schema** _i.e._ a description of the input data with data type and associated domain: 
@@ -119,7 +119,8 @@ This process returns:
   * a list for **categorical features**
 * a list of columns `dropped_cols` that should be **suppressed** (simply adding at the departure of the EDA this list to the variable `user_drop_cols`, then it is necessary to **re-launch** from the EDA). 
 
-_Notes:_ 
+_Notes:_
+* _[Yellow Brick](https://www.scikit-yb.org) offers different graphs associated to the ranking and the correlation, that's why the option is checked by default._
 * _The main steps of data **pre-processing**:_
   1. _not all estimators support **NaN** : they must be corrected using **imputation**_
   2. _data **normalization** and **encoding** of data are also key points for successful learning_ 

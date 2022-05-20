@@ -79,6 +79,12 @@ def set_config(with_keras, with_xgb, with_pipeline, problem_type, stacking, yb, 
                                 left_on='package_source_index', \
                                 right_on='package_source_index',\
                                 how='inner') \
+                         .merge(meta_package[(meta_package.meta_package_valid == True) & \
+                                             ((meta_package.meta_package_data_size == 'both') | \
+                                             (meta_package.meta_package_data_size == data_size))], \
+                                left_on  = 'meta_package_index', \
+                                right_on = 'meta_package_index', \
+                                how = 'inner') \
                     [['package_source_index', 'package_source_name', 'package_name']].drop_duplicates()
     
 
@@ -365,7 +371,7 @@ model_option = widgets.VBox([model_caption_option, model_option1])
 
 visualizer_caption_option = widgets.Label(value='Visualizers:')
 yb = widgets.Checkbox(
-                value=True,
+                value=False,
                 description='Yellow Brick',
                 description_tooltip='Visulization will use Yellow Brick',
                 disabled=False,

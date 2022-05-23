@@ -272,7 +272,7 @@ class ColumnsDropper(BaseEstimator, TransformerMixin):
 def model_filtering(level_0, model_imp, nb_model, score_stack, threshold_score):
     """
     Suppress estimators from level 0 having a test score smaller than threshold_score (from score_stack), then 
-    keep nb_model best estimators (according to model_impp.
+    keep nb_model best estimators (according to model_imp).
     Parameters
     ----------
     level_0: list of estimators of level 0
@@ -319,7 +319,7 @@ def split(X, y, test_size=0.33):
     y_test: test target dataframe
     """
     if shannon_entropy(y) < 0.7:
-       skfold = RepeatedStratifiedKFold(n_splits=5, shuffle=True)
+       skfold = RepeatedStratifiedKFold(n_splits=5)
        # enumerate the splits and summarize the distributions
        for ind_train, ind_test in skfold.split(X, y):
            X_train, X_test = X.iloc[ind_train], X.iloc[ind_test]
@@ -526,7 +526,6 @@ def model_importance_c(model):
     ----------
     model: estimator obtained after fitting
 
-    
     Returns
     -------
     mod_imp: sorted array of model importance 
@@ -551,7 +550,6 @@ def model_importance_r(model):
     Parameters
     ----------
     model: estimator obtained after fitting
-
     
     Returns
     -------
@@ -572,7 +570,6 @@ def plot_model_importance(model):
     Parameters
     ----------
     model: estimator obtained after fitting
-
     
     Returns
     -------

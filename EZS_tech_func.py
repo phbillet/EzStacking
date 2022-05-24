@@ -222,13 +222,13 @@ def keras_nn(problem_type):
                  "    keras.backend.clear_session() \n" + \
                  "#   neural network architecture: start \n" + \
                  "    model = Sequential() \n" + \
-                 "    model.add(Dense(layer_size, activation='relu')) \n" + \
+                 "    model.add(Dense(10 * layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.2)) \n" + \
+                 "    model.add(Dropout(0.5)) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
                  "    model.add(Dense(layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.2)) \n" + \
+                 "    model.add(Dropout(0.5)) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
                  "    model.add(Dense(nb_targets, activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
@@ -241,13 +241,13 @@ def keras_nn(problem_type):
                  "    keras.backend.clear_session()\n" + \
                  "#   neural network architecture: start  \n" + \
                  "    model = Sequential() \n" + \
-                 "    model.add(Dense(layer_size, activation='relu')) \n" + \
+                 "    model.add(Dense(10 * layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.2)) \n" + \
+                 "    model.add(Dropout(0.5)) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
                  "    model.add(Dense(layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.2)) \n" + \
+                 "    model.add(Dropout(0.5)) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
                  "    model.add(Dense(1)) \n" + \
                  "#   neural network architecture: end   \n" + \

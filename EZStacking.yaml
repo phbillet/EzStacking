@@ -2,16 +2,18 @@ name: EZStacking
 channels:
  - defaults
 dependencies:
- - python=3.9
+ - python=3.8
  - pip
  - pip:
    - jupyterlab==3.4.2
+   - jupyter==1.0.0
+   - notebook==6.4.11
    - nbconvert==6.5.0
    - yellowbrick==1.4
    - pandas==1.4.2
    - scikit-learn==1.1.1
-   - tensorflow==2.9
-   - keras==2.9
+   - tensorflow==2.9.0
+   - keras==2.9.0
    - xgboost==1.6.1
    - papermill==2.3.4
    - seaborn==0.11.2 
@@ -27,4 +29,3 @@ dependencies:
    - loguru==0.6.0
    - absl-py==1.0.0
    - six==1.16.0
-

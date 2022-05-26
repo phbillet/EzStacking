@@ -178,6 +178,31 @@ def outliers(df, threshold_Z):
        print('Possible problem with outliers treatment, check threshold_Z') 
     return df
 
+def correlated_columns(df, threshold_corr, target_col):
+    """
+    Display correlation matrix of features, and returns the list of the too correlated features
+    according to threshold_corr.
+
+    Parameters
+    ----------
+    df: Pandas dataframe
+    threshold_corr: number from GUI
+    target: target column
+    Returns
+    -------
+    correlated_features: list of the features having a correlation greater than threshold_corr. 
+    """  
+    df = df.drop(target_col, axis=1)
+    corr_matrix = df.corr() 
+    correlated_features=[]
+    for i in range(len(corr_matrix.columns)):
+        for j in range(i):
+            if abs(corr_matrix.iloc[i, j]) > threshold_corr: # we are interested in absolute coeff value
+               colname = corr_matrix.columns[i]  # getting the name of column
+               correlated_features.append(colname)
+    correlated_features = list(dict.fromkeys(correlated_features))
+    return correlated_features
+
 def plot_sns_corr_class(df, target_col):
     """
     Plot correlation information for classification problem (if Seaborn option is checked).
@@ -291,8 +316,10 @@ def model_filtering(level_0, model_imp, nb_model, score_stack, threshold_score):
     score_stack = np.delete(np.delete(score_stack, 1, axis =1), -1, axis = 0)
     # keep models having test score greater than threshold_score 
     score_stack = score_stack[score_stack[:,1] > threshold_score]
+    if nb_model > len(score_stack):
+       nb_model = len(score_stack)
     # keep models (in importance array) having test score greater than threshold_score
-    model_imp= model_imp[np.in1d(model_imp[:, 0], score_stack)]
+    model_imp = model_imp[np.in1d(model_imp[:, 0], score_stack)]
     model_imp_f = model_imp[np.argpartition(model_imp[:,1], -nb_model)[-nb_model:]].T[0]
     return list(filter(lambda x: x[0] in model_imp_f, level_0))
 
@@ -634,18 +661,20 @@ def plot_partial_dependence_c(model, X, features):
     """      
     target = model.classes_
     for ind in range(len(target)):
+        fig, ax = plt.subplots(figsize=(16, 8))
         display = PartialDependenceDisplay.from_estimator(
                   estimator = model,
                   X = X,
                   features = features,
                   target = target[ind],
-                  n_cols = 4,
-                  kind="both",
+                  n_cols = 3,
+                  kind = "both",
                   subsample=50,
-                  n_jobs=-1,
-                  grid_resolution=20,
-                  ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-                  pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+                  n_jobs = -1,
+                  grid_resolution = 20,
+                  ice_lines_kw = {"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+                  pd_line_kw = {"color": "tab:orange", "linestyle": "--"},
+                  ax = ax,
                   )
         display.figure_.suptitle("Partial dependence for class " + str(target[ind]))
         display.figure_.subplots_adjust(hspace=0.3)
@@ -665,17 +694,19 @@ def plot_partial_dependence_r(model, X, features):
     -------
     plotting: partial dependence of input features
     """      
+    fig, ax = plt.subplots(figsize=(16, 8))
     display = PartialDependenceDisplay.from_estimator(
               estimator = model,
               X = X,
               features = features,
-              n_cols = 4,
+              n_cols = 3,
               kind="both",
               subsample=50,
               n_jobs=-1,
               grid_resolution=20,
               ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
               pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+              ax = ax,
               )
     display.figure_.suptitle("Partial dependence")
     display.figure_.subplots_adjust(hspace=0.3)

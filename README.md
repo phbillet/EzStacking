@@ -105,7 +105,7 @@ Once the first notebook has been generated, the development process can be launc
 
 You simply have to follows the following workflow:
 
-<img src="/screenshots/EZStacking_development_process.png" data-canonical-src="/screenshots/EZStacking_development_process.png" width="30%" height="30%" />
+<img src="/screenshots/EZStacking_development_process.png" data-canonical-src="/screenshots/EZStacking_development_process.png" width="60%" height="60%" />
 
 ## Data quality & EDA
 EDA can be seen as a **toolbox** to evaluate **data quality** like: 

@@ -10,7 +10,7 @@ from ipyfilechooser import FileChooser
 
 def generate(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file, target_col,\
              threshold_NaN, threshold_cat, threshold_Z, threshold_corr, threshold_model, threshold_score, \
-             auto_exec, output):
+             threshold_feature, auto_exec, output):
     """
     Initialize the notebook, analyze input data from GUI, generate, write and execute the notebook.
     """
@@ -18,7 +18,7 @@ def generate(problem_type, stacking, data_size, with_keras, with_xgb, with_pipel
     features_of_interest = []
     nb = analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file, target_col,\
                  user_drop_cols, features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
-                 threshold_corr, threshold_model, threshold_score)
+                 threshold_corr, threshold_model, threshold_score, threshold_feature)
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
          nbf.write(nb, f)
@@ -182,7 +182,7 @@ def load_package(nb, pd_pk_import, pd_pk_from):
 
 def analyze(problem_type, stacking, data_size, with_keras, with_xgb, with_pipeline, yb, seaborn, file,\
             target_col, user_drop_cols, features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
-            threshold_corr, threshold_model, threshold_score):
+            threshold_corr, threshold_model, threshold_score, threshold_feature):
 
     """
     Analyze input data from GUI, set configuration, generate the different cells of the notebook
@@ -449,7 +449,7 @@ threshold_model = widgets.IntText(
                 )
 
 threshold_score = widgets.FloatSlider(
-                value=0.5,
+                value=0.7,
                 min=0,
                 max=1,
                 step=0.1,
@@ -462,8 +462,15 @@ threshold_score = widgets.FloatSlider(
                 readout_format='.2f',
                 )
 
+threshold_feature = widgets.IntText(
+                value=5,
+                description='Th. Feature:',
+                description_tooltip='Keep this number of most important features',
+                disabled=False
+                )
+
 threshold1 = widgets.VBox([caption_threshold_EDA, threshold_cat, threshold_NaN, threshold_Z])
-threshold2 = widgets.VBox([caption_threshold_mod, threshold_corr, threshold_score, threshold_model])
+threshold2 = widgets.VBox([caption_threshold_mod, threshold_corr, threshold_score, threshold_model, threshold_feature])
 threshold = widgets.HBox([threshold1, threshold2])
 
 caption_output_file = widgets.Label(value='Enter output file name:')
@@ -497,18 +504,18 @@ generator = widgets.VBox([caption_output_file, output, run])
 
 def on_button_clicked(b, problem_type, stacking, data_size, keras, xgboost, pipeline, fc, yb,\
                       seaborn, target, threshold_NaN, threshold_cat, threshold_Z, threshold_corr,\
-                      threshold_model, threshold_score, auto_exec, output):
+                      threshold_model, threshold_score, threshold_feature, auto_exec, output):
 
     generate(problem_type.value, stacking.value, data_size.value, keras.value, xgboost.value, pipeline.value, yb.value,\
              seaborn.value, fc.selected, target_cl.value, threshold_NaN.value, threshold_cat.value,\
              threshold_Z.value, threshold_corr.value, threshold_model.value, threshold_score.value,\
-             auto_exec.value, output.value)
+             threshold_feature.value, auto_exec.value, output.value)
 
 run_button.on_click(functools.partial(on_button_clicked, problem_type=problem_type, stacking=stacking,\
                                data_size=data_size,keras=keras, xgboost=xgboost, pipeline=pipeline, yb=yb,\
                                seaborn=seaborn,  fc=fc, target=target, threshold_NaN=threshold_NaN,\
                                threshold_cat=threshold_cat, threshold_Z=threshold_Z, threshold_corr = threshold_corr,\
                                threshold_model = threshold_model, threshold_score = threshold_score,\
-                               auto_exec = auto_exec, output=output))
+                               threshold_feature = threshold_feature, auto_exec = auto_exec, output=output))
 
 EZS_gui = widgets.VBox([file, target, problem_option, option, threshold, generator])

@@ -310,23 +310,47 @@ def model_filtering(level_0, model_imp, nb_model, score_stack, threshold_score):
     -------
     list of filtered estimators of level 0
     """
+    # it is not possible to keep more models than we initially have
     if nb_model > len(level_0):
        nb_model = len(level_0)
+    
     # keep model names and test scores
     score_stack = np.delete(np.delete(score_stack, 1, axis =1), -1, axis = 0)
     # keep models having test score greater than threshold_score 
     score_stack = score_stack[score_stack[:,1] > threshold_score]
+    
+    # it is not possible to keep more models than we have filtered    
     if nb_model > len(score_stack):
        nb_model = len(score_stack)
+    
     # keep models (in importance array) having test score greater than threshold_score
     model_imp = model_imp[np.in1d(model_imp[:, 0], score_stack)]
     model_imp_f = model_imp[np.argpartition(model_imp[:,1], -nb_model)[-nb_model:]].T[0]
+    
     return list(filter(lambda x: x[0] in model_imp_f, level_0))
 
 def feature_filtering(feature_importance, nb_feature):
+    """
+    Separate features in two lists, the first one contains the nb_feature most important features, 
+    the second one contains the complement
+    Parameters
+    ----------
+    feature_importance: array of features with their importance
+    nb_feature: number of features we want to keep
+    
+    Returns
+    -------
+    best_feature: list of nb_feature most important features
+    worst_feature: list of the worst important features
+    """
+    # check nb_feature
     if nb_feature > feature_importance.shape[0]:
        nb_feature = feature_importance.shape[0] 
-    return feature_importance[np.argpartition(feature_importance[:,1], -nb_feature)[-nb_feature:]].T[0]
+    
+    best_feature = feature_importance[np.argpartition(feature_importance[:,1], -nb_feature)[-nb_feature:]].T[0]
+    worst_feature = list(set(feature_importance.T[0]) - set(best_feature))
+
+    return best_feature, worst_feature
 
 def split(X, y, test_size=0.33):
     """
@@ -667,7 +691,7 @@ def plot_partial_dependence_c(model, X, features):
                   X = X,
                   features = features,
                   target = target[ind],
-                  n_cols = 3,
+                  n_cols = 2,
                   kind = "both",
                   subsample=50,
                   n_jobs = -1,
@@ -699,7 +723,7 @@ def plot_partial_dependence_r(model, X, features):
               estimator = model,
               X = X,
               features = features,
-              n_cols = 3,
+              n_cols = 2,
               kind="both",
               subsample=50,
               n_jobs=-1,
@@ -720,18 +744,26 @@ def plot_partial_dependence(model, X, features):
     ----------
     model: estimator obtained after fitting
     X: feature dataframe
-    features: list of features, if features = [], partial dependences will be plot for all the features
+    features: list of features, if features = [], partial dependences will be plot for all numeric features
     
     Returns
     -------
     plotting: partial dependence of input features
     """    
+    # if input list of features is empty, we use the list of numeric features
     if features == []:
-       features = X.columns 
-    if is_classifier(model):
-       plot_partial_dependence_c(model, X, features)
+       features = X.select_dtypes([np.number]).columns.tolist() 
     else:
-       plot_partial_dependence_r(model, X, features)
+    #  we keep only numeric features    
+       features = np.intersect1d(features, X.select_dtypes([np.number]).columns.tolist()).tolist() 
+        
+    if features == []:
+       return "No numeric feature"
+    else:
+       if is_classifier(model):
+          plot_partial_dependence_c(model, X, features)
+       else:
+          plot_partial_dependence_r(model, X, features)
 
 def plot_history(history):
     """

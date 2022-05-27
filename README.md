@@ -86,8 +86,9 @@ _Notes:_
 
 _Notes:_
 * _threshold_corr: if the **correlation** is greater than this number the column will be **dropped**_
-* _threshold_model: **keep** this number of **best models**_
 * _threshold_score: **keep** models having **test score** greater than this number._
+* _threshold_model: **keep** this number of **best models**_
+* _threshold_feature: **keep** this number of **most important features**_
 
 ## Output file name
 Simply enter a file name:
@@ -105,7 +106,7 @@ Once the first notebook has been generated, the development process can be launc
 
 You simply have to follows the following workflow:
 
-<img src="/screenshots/EZStacking_development_process.png" data-canonical-src="/screenshots/EZStacking_development_process.png" width="60%" height="60%" />
+<img src="/screenshots/EZStacking_development_process.png" data-canonical-src="/screenshots/EZStacking_development_process.png" width="50%" height="50%" />
 
 ## Data quality & EDA
 EDA can be seen as a **toolbox** to evaluate **data quality** like: 

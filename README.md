@@ -19,6 +19,7 @@ First you have to:
 * install [**Anaconda**](https://anaconda.org/) 
 * create the **virtual environment** EZStacking using the following command: `conda env create -f EZStacking.yaml`
 * **activate** the virtual environment using the following command: `conda activate EZStacking`
+* **install kernel** in ipython using the following command: `ipython kernel install --user --name=ezstacking`
 * launch the **Jupyter server** using the following command: `jupyter notebook --no-browser`
 
 # EZStacking - How to use it
@@ -77,17 +78,17 @@ _Note: the visualisation option Seaborn can produce time consuming graphics._
 ![EZStacking Thresholds EDA](/screenshots/EZStacking_thresholds_eda.png)
 
 _Notes:_
-* _threshold_cat: threshold for categorical data, if the **number of different values** in a column is less than this number, the column will be considered as a **categorical column**_
-* _threshold_NaN: threshold for **NaN**, if the proportion of NaN is greater than this number the column will be **dropped**_
-* _threshold_Z: threshold for **outliers**, if the **Z_score** is greater than this number, the row will be **dropped**._
+* _threshold_cat: if the **number of different values** in a column is less than this number, the column will be considered as a **categorical column**_
+* _threshold_NaN: if the proportion of **NaN** is greater than this number the column will be **dropped**_
+* _threshold_Z: if the **Z_score**  (indicating **outliers**) is greater than this number, the row will be **dropped**._
 
 ### Thresholds in modelling
 ![EZStacking Thresholds Modelling](/screenshots/EZStacking_thresholds_mod.png)
 
 _Notes:_
 * _threshold_corr: if the **correlation** is greater than this number the column will be **dropped**_
-* _threshold_score: **keep** models having **test score** greater than this number._
-* _threshold_model: **keep** this number of **best models**_
+* _threshold_score:  **keep** models having **test score** greater than this number._
+* _threshold_model: **keep** this number of **best models** (in the sens of **model importance**)_
 * _threshold_feature: **keep** this number of **most important features**_
 
 ## Output file name
@@ -114,6 +115,8 @@ EDA can be seen as a **toolbox** to evaluate **data quality** like:
 * **cleaning** _i.e._ **NaN** and **outlier** dropping
 * ranking / **correlation** 
 
+_Notes: the EDA step **doest not** modify data, it just indicates which actions should be done_
+
 This process returns:
 * a **data schema** _i.e._ a description of the input data with data type and associated domain: 
   * minimum and maximum for **continous features**, 
@@ -121,7 +124,7 @@ This process returns:
 * a list of columns `dropped_cols` that should be **suppressed** (simply adding at the departure of the EDA this list to the variable `user_drop_cols`, then it is necessary to **re-launch** from the EDA). 
 
 _Notes:_
-* _[Yellow Brick](https://www.scikit-yb.org) offers different graphs associated to the ranking and the correlation, that's why the option is checked by default._
+* _[Yellow Brick](https://www.scikit-yb.org) offers different graphs associated to the ranking and the correlation and many more informations._
 * _The main steps of data **pre-processing**:_
   1. _not all estimators support **NaN** : they must be corrected using **imputation**_
   2. _data **normalization** and **encoding** of data are also key points for successful learning_ 
@@ -144,7 +147,7 @@ _Notes:_
 * _the **feature importance** is computed using [permutation importance](https://scikit-learn.org/stable/modules/permutation_importance.html)_
 
 ## Serving the model
-EZStacking also generates a server based on [**FastAPI**](https://fastapi.tiangolo.com/).
+EZStacking also generates an API based on [**FastAPI**](https://fastapi.tiangolo.com/).
 
 The complete **development process** produces three objects:
 * a **schema**
@@ -168,5 +171,6 @@ Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/e
 * [Machine learning](https://www.coursera.org/learn/machine-learning), Andrew Ng & Stanford University
 * [Deep Learning Specialization](https://www.deeplearning.ai/program/deep-learning-specialization/), Andrew Ng & DeepLearning.ai
 * [Advanced Machine Learning Specialization](https://www.coursera.org/specializations/aml), HSE University
+* [Machine Learning Engineering for Production](https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops), Andrew Ng & DeepLearning.ai
 * [Machine Learning Mastery](https://machinelearningmastery.com/), Jason Brownlee
 * ...

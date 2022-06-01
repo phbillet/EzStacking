@@ -127,7 +127,7 @@ _Notes:_
 * _[Yellow Brick](https://www.scikit-yb.org) offers different graphs associated to the ranking and the correlation and many more informations._
 * _The main steps of data **pre-processing**:_
   1. _not all estimators support **NaN** : they must be corrected using **imputation**_
-  2. _data **normalization** and **encoding** of data are also key points for successful learning_ 
+  2. _data **normalization** and **encoding** are also key points for successful learning_ 
   3. _only the **correlations** with the target are interesting, the others must be removed (for linear algebra reasons)_
 * _Those steps are implemented in the **modelling pipeline**._
 
@@ -139,12 +139,14 @@ The **first step** of modelling is structured as follow:
 This initial model is big, the modelling process **reduces** its size in terms of **models** and **features** as follow:
 1. the set of **estimators** is reduced according to the **test scores** and the **importance** of each level 0 models
 2. the reduced estimator is trained 
-3. the **feature importance** graphic gives which columns could also be **dropped**
-4. those columns could be added to variable `user_drop_cols` at the departure of the EDA (then it is necessary to **re-launch** from the EDA).
+3. the **feature importance** graphic indicates which columns could also be **dropped**
+4. those columns are added to variable `dropped_cols` depending on the value of `threshold_feature`
+5. `dropped_cols` can be added to `user_drop_cols` at the departure of the EDA (then it is necessary to **re-launch** from the EDA).
 
 _Notes:_ 
 * _the calculation of the **model importance** is based on the coefficients of the regularized linear regression used as level 1 estimator_
 * _the **feature importance** is computed using [permutation importance](https://scikit-learn.org/stable/modules/permutation_importance.html)_
+* _it is important not to be too stingy, it is not necessary to remove too many estimators and features, as this can lead to a decrease in performance.._
 
 ## Serving the model
 EZStacking also generates an API based on [**FastAPI**](https://fastapi.tiangolo.com/).

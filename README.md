@@ -1,5 +1,5 @@
 # EZStacking
-EZStacking is **[Jupyter notebook](https://jupyter.org/) generator** for [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems using [**Scikit-Learn pipelines**](https://scikit-learn.org/stable/modules/compose.html#combining-estimators) and [**stacked generalization**](https://scikit-learn.org/stable/modules/ensemble.html#stacking).
+EZStacking is **[Jupyter notebook](https://jupyter.org/) generator** for [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems using [**Scikit-Learn pipelines**](https://scikit-learn.org/stable/modules/compose.html#combining-estimators) and [**stacked generalization**](https://scikit-learn.org/stable/modules/ensemble.html#stacking). 
 
 EZStacking handles **classification** and **regression** problems for **structured data** (_cf. Notes hereafter_). 
 

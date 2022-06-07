@@ -124,11 +124,11 @@ This process returns:
 * a list of columns `dropped_cols` that should be **suppressed** (simply adding at the departure of the EDA this list to the variable `user_drop_cols`, then it is necessary to **re-launch** from the EDA). 
 
 _Notes:_
-* _[Yellow Brick](https://www.scikit-yb.org) offers different graphs associated to the ranking and the correlation and many more informations._
+* _[Yellow Brick](https://www.scikit-yb.org) offers different graphs associated to ranking and correlation and many more informations._
 * _The main steps of data **pre-processing**:_
   1. _not all estimators support **NaN** : they must be corrected using **imputation**_
-  2. _data **normalization** and **encoding** are also key points for successful learning_ 
-  3. _only the **correlations** with the target are interesting, the others must be removed (for linear algebra reasons)_
+  2. _data **normalization** and **encoding** are also key points for [**successful learning**](https://machinelearningmastery.com/how-to-improve-neural-network-stability-and-modeling-performance-with-data-scaling/)_ 
+  3. _only **correlations** with the target are interesting, the others must be removed (for [linear algebra reasons](https://datascience.stackexchange.com/questions/24452/in-supervised-learning-why-is-it-bad-to-have-correlated-features))_
 * _Those steps are implemented in the **modelling pipeline**._
 
 ## Modelling

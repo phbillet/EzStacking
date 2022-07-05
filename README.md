@@ -89,7 +89,7 @@ _Notes:_
 
 _Notes:_
 * _test size: **proportion** of the dataset to include in the test split_
-* _threshold_E: if **target entropy** is greater than this number, **RepeatedStratifiedKFold** will be used._
+* _threshold_E: if **target entropy** is greater than this number, **[RepeatedStratifiedKFold](https://scikit-learn.org/stable/modules/cross_validation.html#repeated-k-fold)** will be used._
 
 ### Modelling
 ![EZStacking Modelling](./screenshots/EZStacking_modelling.png)
@@ -269,10 +269,24 @@ As we have already seen, the server returns the consumption of each request, in 
 Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/examples).
 
 # Resources used for this project:
-* [Python courses](https://youtu.be/82KLS2C_gNQ) (in French), Guillaume Saint-Cirgue
-* [Machine learning](https://www.coursera.org/learn/machine-learning), Andrew Ng & Stanford University
-* [Deep Learning Specialization](https://www.deeplearning.ai/program/deep-learning-specialization/), Andrew Ng & DeepLearning.ai
-* [Advanced Machine Learning Specialization](https://www.coursera.org/specializations/aml), HSE University
-* [Machine Learning Engineering for Production](https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops), Andrew Ng & DeepLearning.ai
-* [Machine Learning Mastery](https://machinelearningmastery.com/), Jason Brownlee
-* ...
+* Stacking, Model importance and Others
+  * [Stacked generalization](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231) David H. Wolpert, Neural Networks, Volume 5, Issue 2, 1992, Pages 241-259
+  * [Issues in Stacked Generalization](https://arxiv.org/pdf/1105.5466.pdf) K. M. Ting, I. H. Witten
+  * [Model stacking to improve prediction and variable importance robustness for soft sensor development](https://www.sciencedirect.com/science/article/pii/S2772508122000254) Maxwell Barton, Barry Lennox - Digital Chemical Engineering Volume 3, June 2022, 100034
+  * [Stacking with Neural network for Cryptocurrency investment](https://arxiv.org/pdf/1902.07855v1.pdf) Avinash Barnwal, Haripad Bharti, Aasim Ali, and Vishal Singh - Inncretech Inc., Princeton
+  * [Gaussian Processes for Machine Learning](http://gaussianprocess.org/gpml/chapters/RW.pdf) Carl Eduard Rasmussen and Christopher K.I. Williams MIT Press 2006
+  * [The Kernel Cookbook](https://www.cs.toronto.edu/~duvenaud/cookbook/) David Duvenaud
+  * ...
+* Machine learning tools
+  * [scikit-learn](https://scikit-learn.org/stable/)
+  * [pandas](https://pandas.pydata.org/)
+  * [keras](https://keras.io/)
+  * [seaborn](https://seaborn.pydata.org/)
+  * ...
+* Good ressources to learn Python and machine learning (those I used...)
+  * [Python courses](https://youtu.be/82KLS2C_gNQ) (in French), Guillaume Saint-Cirgue
+  * [Machine learning](https://www.coursera.org/learn/machine-learning), Andrew Ng & Stanford University
+  * [Deep Learning Specialization](https://www.deeplearning.ai/program/deep-learning-specialization/), Andrew Ng & DeepLearning.ai
+  * [Machine Learning Engineering for Production](https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops), Andrew Ng & DeepLearning.ai
+  * [Machine Learning Mastery](https://machinelearningmastery.com/), Jason Brownlee
+  * ...

@@ -14,6 +14,7 @@ from zipfile import ZipFile
 def generate(problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras,\
              with_xgb, with_pipeline, yb, seaborn, file, target_col, threshold_NaN,\
              threshold_cat, threshold_Z, test_size, threshold_entropy,\
+             undersampling, undersampler, \
              threshold_corr, threshold_model, threshold_score, threshold_feature, output):
     """
     Initialize the notebook, analyze input data from GUI, generate, write and execute the notebook.
@@ -23,7 +24,8 @@ def generate(problem_type, stacking, data_size, with_gauss, with_hgboost, with_k
     nb = analyze(problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras,\
                  with_xgb, with_pipeline, yb, seaborn, file, target_col, user_drop_cols,\
                  features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
-                 test_size, threshold_entropy, threshold_corr, threshold_model,\
+                 test_size, threshold_entropy, undersampling, undersampler,\
+                 threshold_corr, threshold_model,\
                  threshold_score, threshold_feature)
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
@@ -189,7 +191,8 @@ def load_package(nb, pd_pk_import, pd_pk_from):
 
 def analyze(problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_xgb,\
             with_pipeline, yb, seaborn, file, target_col, user_drop_cols, features_of_interest,\
-            threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
+            threshold_NaN, threshold_cat, threshold_Z, test_size,\
+            threshold_entropy, undersampling, undersampler,\
             threshold_corr, threshold_model, threshold_score, threshold_feature):
 
     """
@@ -450,7 +453,24 @@ threshold_entropy = widgets.FloatSlider(
                 readout_format='.2f',
                 ) 
 
-split_tab = widgets.VBox([caption_threshold_split, test_size, threshold_entropy])
+undersampling = widgets.Checkbox(
+                value=False,
+                description='Undersampling',
+                description_tooltip='Check this option, if the imbalanced target classes are badly managed without.',
+                disabled=False,
+                indent=False
+                )
+
+undersampler = widgets.RadioButtons(
+    options=['Random', 'Centroids', 'AllKNN', 'TomekLinks'],
+#     value='pineapple',
+    description='Undersampler:',
+    disabled=False
+)
+
+splitter = widgets.VBox([caption_threshold_split, test_size, threshold_entropy])
+undersample = widgets.VBox([undersampling, undersampler])
+split_tab = widgets.HBox([splitter, undersample])
 
 # Tab:  model
 caption_option = widgets.Label(value='Processing options:')
@@ -507,7 +527,7 @@ pipeline = widgets.Checkbox(
 #model_option2 = widgets.HBox([pipeline, xgboost])
 model_option1 = widgets.VBox([xgboost, hgboost])
 model_option2 = widgets.VBox([gauss, keras])
-model_option_grp = widgets.HBox([model_option1, model_option2])
+model_option_grp = widgets.VBox([model_option1, model_option2])
 
 model_option = widgets.VBox([model_caption_option, model_option_grp])
 
@@ -579,19 +599,22 @@ run = widgets.Button(
 
 def on_run_clicked(b, problem_type, stacking, data_size, gauss, hgboost, keras, xgboost, pipeline, fc, yb,\
                       seaborn, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
+                      undersampling, undersampler,\
                       threshold_corr, threshold_model, threshold_score, threshold_feature, output):
 
     generate(problem_type.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
              keras.value, xgboost.value, pipeline.value, yb.value, seaborn.value, fc.selected,\
              target_cl.value, threshold_NaN.value, threshold_cat.value, threshold_Z.value,\
-             test_size.value, threshold_entropy.value, threshold_corr.value, threshold_model.value,\
+             test_size.value, threshold_entropy.value, undersampling.value, undersampler.value,\
+             threshold_corr.value, threshold_model.value,\
              threshold_score.value, threshold_feature.value, output.value)
 
 run.on_click(functools.partial(on_run_clicked, problem_type=problem_type, stacking=stacking,\
                                data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, xgboost=xgboost,\
                                pipeline=pipeline, yb=yb, seaborn=seaborn, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,\
-                               test_size=test_size, threshold_entropy=threshold_entropy, threshold_corr = threshold_corr,\
+                               test_size = test_size, threshold_entropy=threshold_entropy, \
+                               undersampling = undersampling, undersampler = undersampler, threshold_corr = threshold_corr,\
                                threshold_model = threshold_model, threshold_score = threshold_score,\
                                threshold_feature = threshold_feature, output=output))
 

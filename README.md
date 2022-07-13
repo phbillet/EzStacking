@@ -90,6 +90,7 @@ _Notes:_
 _Notes:_
 * _test size: **proportion** of the dataset to include in the test split_
 * _threshold_E: if **target entropy** is greater than this number, **[RepeatedStratifiedKFold](https://scikit-learn.org/stable/modules/cross_validation.html#repeated-k-fold)** will be used._
+* _if the option **Undersampling** is checked, then an [undersampler](https://imbalanced-learn.org/stable/references/under_sampling.html) must be chosen with care._
 
 ### Modelling
 ![EZStacking Modelling](./screenshots/EZStacking_modelling.png)
@@ -164,7 +165,7 @@ EDA can be seen as a **toolbox** to evaluate **data quality** like:
 * **cleaning** _i.e._ **NaN** and **outlier** dropping
 * ranking / **correlation** 
 
-_Notes: the EDA step **doest not** modify data, it just indicates which actions should be done_
+_Note: the EDA step **doest not** modify data, it just indicates which actions should be done._
 
 This process returns:
 * a **data schema** _i.e._ a description of the input data with data type and associated domain: 
@@ -176,7 +177,7 @@ _Notes:_
 * _Tip: starting with the end of the EDA is a good idea (`Run All Above Selected Cell`), so you do not execute unnecessary code (at the first step of development)_
 * _[Yellow Brick](https://www.scikit-yb.org) offers different graphs associated to ranking and correlation and many more informations_
 * _The main steps of data **pre-processing**:_
-  1. _not all estimators support **NaN** : they must be corrected using **imputation**_
+  1. _not all estimators support **NaN** : they must be corrected using **iterative imputation** (resp. **simple imputation**) for numerical features (resp. categorical features)._
   2. _data **normalization** and **encoding** are also key points for successful learning_ 
   3. _only the **correlations** with the target are interesting, the others must be removed (for linear algebra reasons)_
 * _Those steps are implemented in the first part of the **modelling pipeline**._
@@ -191,6 +192,8 @@ The **first step** of modelling is structured as follow:
 During the splitting step: 
 * if the dataset is large, the test set should be reduced to 10% of the whole dataset
 * imbalanced classes are measured using [Shannon entropy](https://stats.stackexchange.com/questions/239973/a-general-measure-of-data-set-imbalance), if the score is too low, the splitting is realized using [RepeatedStratifiedKFold](https://scikit-learn.org/stable/modules/cross_validation.html#repeated-k-fold).
+
+_Note: for **imbalanced class management**, EZStacking also offers optionally different **subsampling methods** as an option._
 
 This initial model is maybe too large, the modelling process **reduces** its size in terms of **models** and **features** as follow:
 1. the set of **estimators** is reduced according to the **test scores** and the **importance** of each level 0 models

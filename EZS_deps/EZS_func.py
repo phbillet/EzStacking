@@ -352,7 +352,7 @@ def feature_filtering(feature_importance, nb_feature):
 
     return best_feature, worst_feature
 
-def split(X, y, test_size=0.33, threshold_entropy=0.7):
+def split(X, y, test_size=0.33, threshold_entropy=0.7, undersampling=False, undersampler=None):
     """
     Split dataframe into train and test sets.
     If the Shannon entropy of the target dataset is less than 0.7, RepeatedStratifiedKFold is used
@@ -371,7 +371,25 @@ def split(X, y, test_size=0.33, threshold_entropy=0.7):
     """
     s_e = shannon_entropy(y)
     if s_e < threshold_entropy:
-       print("Shannon Entropy = {:.4}, split using RepeatedStratifiedKFold".format(s_e)) 
+       if undersampling: 
+          if undersampler == 'Random': 
+             from imblearn.under_sampling import RandomUnderSampler
+             us = RandomUnderSampler()
+          elif undersampler == 'Centroids': 
+             from imblearn.under_sampling import ClusterCentroids
+             us = ClusterCentroids()
+          elif undersampler == 'AllKNN': 
+             from imblearn.under_sampling import AllKNN
+             us = AllKNN()
+          elif undersampler == 'TomekLinks': 
+             from imblearn.under_sampling import TomekLinks
+             us = TomekLinks()
+          else:
+             print("Unknown undersampler")       
+          X, y = us.fit_resample(X, y)
+          print("Shannon Entropy = {:.4}, split using undersampler {} and RepeatedStratifiedKFold".format(s_e, undersampler)) 
+       else: 
+          print("Shannon Entropy = {:.4}, split using RepeatedStratifiedKFold".format(s_e)) 
        skfold = RepeatedStratifiedKFold(n_splits=5)
        # enumerate the splits and summarize the distributions
        for ind_train, ind_test in skfold.split(X, y):

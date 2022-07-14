@@ -129,6 +129,7 @@ def set_config(with_gauss, with_hgboost, with_keras, with_xgb, with_pipeline, pr
                       [[ 'package_index', 'package_code']].drop_duplicates()
     
     pd_document = document[((document.document_problem == 'both') | (document.document_problem == problem)) & \
+                           ((document.document_data_size == 'both') | (document.document_data_size == data_size)) & \
                            ((document.document_stacking == 'both') | \
                            (document.document_stacking == \
                             meta_package[meta_package.meta_package_index == 'STACK']\

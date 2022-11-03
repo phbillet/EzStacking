@@ -589,7 +589,23 @@ def score_stacking(model, X_train, y_train, X_test, y_test):
     plt.show()
     return res_stack, mod_imp
 
-def model_importance_c(model):
+def find_coeff(model):
+    """
+    Searches the wrapped model for the feature importances parameter.
+    """
+    for attr in ("feature_importances_", "coef_"):
+        try:
+           return getattr(model, attr)
+        except AttributeError:
+           continue
+
+        raise YellowbrickTypeError(
+           "could not find feature importances param on {}".format(
+                model.__class__.__name__
+           )
+        )
+        
+def model_importance_c(model, level_1_model):
     """
     Compute the model importance depending on final estimator coefficients for classification
 
@@ -604,17 +620,27 @@ def model_importance_c(model):
     level_0 = np.array(list(model.named_estimators_.keys()))
     n_classes = model.classes_.shape[0]
     n_models = len(model.estimators_)
-    if model.final_estimator_.coef_.shape[0] > 1:
-       coeff = sum(model.final_estimator_.coef_.reshape(n_classes,n_models,n_classes)[i].T[i] for i in range(n_classes))
-    else:
-       coeff = model.final_estimator_.coef_.reshape(n_models)  
+    model_coeff = find_coeff(model.final_estimator_)
+    
+    if level_1_model == 'tree':
+       if len(model_coeff) == n_models:
+          coeff = model_coeff.reshape(n_models)  
+       else:
+          coeff = sum(model_coeff.reshape(n_classes,n_models))
+            
+    if level_1_model == 'regression':
+       if len(model_coeff) == n_models:
+          coeff = model_coeff.reshape(n_models)  
+       else:
+          coeff = sum(model_coeff.reshape(n_classes,n_models,n_classes)[i].T[i] for i in range(n_classes))
+            
     model_importance = np.empty((len(level_0), 2), dtype='object')
     for ind in range(len(level_0)):
         model_importance[ind, 0] = level_0[ind]
         model_importance[ind, 1] = np.abs(coeff[ind])
     return model_importance[model_importance[:, 1].argsort()]
 
-def model_importance_r(model):
+def model_importance_r(model, level_1_model):
     """
     Compute the model importance depending on final estimator coefficients for regression
 
@@ -627,14 +653,14 @@ def model_importance_r(model):
     mod_imp: sorted array of model importance 
     """         
     level_0 = np.array(list(model.named_estimators_.keys()))
-    coeff = model.final_estimator_.coef_
+    coeff = find_coeff(model.final_estimator_)
     model_importance = np.empty((len(level_0), 2), dtype='object')
     for ind in range(len(level_0)):
         model_importance[ind, 0] = level_0[ind]
         model_importance[ind, 1] = np.abs(coeff[ind])
     return model_importance[model_importance[:, 1].argsort()]
 
-def plot_model_importance(model):
+def plot_model_importance(model, level_1_model):
     """
     Compute the model importance depending on final estimator coefficients
 
@@ -648,9 +674,9 @@ def plot_model_importance(model):
     mod_imp: sorted array of model importance 
     """      
     if is_classifier(model):
-       mod_imp = model_importance_c(model)
+       mod_imp = model_importance_c(model, level_1_model)
     else:
-       mod_imp = model_importance_r(model)
+       mod_imp = model_importance_r(model, level_1_model)
     mod_imp.T[1] = mod_imp.T[1] / np.sum(mod_imp.T[1])
     fig, ax = plt.subplots()
     ax.barh(mod_imp.T[0], mod_imp.T[1])
@@ -659,7 +685,7 @@ def plot_model_importance(model):
     plt.show()
     return mod_imp
 
-def plot_perm_importance(model, X, y):
+def plot_perm_importance(model, X, y, CPU):
     """
     Compute the feature permutation importance
 
@@ -668,6 +694,7 @@ def plot_perm_importance(model, X, y):
     model: estimator obtained after fitting
     X: feature dataframe
     y: target dataframe
+    CPU: boolean for CPU training
     
     Returns
     -------
@@ -678,7 +705,10 @@ def plot_perm_importance(model, X, y):
        scoring = 'accuracy'
     else:
        scoring = 'r2'  
-    result = permutation_importance(model, X, y, scoring=scoring, n_repeats=10, n_jobs=-1)
+    if CPU==True:
+       result = permutation_importance(model, X, y, scoring=scoring, n_repeats=10, n_jobs=-1)
+    else:
+       result = permutation_importance(model, X, y, scoring=scoring, n_repeats=10)
     sorted_idx = result.importances_mean.argsort()
     perm_imp = np.array([X.columns[sorted_idx], result.importances[sorted_idx].mean(axis=1).T]).T
     perm_imp.T[1] = perm_imp.T[1] / np.sum(perm_imp.T[1])
@@ -689,7 +719,7 @@ def plot_perm_importance(model, X, y):
     plt.show()
     return perm_imp
 
-def plot_partial_dependence_c(model, X, features):
+def plot_partial_dependence_c(model, X, features, CPU):
     """
     Plot partial dependence of features for a given classification estimator and a given dataset
 
@@ -698,6 +728,7 @@ def plot_partial_dependence_c(model, X, features):
     model: estimator obtained after fitting
     X: feature dataframe
     features: list of features
+    CPU: boolean for CPU training
     
     Returns
     -------
@@ -706,25 +737,40 @@ def plot_partial_dependence_c(model, X, features):
     target = model.classes_
     for ind in range(len(target)):
         fig, ax = plt.subplots(figsize=(16, 8))
-        display = PartialDependenceDisplay.from_estimator(
-                  estimator = model,
-                  X = X,
-                  features = features,
-                  target = target[ind],
-                  n_cols = 2,
-                  kind = "both",
-                  subsample=50,
-                  n_jobs = -1,
-                  grid_resolution = 20,
-                  ice_lines_kw = {"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-                  pd_line_kw = {"color": "tab:orange", "linestyle": "--"},
-                  ax = ax,
-                  )
+        if CPU==True:
+           display = PartialDependenceDisplay.from_estimator(
+                     estimator = model,
+                     X = X,
+                     features = features,
+                     target = target[ind],
+                     n_cols = 2,
+                     kind = "both",
+                     subsample=50,
+                     n_jobs = -1,
+                     grid_resolution = 20,
+                     ice_lines_kw = {"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+                     pd_line_kw = {"color": "tab:orange", "linestyle": "--"},
+                     ax = ax,
+                     )
+        else:
+           display = PartialDependenceDisplay.from_estimator(
+                     estimator = model,
+                     X = X,
+                     features = features,
+                     target = target[ind],
+                     n_cols = 2,
+                     kind = "both",
+                     subsample=50,
+                     grid_resolution = 20,
+                     ice_lines_kw = {"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+                     pd_line_kw = {"color": "tab:orange", "linestyle": "--"},
+                     ax = ax,
+                     )
         display.figure_.suptitle("Partial dependence for class " + str(target[ind]))
         display.figure_.subplots_adjust(hspace=0.3)
         plt.show()
     
-def plot_partial_dependence_r(model, X, features):
+def plot_partial_dependence_r(model, X, features, CPU):
     """
     Plot partial dependence of features for a given regression estimator and a given dataset
 
@@ -733,30 +779,45 @@ def plot_partial_dependence_r(model, X, features):
     model: estimator obtained after fitting
     X: feature dataframe
     features: list of features
+    CPU: boolean for CPU training
     
     Returns
     -------
     plotting: partial dependence of input features
     """      
     fig, ax = plt.subplots(figsize=(16, 8))
-    display = PartialDependenceDisplay.from_estimator(
-              estimator = model,
-              X = X,
-              features = features,
-              n_cols = 2,
-              kind="both",
-              subsample=50,
-              n_jobs=-1,
-              grid_resolution=20,
-              ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-              pd_line_kw={"color": "tab:orange", "linestyle": "--"},
-              ax = ax,
-              )
+    if CPU==True:
+       display = PartialDependenceDisplay.from_estimator(
+                 estimator = model,
+                 X = X,
+                 features = features,
+                 n_cols = 2,
+                 kind="both",
+                 subsample=50,
+                 n_jobs=-1,
+                 grid_resolution=20,
+                 ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+                 pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+                 ax = ax,
+                 )
+    else:
+       display = PartialDependenceDisplay.from_estimator(
+                 estimator = model,
+                 X = X,
+                 features = features,
+                 n_cols = 2,
+                 kind="both",
+                 subsample=50,
+                 grid_resolution=20,
+                 ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+                 pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+                 ax = ax,
+                 )
     display.figure_.suptitle("Partial dependence")
     display.figure_.subplots_adjust(hspace=0.3)
     plt.show() 
 
-def plot_partial_dependence(model, X, features):
+def plot_partial_dependence(model, X, features, CPU):
     """
     Plot partial dependence of features for a given estimator and a given dataset
 
@@ -765,6 +826,7 @@ def plot_partial_dependence(model, X, features):
     model: estimator obtained after fitting
     X: feature dataframe
     features: list of features, if features = [], partial dependences will be plot for all numeric features
+    CPU: boolean for CPU training
     
     Returns
     -------
@@ -781,9 +843,9 @@ def plot_partial_dependence(model, X, features):
        return "No numeric feature"
     else:
        if is_classifier(model):
-          plot_partial_dependence_c(model, X, features)
+          plot_partial_dependence_c(model, X, features, CPU)
        else:
-          plot_partial_dependence_r(model, X, features)
+          plot_partial_dependence_r(model, X, features, CPU)
 
 def plot_history(history):
     """

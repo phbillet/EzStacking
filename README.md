@@ -95,7 +95,7 @@ _Notes:_
 ### Modelling
 ![EZStacking Modelling](./screenshots/EZStacking_modelling.png)
 
-#### Optional models
+#### Optional models in level 0 model set
 |Option   | Notes                                                   |
 |---------|---------------------------------------------------------|
 |XGBoost  | the model includes a model based on gradient boosting     |
@@ -106,6 +106,13 @@ _Notes:_
 _Notes:_ 
 * _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on XGBoost or gaussian processes do not benefit of it_
 * _the Gauss option is only available for small dataset ._ 
+
+#### Level 1 model options
+|Option                   | Notes                                                   |
+|-------------------------|---------------------------------------------------------|
+|Level 1 model type       | Regression (linear or logistic) or decision tree        |
+|Level 1 cross validation | Apply cross validation on level 1 model during training |
+
 
 #### Thresholds in modelling
 

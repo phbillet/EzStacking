@@ -11,20 +11,20 @@ from IPython.display import display
 from ipyfilechooser import FileChooser
 from zipfile import ZipFile
 
-def generate(problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras,\
+def generate(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU,\
              with_xgb, with_pipeline, yb, seaborn, file, target_col, threshold_NaN,\
              threshold_cat, threshold_Z, test_size, threshold_entropy,\
-             undersampling, undersampler, \
+             undersampling, undersampler, level_1_model,\
              threshold_corr, threshold_model, threshold_score, threshold_feature, output):
     """
     Initialize the notebook, analyze input data from GUI, generate, write and execute the notebook.
     """
     user_drop_cols=[]
     features_of_interest = []
-    nb = analyze(problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras,\
+    nb = analyze(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU,\
                  with_xgb, with_pipeline, yb, seaborn, file, target_col, user_drop_cols,\
                  features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
-                 test_size, threshold_entropy, undersampling, undersampler,\
+                 test_size, threshold_entropy, undersampling, undersampler, level_1_model,\
                  threshold_corr, threshold_model,\
                  threshold_score, threshold_feature)
     fname = output + '.ipynb'
@@ -32,7 +32,7 @@ def generate(problem_type, stacking, data_size, with_gauss, with_hgboost, with_k
          nbf.write(nb, f)
     
 
-def set_config(with_gauss, with_hgboost, with_keras, with_xgb, with_pipeline, problem_type, stacking, yb, seaborn, data_size):
+def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pipeline, problem_type, stacking, yb, seaborn, data_size, cv, level_1_model):
     """
     Set configuration: load configuration database, generate the different dataframes used to generate
     cells of the notebook according to the data from the GUI.
@@ -46,6 +46,7 @@ def set_config(with_gauss, with_hgboost, with_keras, with_xgb, with_pipeline, pr
     
     meta_package.loc[meta_package['meta_package_index'] == 'STACK', ['meta_package_valid']] = stacking
     meta_package.loc[meta_package['meta_package_index'] == 'KER', ['meta_package_valid']] = with_keras
+    meta_package.loc[meta_package['meta_package_index'] == 'CPU', ['meta_package_valid']] = with_CPU
     meta_package.loc[meta_package['meta_package_index'] == 'HGB', ['meta_package_valid']] = with_hgboost
     meta_package.loc[meta_package['meta_package_index'] == 'GP', ['meta_package_valid']] = with_gauss
     meta_package.loc[meta_package['meta_package_index'] == 'GNB', ['meta_package_valid']] = with_gauss
@@ -130,6 +131,8 @@ def set_config(with_gauss, with_hgboost, with_keras, with_xgb, with_pipeline, pr
     
     pd_document = document[((document.document_problem == 'both') | (document.document_problem == problem)) & \
                            ((document.document_data_size == 'both') | (document.document_data_size == data_size)) & \
+                           ((document.document_cv == 'both') | (document.document_cv == cv)) & \
+                           ((document.document_level_1_model == 'both') | (document.document_level_1_model == level_1_model)) & \
                            ((document.document_stacking == 'both') | \
                            (document.document_stacking == \
                             meta_package[meta_package.meta_package_index == 'STACK']\
@@ -177,8 +180,10 @@ def load_package(nb, pd_pk_import, pd_pk_from):
            string = string + "from " + str(row[1]) + " import " +  str(row[2]) + "\n"
         elif row[2] != 'None': 
            string = string + "import " + str(row[1]) + " as " + str(row[2]) + "\n" 
-        else:
+        elif row[1] != 'None':  
            string = string + "import " + str(row[1]) + "\n"
+        else:
+           pass 
         if row[3] != 'None':
            string = string + str(row[3]) + "\n"
         
@@ -190,18 +195,18 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     
     return nb
 
-def analyze(problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_xgb,\
+def analyze(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
             with_pipeline, yb, seaborn, file, target_col, user_drop_cols, features_of_interest,\
             threshold_NaN, threshold_cat, threshold_Z, test_size,\
-            threshold_entropy, undersampling, undersampler,\
+            threshold_entropy, undersampling, undersampler, level_1_model,\
             threshold_corr, threshold_model, threshold_score, threshold_feature):
 
     """
     Analyze input data from GUI, set configuration, generate the different cells of the notebook
     """
-    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_xgb,\
+    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
                                                                             with_pipeline,problem_type, stacking, yb,\
-                                                                            seaborn, data_size)
+                                                                            seaborn, data_size, cv, level_1_model)
     
     fileList = ['./EZS_deps/client.ipynb', './EZS_deps/server.ipynb']
     for item in fileList:
@@ -250,14 +255,11 @@ def keras_nn(problem_type):
                  "    keras.backend.clear_session() \n" + \
                  "#   neural network architecture: start \n" + \
                  "    model = Sequential() \n" + \
-                 "    model.add(Dense(10 * layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.5)) \n" + \
+                 "    model.add(Dense(layer_size, activation='selu')) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
-                 "    model.add(Dense(layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.5)) \n" + \
-                 "#    model.add(LayerNormalization()) \n" + \
+                 "    model.add(Dropout(0.2)) \n" + \
                  "    model.add(Dense(nb_targets, activation='softmax')) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])\n" + \
@@ -269,14 +271,11 @@ def keras_nn(problem_type):
                  "    keras.backend.clear_session()\n" + \
                  "#   neural network architecture: start  \n" + \
                  "    model = Sequential() \n" + \
-                 "    model.add(Dense(10 * layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.5)) \n" + \
-                 "#    model.add(LayerNormalization()) \n" + \
                  "    model.add(Dense(layer_size, activation='relu')) \n" + \
                  "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.5)) \n" + \
                  "#    model.add(LayerNormalization()) \n" + \
+                 "    model.add(Dropout(0.2)) \n" + \
                  "    model.add(Dense(1)) \n" + \
                  "#   neural network architecture: end   \n" + \
                  "    model.compile(loss='mean_squared_error', optimizer='adam') \n" + \
@@ -340,24 +339,21 @@ target = widgets.VBox([caption_target, target_cl])
 file_target = widgets.VBox([file, target]) 
 
 caption_problem_option = widgets.Label(value='Problem and data characteristics:')
-caption_problem_type = widgets.Label(value='Problem type:') 
 problem_type = widgets.RadioButtons(
                 options=['classification', 'regression'],
                 description='Problem type:',
                 description_tooltip='If the target is categorical then choose classification, regression otherwise.',
                 disabled=False
                 )
-problem = widgets.VBox([caption_problem_type, problem_type])
-caption_data_size = widgets.Label(value='Data size:')
+
 data_size = widgets.RadioButtons(
                 options=['small', 'large'],
                 description='Data size:',
                 description_tooltip='Choose large, if the file contains more 5000 rows',
                 disabled=False
                 )
-data = widgets.VBox([caption_data_size, data_size])
 
-problem_option1 = widgets.HBox([problem, data])
+problem_option1 = widgets.HBox([problem_type, data_size])
 problem_option = widgets.VBox([caption_problem_option, problem_option1])
 
 file_problem_tab = widgets.HBox([file_target, problem_option])
@@ -474,7 +470,7 @@ undersample = widgets.VBox([undersampling, undersampler])
 split_tab = widgets.HBox([splitter, undersample])
 
 # Tab:  model
-caption_option = widgets.Label(value='Processing options:')
+level_0 = widgets.Label(value='Level 0:')
 model_caption_option = widgets.Label(value='Optional models:')
 stacking = widgets.Checkbox(
 #                value=False,
@@ -506,7 +502,17 @@ keras = widgets.Checkbox(
                 description='Keras',
                 description_tooltip='The model will use Keras neural network',
                 disabled=False,
-                indent=False
+                indent=False,
+                layout=widgets.Layout(width='75px', height='50px')
+                )
+
+CPU = widgets.Checkbox(
+                value=False,
+                description='Train on CPU',
+                description_tooltip='Keras neural network will be trained on CPU',
+                disabled=False,
+                indent=False,
+                layout=widgets.Layout(width='100px', height='50px')
                 )
 
 xgboost = widgets.Checkbox(
@@ -524,13 +530,29 @@ pipeline = widgets.Checkbox(
                 disabled=False,
                 indent=False
                 )
-#model_option1 = widgets.HBox([stacking, keras])
+model_keras = widgets.HBox([keras, CPU])
 #model_option2 = widgets.HBox([pipeline, xgboost])
 model_option1 = widgets.VBox([xgboost, hgboost])
-model_option2 = widgets.VBox([gauss, keras])
+model_option2 = widgets.VBox([gauss, model_keras])
 model_option_grp = widgets.VBox([model_option1, model_option2])
 
-model_option = widgets.VBox([model_caption_option, model_option_grp])
+model_option_0 = widgets.VBox([level_0, model_caption_option, model_option_grp])
+
+level_1 = widgets.Label(value='Level 1:')
+level_1_model = widgets.RadioButtons(
+                options=['regression', 'tree'],
+                description='Level 1 model type:',
+                disabled=False
+                )
+
+cv = widgets.Checkbox(
+                value=False,
+                description='Level 1 with cross-validation',
+                description_tooltip='The model will use cross-validation during training of level 1 model',
+                disabled=False,
+                indent=False
+                )
+model_option_1 = widgets.VBox([level_1, level_1_model, cv])
 
 
 caption_threshold_mod = widgets.Label(value='Modelling thresholds:')
@@ -578,7 +600,7 @@ threshold_feature = widgets.IntText(
 
 threshold_modelling = widgets.VBox([caption_threshold_mod, threshold_corr, threshold_score, threshold_model, threshold_feature])
 
-model_tab = widgets.HBox([model_option, threshold_modelling])
+model_tab = widgets.HBox([model_option_0, model_option_1, threshold_modelling])
 
 # Tab:  build
 caption_output_file = widgets.Label(value='Output file name:')
@@ -598,24 +620,24 @@ run = widgets.Button(
                 icon=''
                 )
 
-def on_run_clicked(b, problem_type, stacking, data_size, gauss, hgboost, keras, xgboost, pipeline, fc, yb,\
+def on_run_clicked(b, problem_type, stacking, data_size, cv, gauss, hgboost, keras, CPU, xgboost, pipeline, fc, yb,\
                       seaborn, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
-                      undersampling, undersampler,\
+                      undersampling, undersampler, level_1_model,\
                       threshold_corr, threshold_model, threshold_score, threshold_feature, output):
 
-    generate(problem_type.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
-             keras.value, xgboost.value, pipeline.value, yb.value, seaborn.value, fc.selected,\
+    generate(problem_type.value, stacking.value, data_size.value, cv.value, gauss.value, hgboost.value,\
+             keras.value, CPU.value, xgboost.value, pipeline.value, yb.value, seaborn.value, fc.selected,\
              target_cl.value, threshold_NaN.value, threshold_cat.value, threshold_Z.value,\
-             test_size.value, threshold_entropy.value, undersampling.value, undersampler.value,\
+             test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value,\
              threshold_corr.value, threshold_model.value,\
              threshold_score.value, threshold_feature.value, output.value)
 
 run.on_click(functools.partial(on_run_clicked, problem_type=problem_type, stacking=stacking,\
-                               data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, xgboost=xgboost,\
+                               data_size=data_size, cv=cv, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, xgboost=xgboost,\
                                pipeline=pipeline, yb=yb, seaborn=seaborn, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,\
                                test_size = test_size, threshold_entropy=threshold_entropy, \
-                               undersampling = undersampling, undersampler = undersampler, threshold_corr = threshold_corr,\
+                               undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, threshold_corr = threshold_corr,\
                                threshold_model = threshold_model, threshold_score = threshold_score,\
                                threshold_feature = threshold_feature, output=output))
 

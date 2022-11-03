@@ -5,27 +5,28 @@ dependencies:
  - python=3.10
  - pip
  - pip:
-   - jupyterlab==3.4.2
+   - jupyterlab==3.4.7
    - jupyter==1.0.0
-   - notebook==6.4.11
-   - nbconvert==6.5.0
-   - yellowbrick==1.4
-   - pandas==1.4.2
-   - scikit-learn==1.1.1
+   - notebook==6.4.12
+   - nbconvert==7.0.0
+   - yellowbrick==1.5
+   - pandas==1.5.0
+   - openpyxl==3.0.10
+   - scikit-learn==1.1.2
    - imbalanced-learn==0.9.1
-   - tensorflow==2.9.0
-   - keras==2.9.0
-   - xgboost==1.6.1
-   - seaborn==0.11.2 
-   - graphviz==0.20
-   - ipywidgets==7.7.0
+   - tensorflow==2.10.0
+   - keras==2.10.0
+   - xgboost==1.6.2
+   - seaborn==0.12.0
+   - graphviz==0.20.1
+   - ipywidgets==8.0.2
    - ipyfilechooser==0.6.0
    - odfpy==1.4.1
-   - ipython==8.3.0
-   - fastapi==0.78.0 
-   - uvicorn==0.17.6
+   - ipython==8.5.0
+   - fastapi==0.85.0
+   - uvicorn==0.18.3
    - pyngrok==5.1.0
-   - nest_asyncio==1.5.5
-   - loguru==0.6.0   
-   - absl-py==1.0.0
+   - nest_asyncio==1.5.6
+   - loguru==0.6.0
+   - absl-py==1.2.0
    - six==1.16.0

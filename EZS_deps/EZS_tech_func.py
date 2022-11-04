@@ -328,12 +328,29 @@ fc = FileChooser('./')
 file = widgets.VBox([caption_fc, fc])
 
 caption_target = widgets.Label(value='Target name:')
-target_cl = widgets.Text(
-                value='column name',
-                placeholder='Type something',
-                description='Target:',
-                disabled=False   
-                )
+# interaction between data_size radio button and gauss checkbox
+target_cl = widgets.Dropdown(
+                    options=['Empty',],
+                    value='Empty',
+                    description='Target:',
+                    disabled=False,
+                    )
+
+def list_columns():
+    global fc, target_cl
+    if fc.selected == None:
+       target_cl = widgets.Dropdown(
+                    options=['Empty',],
+                    value='Empty',
+                    description='Target:',
+                    disabled=False,
+                    )
+    else:
+       target_cl.options=pd.read_csv(fc.selected).columns.tolist()
+                 
+
+fc.register_callback(list_columns)
+
 target = widgets.VBox([caption_target, target_cl]) 
 
 file_target = widgets.VBox([file, target]) 
@@ -489,6 +506,16 @@ gauss = widgets.Checkbox(
                 indent=False
                 )
 
+# interaction between data_size radio button and gauss checkbox
+def remove_gauss(data_size):
+    if data_size['new'] == 'small':
+       gauss.layout.display = 'flex'
+    else:
+       gauss.layout.display = 'none'
+
+data_size.observe(remove_gauss, names='value')
+
+
 hgboost = widgets.Checkbox(
                 value=False,
                 description='HGBoost',
@@ -514,6 +541,18 @@ CPU = widgets.Checkbox(
                 indent=False,
                 layout=widgets.Layout(width='100px', height='50px')
                 )
+
+# interaction between keras and CPU checkboxes
+if keras.value == False:
+   CPU.layout.display = 'none'
+
+def remove_CPU(keras):
+    if keras['new']:
+       CPU.layout.display = 'flex'
+    else:
+       CPU.layout.display = 'none'
+
+keras.observe(remove_CPU, names='value')
 
 xgboost = widgets.Checkbox(
                 value=False,
@@ -541,6 +580,7 @@ model_option_0 = widgets.VBox([level_0, model_caption_option, model_option_grp])
 level_1 = widgets.Label(value='Level 1:')
 level_1_model = widgets.RadioButtons(
                 options=['regression', 'tree'],
+                value='regression',
                 description='Level 1 model type:',
                 disabled=False
                 )
@@ -552,8 +592,17 @@ cv = widgets.Checkbox(
                 disabled=False,
                 indent=False
                 )
-model_option_1 = widgets.VBox([level_1, level_1_model, cv])
 
+# interaction between level_1_model radio button and cv checkbox
+def remove_cv(level_1_model):
+    if level_1_model['new'] == 'regression':
+       cv.layout.display = 'flex'
+    else:
+       cv.layout.display = 'none'
+
+level_1_model.observe(remove_cv, names='value')
+
+model_option_1 = widgets.VBox([level_1, level_1_model, cv])
 
 caption_threshold_mod = widgets.Label(value='Modelling thresholds:')
 

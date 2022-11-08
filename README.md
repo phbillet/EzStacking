@@ -35,18 +35,20 @@ _Note: `jupyter-lab` is a comfortable development tool more flexible than `jupyt
 ## Input file and problem characteristics
 
 In Jupyter, first open the notebook named `EZStacking.ipynb`:
+
 ![First launch](./screenshots/EZStacking_first_launch.png)
 
 Then click on `Run All Cells`:
 
 ![EZStacking GUI](./screenshots/EZStacking_gui.png)
 
-First select your **file**, fill the **target** name (_i.e._ the variable on which we want to make predictions), the **problem type** (_i.e._ **classification** if the target is discrete, **regression** otherwise) and the **data size**:
+First select your **file**, then select the **target** name (_i.e._ the variable on which we want to make predictions), the **problem type** (_i.e._ **classification** if the target is discrete, **regression** otherwise) and the **data size**:
 
 ![EZStacking GUI](./screenshots/EZStacking_file_selection.png)
 
 _Notes:_ 
 * _the data size is **small**, if the number of row is smaller than **3000**._
+* _**Random seed** is used for **replicability**_
 * _depending on the data size, EZStacking uses those estimators for the level 0:_
 
 |Model	|Data size | |Model |Data size |
@@ -85,6 +87,7 @@ _Notes:_
 
 
 ### Splitting
+
 ![EZStacking Splitting](./screenshots/EZStacking_thresholds_split.png)
 
 _Notes:_

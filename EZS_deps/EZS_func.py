@@ -15,7 +15,6 @@ from sklearn.inspection import partial_dependence
 from sklearn.inspection import PartialDependenceDisplay
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, recall_score 
-
 # Technical functions
 
 def plot_dataframe_structure(df):
@@ -352,7 +351,7 @@ def feature_filtering(feature_importance, nb_feature):
 
     return best_feature, worst_feature
 
-def split(X, y, test_size=0.33, threshold_entropy=0.7, undersampling=False, undersampler=None):
+def split(X, y, random_state, test_size=0.33, threshold_entropy=0.7, undersampling=False, undersampler=None):
     """
     Split dataframe into train and test sets.
     If the Shannon entropy of the target dataset is less than 0.7, RepeatedStratifiedKFold is used
@@ -390,13 +389,14 @@ def split(X, y, test_size=0.33, threshold_entropy=0.7, undersampling=False, unde
           print("Shannon Entropy = {:.4}, split using undersampler {} and RepeatedStratifiedKFold".format(s_e, undersampler)) 
        else: 
           print("Shannon Entropy = {:.4}, split using RepeatedStratifiedKFold".format(s_e)) 
-       skfold = RepeatedStratifiedKFold(n_splits=5)
+       skfold = RepeatedStratifiedKFold(n_splits=5, random_state = random_state)
        # enumerate the splits and summarize the distributions
-       for ind_train, ind_test in skfold.split(X, y):
+       for ind_train, ind_test in skfold.split(X, y, random_state = random_state):
            X_train, X_test = X.iloc[ind_train], X.iloc[ind_test]
            y_train, y_test = y.iloc[ind_train], y.iloc[ind_test] 
     else:    
-       X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=None, shuffle=True)
+       X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=None,\
+                                                           shuffle=True, random_state = random_state)
     return X_train, X_test, y_train, y_test
     
 def downcast_dtypes(df):
@@ -629,7 +629,7 @@ def model_importance_c(model, level_1_model):
           coeff = sum(model_coeff.reshape(n_classes,n_models))
             
     if level_1_model == 'regression':
-       if len(model_coeff) == n_models:
+       if len(model_coeff[0]) == n_models:
           coeff = model_coeff.reshape(n_models)  
        else:
           coeff = sum(model_coeff.reshape(n_classes,n_models,n_classes)[i].T[i] for i in range(n_classes))

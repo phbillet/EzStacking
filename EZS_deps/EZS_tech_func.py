@@ -14,8 +14,8 @@ from zipfile import ZipFile
 def generate(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU,\
              with_xgb, with_pipeline, yb, seaborn, file, target_col, threshold_NaN,\
              threshold_cat, threshold_Z, test_size, threshold_entropy,\
-             undersampling, undersampler, level_1_model,\
-             threshold_corr, threshold_model, threshold_score, threshold_feature, output):
+             undersampling, undersampler, level_1_model, random_state,\
+             threshold_corr, threshold_model, threshold_score, threshold_feature, output, kaggle):
     """
     Initialize the notebook, analyze input data from GUI, generate, write and execute the notebook.
     """
@@ -24,15 +24,15 @@ def generate(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, wi
     nb = analyze(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU,\
                  with_xgb, with_pipeline, yb, seaborn, file, target_col, user_drop_cols,\
                  features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
-                 test_size, threshold_entropy, undersampling, undersampler, level_1_model,\
+                 test_size, threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
                  threshold_corr, threshold_model,\
-                 threshold_score, threshold_feature)
+                 threshold_score, threshold_feature, kaggle)
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
          nbf.write(nb, f)
     
 
-def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pipeline, problem_type, stacking, yb, seaborn, data_size, cv, level_1_model):
+def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pipeline, problem_type, stacking, yb, seaborn, data_size, cv, level_1_model, kaggle):
     """
     Set configuration: load configuration database, generate the different dataframes used to generate
     cells of the notebook according to the data from the GUI.
@@ -60,7 +60,9 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pi
     
     package_source_type = 'full'
 
-    pd_pk_import = package_source[(package_source.package_source_type   == package_source_type) \
+    pd_pk_import = package_source[(package_source.package_source_type   == package_source_type) &\
+                              ((package_source.package_source_kaggle == 'both') | \
+                               (package_source.package_source_kaggle == kaggle))\
                                  ].merge(meta_package[(meta_package.meta_package_valid == True) & \
                                          ((meta_package.meta_package_data_size == 'both') | \
                                          (meta_package.meta_package_data_size == data_size))], \
@@ -132,6 +134,7 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pi
     pd_document = document[((document.document_problem == 'both') | (document.document_problem == problem)) & \
                            ((document.document_data_size == 'both') | (document.document_data_size == data_size)) & \
                            ((document.document_cv == 'both') | (document.document_cv == cv)) & \
+                           ((document.document_kaggle == 'both') | (document.document_kaggle == kaggle)) & \
                            ((document.document_level_1_model == 'both') | (document.document_level_1_model == level_1_model)) & \
                            ((document.document_stacking == 'both') | \
                            (document.document_stacking == \
@@ -167,7 +170,7 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pi
     
     return pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree
 
-def load_package(nb, pd_pk_import, pd_pk_from):
+def load_package(nb, pd_pk_import, pd_pk_from, kaggle):
     """
     Generate the cells used to load packages in the first part of the notebook.
     """
@@ -193,20 +196,25 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     code = string
     nb['cells'].append(nbf.v4.new_code_cell(code))
     
+    if kaggle:
+       file = open("./EZS_deps/EZS_func.py", "r")
+       code = file.read()
+       nb['cells'].append(nbf.v4.new_code_cell(code))
+
     return nb
 
 def analyze(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
             with_pipeline, yb, seaborn, file, target_col, user_drop_cols, features_of_interest,\
             threshold_NaN, threshold_cat, threshold_Z, test_size,\
-            threshold_entropy, undersampling, undersampler, level_1_model,\
-            threshold_corr, threshold_model, threshold_score, threshold_feature):
+            threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
+            threshold_corr, threshold_model, threshold_score, threshold_feature, kaggle):
 
     """
     Analyze input data from GUI, set configuration, generate the different cells of the notebook
     """
     pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
                                                                             with_pipeline,problem_type, stacking, yb,\
-                                                                            seaborn, data_size, cv, level_1_model)
+                                                                            seaborn, data_size, cv, level_1_model, kaggle)
     
     fileList = ['./EZS_deps/client.ipynb', './EZS_deps/server.ipynb']
     for item in fileList:
@@ -231,7 +239,7 @@ def analyze(problem_type, stacking, data_size, cv, with_gauss, with_hgboost, wit
         
         if index == 1:
            # at index 1: prepare package preamble 
-           nb = load_package(nb, pd_pk_import, pd_pk_from) 
+           nb = load_package(nb, pd_pk_import, pd_pk_from, kaggle) 
         if row[1] != 'None':
            # title management
            if row[0] == ' ': 
@@ -328,7 +336,8 @@ fc = FileChooser('./')
 file = widgets.VBox([caption_fc, fc])
 
 caption_target = widgets.Label(value='Target name:')
-# interaction between data_size radio button and gauss checkbox
+
+# interaction between FileChooser and target dropdown
 target_cl = widgets.Dropdown(
                     options=['Empty',],
                     value='Empty',
@@ -356,6 +365,7 @@ target = widgets.VBox([caption_target, target_cl])
 file_target = widgets.VBox([file, target]) 
 
 caption_problem_option = widgets.Label(value='Problem and data characteristics:')
+
 problem_type = widgets.RadioButtons(
                 options=['classification', 'regression'],
                 description='Problem type:',
@@ -370,8 +380,17 @@ data_size = widgets.RadioButtons(
                 disabled=False
                 )
 
+random_state = widgets.IntText(
+                value=42,
+                description='Random seed:',
+                description_tooltip='Fix this number for reproductibility',
+                disabled=False,
+                layout=widgets.Layout(width='150px', height='50px')
+                )
+
 problem_option1 = widgets.HBox([problem_type, data_size])
-problem_option = widgets.VBox([caption_problem_option, problem_option1])
+problem_option1_1 = widgets.VBox([problem_option1, random_state])
+problem_option = widgets.VBox([caption_problem_option, problem_option1_1])
 
 file_problem_tab = widgets.HBox([file_target, problem_option])
 
@@ -481,10 +500,29 @@ undersampler = widgets.RadioButtons(
     description='Undersampler:',
     disabled=False
 )
+undersampler.layout.display = 'none'
+
+# interaction between undersampling and undersampler
+def remove_undersampler(undersampling):
+    if undersampling['new']:
+       undersampler.layout.display = 'flex'
+    else:
+       undersampler.layout.display = 'none'
+    
+undersampling.observe(remove_undersampler, names='value')
 
 splitter = widgets.VBox([caption_threshold_split, test_size, threshold_entropy])
 undersample = widgets.VBox([undersampling, undersampler])
-split_tab = widgets.HBox([splitter, undersample])
+split_tab = widgets.HBox([undersample, splitter])
+
+# interaction between problem_type and sampling and entropy
+def remove_undersample(problem_type):
+    if problem_type['new'] == 'classification':
+       undersample.layout.display, threshold_entropy.layout.display = 'flex', 'flex'
+    else:
+       undersampling.value, undersample.layout.display, threshold_entropy.layout.display = False, 'none', 'none'
+
+problem_type.observe(remove_undersample, names='value')
 
 # Tab:  model
 level_0 = widgets.Label(value='Level 0:')
@@ -511,7 +549,7 @@ def remove_gauss(data_size):
     if data_size['new'] == 'small':
        gauss.layout.display = 'flex'
     else:
-       gauss.layout.display = 'none'
+       gauss.layout.display, gauss.value = 'none', False
 
 data_size.observe(remove_gauss, names='value')
 
@@ -550,7 +588,7 @@ def remove_CPU(keras):
     if keras['new']:
        CPU.layout.display = 'flex'
     else:
-       CPU.layout.display = 'none'
+       CPU.layout.display, CPU.value = 'none', False 
 
 keras.observe(remove_CPU, names='value')
 
@@ -598,7 +636,7 @@ def remove_cv(level_1_model):
     if level_1_model['new'] == 'regression':
        cv.layout.display = 'flex'
     else:
-       cv.layout.display = 'none'
+       cv.layout.display, cv.value  = 'none', False
 
 level_1_model.observe(remove_cv, names='value')
 
@@ -661,6 +699,16 @@ output = widgets.Text(
                 disabled=False   
                 )
 
+kaggle = widgets.Checkbox(
+                value=False,
+                description='for Kaggle',
+                description_tooltip='Generate Kaggle notebook',
+                disabled=False,
+                indent=False
+                )
+
+build_tab_content = widgets.HBox([output, kaggle])
+
 run = widgets.Button(
                 description='Build',
                 tooltip='If no error, you should find the generated notebook in the current folder',
@@ -671,26 +719,26 @@ run = widgets.Button(
 
 def on_run_clicked(b, problem_type, stacking, data_size, cv, gauss, hgboost, keras, CPU, xgboost, pipeline, fc, yb,\
                       seaborn, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
-                      undersampling, undersampler, level_1_model,\
-                      threshold_corr, threshold_model, threshold_score, threshold_feature, output):
+                      undersampling, undersampler, level_1_model, random_state,\
+                      threshold_corr, threshold_model, threshold_score, threshold_feature, output, kaggle):
 
     generate(problem_type.value, stacking.value, data_size.value, cv.value, gauss.value, hgboost.value,\
              keras.value, CPU.value, xgboost.value, pipeline.value, yb.value, seaborn.value, fc.selected,\
              target_cl.value, threshold_NaN.value, threshold_cat.value, threshold_Z.value,\
              test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value,\
-             threshold_corr.value, threshold_model.value,\
-             threshold_score.value, threshold_feature.value, output.value)
+             random_state.value, threshold_corr.value, threshold_model.value,\
+             threshold_score.value, threshold_feature.value, output.value, kaggle.value)
 
 run.on_click(functools.partial(on_run_clicked, problem_type=problem_type, stacking=stacking,\
                                data_size=data_size, cv=cv, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, xgboost=xgboost,\
                                pipeline=pipeline, yb=yb, seaborn=seaborn, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,\
                                test_size = test_size, threshold_entropy=threshold_entropy, \
-                               undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, threshold_corr = threshold_corr,\
-                               threshold_model = threshold_model, threshold_score = threshold_score,\
-                               threshold_feature = threshold_feature, output=output))
+                               undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, random_state = random_state,\
+                               threshold_corr = threshold_corr, threshold_model = threshold_model, threshold_score = threshold_score,\
+                               threshold_feature = threshold_feature, output=output, kaggle=kaggle))
 
-build_tab = widgets.VBox([caption_output_file, output, run])
+build_tab = widgets.VBox([caption_output_file, build_tab_content, run])
 
 # tab : test
 def test_endpoint(schema, test_type):
@@ -822,21 +870,30 @@ def delete_files(output):
     file_list = [nbname, 'model.sav', 'schema.csv', 'server.py', 'test.sh', 'client.ipynb', 'server.ipynb']  
     for file in file_list:
         os.remove(file)
-
-def zip_and_clean(fc, output):
+        
+def delete_kaggle():
+    # delete work files
+    file_list = ['model.sav', 'schema.csv', 'server.py', 'test.sh', 'client.ipynb', 'server.ipynb']  
+    for file in file_list:
+        os.remove(file) if os.path.exists(file) else None
+        
+def zip_and_clean(fc, output, kaggle):
     nbname = output + '.ipynb'
     # Check if notebook exists
-    if not os.path.isfile(nbname):
-       print('It seems that the notebook is not generated.')
-    # Check if model exists
-    elif (not os.path.isfile('model.sav') or
-         not os.path.isfile('schema.csv') or
-         not os.path.isfile('server.py')):
-         print('It seems that the model is not built.')
+    if kaggle:
+       delete_kaggle() 
     else:
-    # if everything is OK, zip and clean
-         zip_files(fc, output)
-         delete_files(output)
+       if not os.path.isfile(nbname):
+          print('It seems that the notebook is not generated.')
+       # Check if model exists
+       elif (not os.path.isfile('model.sav') or
+             not os.path.isfile('schema.csv') or
+             not os.path.isfile('server.py')):
+             print('It seems that the model is not built.')
+       else:
+             # if everything is OK, zip and clean in 
+             zip_files(fc, output)
+             delete_files(output)
     
 zip = widgets.Button(
                 description='Zip & Clean',
@@ -846,11 +903,11 @@ zip = widgets.Button(
                 icon=''
                 ) 
 
-def on_zip_clicked(b, fc, output):
+def on_zip_clicked(b, fc, output, kaggle):
 
-    zip_and_clean(fc.selected, output.value)
+    zip_and_clean(fc.selected, output.value, kaggle.value)
 
-zip.on_click(functools.partial(on_zip_clicked, fc=fc, output=output))
+zip.on_click(functools.partial(on_zip_clicked, fc=fc, output=output, kaggle=kaggle))
 
 dev_names = ['EDA', 'Split', 'Model', 'Build']
 dev_tabs = [EDA_tab, split_tab, model_tab, build_tab]

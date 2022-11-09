@@ -391,7 +391,7 @@ def split(X, y, random_state, test_size=0.33, threshold_entropy=0.7, undersampli
           print("Shannon Entropy = {:.4}, split using RepeatedStratifiedKFold".format(s_e)) 
        skfold = RepeatedStratifiedKFold(n_splits=5, random_state = random_state)
        # enumerate the splits and summarize the distributions
-       for ind_train, ind_test in skfold.split(X, y, random_state = random_state):
+       for ind_train, ind_test in skfold.split(X, y):
            X_train, X_test = X.iloc[ind_train], X.iloc[ind_test]
            y_train, y_test = y.iloc[ind_train], y.iloc[ind_test] 
     else:    

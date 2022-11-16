@@ -232,16 +232,11 @@ _Notes:_
 * _it is important not to be too stingy, it is not necessary to remove too many estimators and features, as this can lead to a decrease in performance._
 
 ### Model evaluation
-#### Partial Dependence & Individual Conditional Expectation
-Regression |  Classification
-:-------------------------:|:-------------------------:
-![](./screenshots/EZStacking_regre_part_dep.png)  |  ![](./screenshots/EZStacking_classi_part_dep.png)
 
 #### (Class) prediction error
 Regression |  Classification
 :-------------------------:|:-------------------------:
 ![](./screenshots/EZStacking_pred_err.png)  |  ![](./screenshots/EZStacking_class_pred_err.png)
-
 
 #### Specific to classification (with Yellow Brick option)
 ##### ROC/AUC 
@@ -253,6 +248,17 @@ Regression |  Classification
 #### Specific to regression (with Yellow Brick option)
 ##### Residuals plot
 ![](./screenshots/EZStacking_res_plot.png)
+
+### Model inspection
+
+#### Model importance
+![](./screenshots/EZStacking_model_imp.png)
+#### Feature permutation importance
+![](./screenshots/EZStacking_perm_feat_imp.png)
+#### Partial Dependence & Individual Conditional Expectation
+Regression |  Classification
+:-------------------------:|:-------------------------:
+![](./screenshots/EZStacking_regre_part_dep.png)  |  ![](./screenshots/EZStacking_classi_part_dep.png)
 
 
 ## Serving the model

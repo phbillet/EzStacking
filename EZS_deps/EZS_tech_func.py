@@ -645,7 +645,7 @@ model_option_1 = widgets.VBox([level_1, level_1_model, cv])
 caption_threshold_mod = widgets.Label(value='Modelling thresholds:')
 
 threshold_corr = widgets.FloatSlider(
-                 value=0.95,
+                 value=0.75,
                  min=0.00,
                  max=1.00,
                  step=0.01,

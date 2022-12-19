@@ -1108,3 +1108,65 @@ def fastapi_server(model, model_name, X, y):
     file_server = open("server.py", "w") 
     file_server.write(string)
     file_server.close()  
+
+def store_data(name, level_1_model, score_stack_0, score_stack_1, score_stack_2, 
+           model_imp_0, model_imp_1, model_imp_2, 
+           feature_importance_0, feature_importance_1, feature_importance_2):
+    import sqlite3
+    conn = sqlite3.connect('/home/philippe/development/python/EZStacking/EZS_deps/EZS_store.db')
+    cursor = conn.cursor()
+
+    search_problem = cursor.execute("SELECT name FROM problem WHERE name = ?", (name,))
+    problem_name = search_problem.fetchone()
+    if problem_name == None:
+       cursor.execute("INSERT INTO problem (name, path , type, target) VALUES(?, ?, ?, ?)", (name, path, problem_type, target_col))
+
+    search_version = cursor.execute("SELECT MAX(version) FROM solution WHERE name = ?", (name,))
+    row = search_version.fetchone()
+    if row == (None,):
+       version = 1
+    else:
+       version = row[0] + 1
+
+    cursor.execute("INSERT INTO solution (name, version, correlation, nb_model, nb_feature, score, test_size) VALUES(?, ?, ?, ?, ?, ?, ?)", \
+                    (name, version, threshold_corr, threshold_model, threshold_feature, threshold_score, test_size));
+
+    schema = pd.read_csv('schema.csv')
+    for ind in range(len(user_drop_cols)):
+        cursor.execute("INSERT INTO eda (name, version, feature, type, range, drop_user, drop_correlation, target)  VALUES(?, ?, ?, ?, ?, ?, ?, ?)", \
+                        (name, version, user_drop_cols[ind], None, None, 1, 0, 0));
+    for ind in range(schema.shape[0]):
+        if schema['column_name'][ind] in correlated_features:
+           drop_correlation = True
+        else:
+           drop_correlation = False
+
+        cursor.execute("INSERT INTO eda (name, version, feature, type, range, drop_user, drop_correlation, target)  VALUES(?, ?, ?, ?, ?, ?, ?, ?)", \
+                        (name, version, schema['column_name'][ind], schema['column_type'][ind], schema['column_range'][ind], 0, drop_correlation, 0));
+
+    cursor.execute("INSERT INTO eda (name, version, feature, type, range, drop_user, drop_correlation, target)  VALUES(?, ?, ?, ?, ?, ?, ?, ?)", \
+                        (name, version, target_col, None, None, 0, 0, 1));
+
+    for ind in range(3):
+        cursor.execute("INSERT INTO model (name, version, step, L1_model) VALUES (?, ?, ?, ?)", \
+                        (name, version, ind+1, level_1_model));
+
+        score_stack = locals()["_".join(['score_stack', str(ind)])]
+        for ind2 in range(score_stack.shape[0]):
+            cursor.execute("INSERT INTO model_score (name, version, step, model, train_score, test_score) VALUES(?, ?, ?, ?, ?, ?)", \
+                            (name, version, ind+1, score_stack[ind2,0], score_stack[ind2,1], score_stack[ind2,2]));
+
+        model_imp = locals()["_".join(['model_imp', str(ind)])]
+        for ind2 in range(model_imp.shape[0]):
+            cursor.execute("INSERT INTO model_importance (name, version, step, model, importance) VALUES(?, ?, ?, ?, ?)", \
+                            (name, version, ind+1, model_imp[ind2,0], model_imp[ind2,1]));
+
+        feature_importance = locals()["_".join(['feature_importance', str(ind)])]
+        for ind2 in range(feature_importance.shape[0]):
+            cursor.execute("INSERT INTO feature_importance (name, version, step, feature, importance) VALUES(?, ?, ?, ?, ?)", \
+                            (name, version, ind+1, feature_importance[ind2,0], feature_importance[ind2,1]));
+
+    # cursor.execute("DELETE FROM problem WHERE name = ?", (name,))
+
+    conn.commit()
+    conn.close()

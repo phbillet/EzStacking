@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sys
 from scipy import stats
+from scipy.stats import spearmanr
+from scipy.cluster import hierarchy
+from scipy.spatial.distance import squareform
 from pandas.api.types import is_numeric_dtype
 from sklearn.base import BaseEstimator, is_classifier, is_regressor, TransformerMixin
 from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold
@@ -200,6 +203,34 @@ def correlated_columns(df, threshold_corr, target_col):
                correlated_features.append(colname)
     correlated_features = list(dict.fromkeys(correlated_features))
     return correlated_features
+
+def hierarchical_clustering(X):
+    # from: https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance_multicollinear.html
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+    corr = spearmanr(X).correlation
+
+    # Ensure the correlation matrix is symmetric
+    corr = (corr + corr.T) / 2
+    np.fill_diagonal(corr, 1)
+
+    # We convert the correlation matrix to a distance matrix before performing
+    # hierarchical clustering using Ward's linkage.
+    distance_matrix = 1 - np.abs(corr)
+    dist_linkage = hierarchy.ward(squareform(distance_matrix))
+    dendro = hierarchy.dendrogram(
+        dist_linkage, labels=X.columns.tolist(), ax=ax1, leaf_rotation=90
+    )
+    dendro_idx = np.arange(0, len(dendro["ivl"]))
+
+    ax2.imshow(corr[dendro["leaves"], :][:, dendro["leaves"]])
+    ax2.style.background_gradient(cmap='coolwarm')
+    ax2.set_xticks(dendro_idx)
+    ax2.set_yticks(dendro_idx)
+    ax2.set_xticklabels(dendro["ivl"], rotation="vertical")
+    ax2.set_yticklabels(dendro["ivl"])
+    fig.tight_layout()
+    plt.show()
+
 
 def plot_sns_corr_class(df, target_col):
     """
@@ -1109,7 +1140,7 @@ def fastapi_server(model, model_name, X, y):
     file_server.write(string)
     file_server.close()  
 
-def store_data(name, level_1_model, score_stack_0, score_stack_1, score_stack_2, 
+def store_data(name, path, threshold_corr, threshold_model, threshold_feature, threshold_score, test_size, level_1_model, score_stack_0, score_stack_1, score_stack_2, 
            model_imp_0, model_imp_1, model_imp_2, 
            feature_importance_0, feature_importance_1, feature_importance_2):
     import sqlite3

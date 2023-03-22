@@ -58,7 +58,7 @@ _Notes:_
 |Model	|Data size | |Model |Data size |
 |------|----------|-|------|----------|
 |[XGBoost](https://arxiv.org/abs/1603.02754)	|both | |[SGD](https://scikit-learn.org/stable/modules/linear_model.html#stochastic-gradient-descent-sgd)	|large |
-|[Support vector](https://scikit-learn.org/stable/modules/svm.html)	|large | |[Logistic Regression](https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression)	|both |
+|[Support vector](https://scikit-learn.org/stable/modules/svm.html)	|small | |[Logistic Regression](https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression)	|both |
 |[Keras](https://keras.io/guides/)	|both | |[Linear Regression](https://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares)	|both |
 |[Gaussian Process](https://scikit-learn.org/stable/modules/gaussian_process.html)	|small | |[ElasticNet](https://scikit-learn.org/stable/modules/linear_model.html#elastic-net) |both |
 |[Decision Tree](https://scikit-learn.org/stable/modules/tree.html)	|small | |[Multilayer Perceptron](https://scikit-learn.org/stable/modules/neural_networks_supervised.html)	|small |
@@ -74,10 +74,12 @@ Now, let's choose the options:
 ### EDA
 
 #### Visualization options
-|Option        | Notes                                                              |
-|--------------|--------------------------------------------------------------------|
-|Yellow bricks | The graphics will be constructed with Matplotlib and Yellow bricks |
-|Seaborn       | The graphics will be constructed with Matplotlib and Seaborn       |
+|Option                                                | Notes                                                               |
+|------------------------------------------------------|---------------------------------------------------------------------|
+|[Yellow bricks](https://www.scikit-yb.org/en/latest/) | The graphics will be constructed with Matplotlib and Yellow bricks  |
+|[Seaborn](https://seaborn.pydata.org/)                | The graphics will be constructed with Matplotlib and Seaborn        |
+|[fastEDA](https://github.com/Matt-OP/fasteda)         | The graphics will be constructed with Matplotlib and fastEDA        |
+|[ydata-profiling ](https://github.com/Matt-OP/fasteda)| The graphics will be constructed with Matplotlib and ydata-profiling|
 
 _Note: the visualisation option Seaborn can produce time consuming graphics._
 
@@ -289,7 +291,7 @@ The **schema** is also used to build the file of **passing** and **non-passing t
 As we have already seen, the server returns the consumption of each request, in the test phase we also have access to the **global consumption** linked to the execution of all requests.
 
 # Some results
-Some results are given [here](https://github.com/phbillet/EZStacking/tree/main/examples) or in [Kaggle](https://www.kaggle.com/philippebillet/code).
+Some results are given in [Kaggle](https://www.kaggle.com/philippebillet/code).
 
 # Resources used for this project:
 * Stacking, Model importance and Others

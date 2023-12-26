@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import sys
+from ipywidgets import interact, fixed
 from scipy import stats
 from scipy.stats import spearmanr
 from scipy.cluster import hierarchy
@@ -18,6 +19,14 @@ from sklearn.inspection import PartialDependenceDisplay
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, recall_score 
 # Technical functions
+
+def reduce_schema(col, values):
+    """
+    Internal function used to drop columns from schema.
+    """    
+    schema = pd.read_csv('./schema.csv')
+    schema = schema[~schema[col].isin(values)]
+    schema.to_csv('./schema.csv', index=False)
 
 def plot_dataframe_structure(df):
     """
@@ -119,7 +128,7 @@ def encoding(df, threshold_cat, target_col):
         if df[c].dtypes == 'object' or df[c].dtypes.name == 'category': 
            encoded_cols.append([c, 'cat', df[c].dropna().unique().tolist()])
            print('Encoding object column:', c)
-           df[c] = df[c].factorize()[0].astype(np.int)
+           df[c] = df[c].factorize()[0].astype(np.int32)
         elif is_numeric_dtype(df[c]): 
              if df[c].unique().shape[0] > threshold_cat: 
                 encoded_cols.append([c, 'num', [df[c].min(), df[c].max()]])
@@ -132,7 +141,7 @@ def encoding(df, threshold_cat, target_col):
              print('Unknown type ', df[c].dtypes,' for column:',c) 
              df = df.drop(c, axis=1)
              drop_cols = np.unique(np.concatenate((drop_cols, c)))
-    encoded_cols = pd.DataFrame(np.array(encoded_cols), columns=['column_name', 'column_type', 'column_range'])
+    encoded_cols = pd.DataFrame(encoded_cols, columns=['column_name', 'column_type', 'column_range'], dtype=object)
     encoded_cols = encoded_cols.loc[encoded_cols['column_name'] != target_col]
     encoded_cols.to_csv('schema.csv', index=False)
     return df, encoded_cols
@@ -204,10 +213,10 @@ def correlated_columns(df, threshold_corr, target_col):
     correlated_features = list(dict.fromkeys(correlated_features))
     return correlated_features
 
-def hierarchical_clustering(X):
+def hierarchical_clustering(df):
     # from: https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance_multicollinear.html
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-    corr = spearmanr(X).correlation
+    corr = spearmanr(df).correlation
 
     # Ensure the correlation matrix is symmetric
     corr = (corr + corr.T) / 2
@@ -218,12 +227,11 @@ def hierarchical_clustering(X):
     distance_matrix = 1 - np.abs(corr)
     dist_linkage = hierarchy.ward(squareform(distance_matrix))
     dendro = hierarchy.dendrogram(
-        dist_linkage, labels=X.columns.tolist(), ax=ax1, leaf_rotation=90
+        dist_linkage, labels=df.columns.tolist(), ax=ax1, leaf_rotation=90
     )
     dendro_idx = np.arange(0, len(dendro["ivl"]))
 
     ax2.imshow(corr[dendro["leaves"], :][:, dendro["leaves"]])
-    ax2.style.background_gradient(cmap='coolwarm')
     ax2.set_xticks(dendro_idx)
     ax2.set_yticks(dendro_idx)
     ax2.set_xticklabels(dendro["ivl"], rotation="vertical")
@@ -766,7 +774,7 @@ def plot_partial_dependence_c(model, X, features, CPU):
     """      
     target = model.classes_
     for ind in range(len(target)):
-        fig, ax = plt.subplots(figsize=(16, 8))
+        fig, ax = plt.subplots(figsize=(10, 5))
         if CPU==True:
            display = PartialDependenceDisplay.from_estimator(
                      estimator = model,
@@ -815,7 +823,7 @@ def plot_partial_dependence_r(model, X, features, CPU):
     -------
     plotting: partial dependence of input features
     """      
-    fig, ax = plt.subplots(figsize=(16, 8))
+    fig, ax = plt.subplots(figsize=(10, 5))
     if CPU==True:
        display = PartialDependenceDisplay.from_estimator(
                  estimator = model,
@@ -876,6 +884,12 @@ def plot_partial_dependence(model, X, features, CPU):
           plot_partial_dependence_c(model, X, features, CPU)
        else:
           plot_partial_dependence_r(model, X, features, CPU)
+            
+def pd_ice_plot(model, X_test, feature, CPU):
+    def ppd(model, X_test, feature, CPU):
+        plot_partial_dependence(model, X_test, feature, CPU) 
+        
+    interact(ppd, model=fixed(model), X_test=fixed(X_test), feature=feature, CPU=fixed(CPU));
 
 def plot_history(history):
     """
@@ -1034,7 +1048,8 @@ def fastapi_server(model, model_name, X, y):
     string = string  + "\n"
     string = string  + "# read dataframe schema\n"
     string = string  + "schema = pd.read_csv('schema.csv')" 
-    string = string  + "\n"        
+    string = string  + "\n" 
+    
     modulename = 'keras'
     keras_bool = False
     if modulename in sys.modules:
@@ -1125,11 +1140,6 @@ def fastapi_server(model, model_name, X, y):
        string = string  + "    # Return the Result\n"
        string = string  + "    return { 'regression_value' : result, 'error' : data_err, 'elapsed time' : elaps, 'cpu time' : cpu}\n"
     
-    string = string  + "\n"
-    string = string  + "from pyngrok import ngrok\n"
-    string = string  + "ngrok_tunnel = ngrok.connect(8000)\n"
-    string = string  + "ngrok_tunnel\n"
-
     string = string  + "\n"
     string = string  + "import nest_asyncio\n"
     string = string  + "\n"

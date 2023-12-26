@@ -116,6 +116,10 @@ _Notes:_
 * _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on XGBoost or gaussian processes do not benefit of it_
 * _the Gauss option is only available for small dataset ._ 
 
+_**Known bugs** using Keras:_
+* _for **classification problems**: the generated **API doesn't work** with Keras_
+* _the **ReduceLROnPlateau** callback produces an error when **saving the model**._
+
 #### Level 1 model options
 |Option                   | Notes                                                   |
 |-------------------------|---------------------------------------------------------|

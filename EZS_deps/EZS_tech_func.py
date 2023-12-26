@@ -30,7 +30,7 @@ def generate(project_name, problem_type, stacking, data_size, cv, with_gauss, wi
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
          nbf.write(nb, f)
-    
+                
 
 def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pipeline, problem_type, 
                stacking, yb, seaborn, ydata_profiling, fast_eda, data_size, cv, level_1_model):
@@ -165,6 +165,11 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pi
                            (document.document_ydp == \
                             meta_package[meta_package.meta_package_index == 'YDP']\
                             ['meta_package_valid'].tolist()[0]\
+                           )) & \
+                           ((document.document_feda == 'both') | \
+                           (document.document_feda == \
+                            meta_package[meta_package.meta_package_index == 'FEDA']\
+                            ['meta_package_valid'].tolist()[0]\
                            )) \
                           ].merge(meta_package[meta_package.meta_package_valid == True], \
                                                left_on  = 'meta_package_index', \
@@ -259,35 +264,107 @@ def keras_nn(problem_type):
     """
     Generate a basic skeleton of Keras neural network for classification
     """
-    code_class = "def K_Class(): \n" + \
-                 "    keras.backend.clear_session() \n" + \
-                 "#   neural network architecture: start \n" + \
-                 "    model = Sequential() \n" + \
-                 "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dense(layer_size, activation='selu')) \n" + \
-                 "#    model.add(LayerNormalization()) \n" + \
-                 "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dropout(0.2)) \n" + \
-                 "    model.add(Dense(nb_targets, activation='softmax')) \n" + \
-                 "#   neural network architecture: end   \n" + \
-                 "    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])\n" + \
-                 "    return model\n"
+    code_class = "from typing import Dict, Iterable, Any\n" + \
+                 "from scikeras.wrappers import KerasClassifier\n" + \
+                 " \n" + \
+                 "class K_MLPClassifier(KerasClassifier):\n" + \
+                 " \n" + \
+                 "      def __init__(\n" + \
+                 "          self,\n" + \
+                 "          hidden_layer_sizes=100,\n" + \
+                 "          activation='relu',\n" + \
+                 "          batch_normalization=True,\n" + \
+                 "          dropout=0.0,\n" + \
+                 "          optimizer='adam',\n" + \
+                 "          optimizer__learning_rate=0.001,\n" + \
+                 "          epochs=200,\n" + \
+                 "          verbose=0,\n" + \
+                 "          **kwargs,\n" + \
+                 "      ):\n" + \
+                 "          super().__init__(**kwargs)\n" + \
+                 "          self.hidden_layer_sizes = hidden_layer_sizes\n" + \
+                 "          self.activation = activation\n" + \
+                 "          self.batch_normalization = batch_normalization\n" + \
+                 "          self.dropout = dropout\n" + \
+                 "          self.optimizer = optimizer\n" + \
+                 "          self.epochs = epochs\n" + \
+                 "          self.verbose = verbose\n" + \
+                 " \n" + \
+                 "      def _keras_build_fn(self, compile_kwargs: Dict[str, Any]):\n" + \
+                 "          model = keras.Sequential()\n" + \
+                 "          inp = keras.layers.Input(shape=(self.n_features_in_))\n" + \
+                 "          model.add(inp)\n" + \
+                 "          for hidden_layer_size in (self.hidden_layer_sizes,):\n" + \
+                 "              layer = keras.layers.Dense(hidden_layer_size, activation=self.activation)\n" + \
+                 "              model.add(layer)\n" + \
+                 "              if self.batch_normalization:\n" + \
+                 "                 layer = keras.layers.BatchNormalization()\n" + \
+                 "                 model.add(layer)\n" + \
+                 "              if self.dropout > 0.0:\n" + \
+                 "                 layer = keras.layers.Dropout(self.dropout)\n" + \
+                 "                 model.add(layer)\n" + \
+                 "          if self.target_type_ == 'binary':\n" + \
+                 "              n_output_units = 1\n" + \
+                 "              output_activation = 'sigmoid'\n" + \
+                 "              loss = 'binary_crossentropy'\n" + \
+                 "          elif self.target_type_ == 'multiclass':\n" + \
+                 "              n_output_units = self.n_classes_\n" + \
+                 "              output_activation = 'softmax'\n" + \
+                 "              loss = 'sparse_categorical_crossentropy'\n" + \
+                 "          else:\n" + \
+                 "              raise NotImplementedError(f'Unsupported task type: {self.target_type_}')\n" + \
+                 "          out = keras.layers.Dense(n_output_units, activation=output_activation)\n" + \
+                 "          model.add(out)\n" + \
+                 "          model.compile(loss=loss, optimizer=compile_kwargs['optimizer'])\n" + \
+                 "          return model\n" 
+
     """
     Generate a basic skeleton of Keras neural network for regression
     """
-    code_regre = "def K_Regre(): \n" + \
-                 "    keras.backend.clear_session()\n" + \
-                 "#   neural network architecture: start  \n" + \
-                 "    model = Sequential() \n" + \
-                 "    model.add(BatchNormalization()) \n" + \
-                 "    model.add(Dense(layer_size, activation='relu')) \n" + \
-                 "    model.add(BatchNormalization()) \n" + \
-                 "#    model.add(LayerNormalization()) \n" + \
-                 "    model.add(Dropout(0.2)) \n" + \
-                 "    model.add(Dense(1)) \n" + \
-                 "#   neural network architecture: end   \n" + \
-                 "    model.compile(loss='mean_squared_error', optimizer='adam') \n" + \
-                 "    return model\n"
+    code_regre = "from typing import Dict, Iterable, Any\n" + \
+                 "from scikeras.wrappers import KerasRegressor\n" + \
+                 " \n" + \
+                 "class K_MLPRegressor(KerasRegressor):\n" + \
+                 " \n" + \
+                 "      def __init__(\n" + \
+                 "          self,\n" + \
+                 "          hidden_layer_sizes=100,\n" + \
+                 "          activation='relu',\n" + \
+                 "          batch_normalization=True,\n" + \
+                 "          dropout=0,\n" + \
+                 "          optimizer='adam',\n" + \
+                 "          optimizer__learning_rate=0.001,\n" + \
+                 "          epochs=200,\n" + \
+                 "          verbose=0,\n" + \
+                 "          **kwargs,\n" + \
+                 "      ):\n" + \
+                 "          super().__init__(**kwargs)\n" + \
+                 "          self.hidden_layer_sizes = hidden_layer_sizes\n" + \
+                 "          self.activation = activation\n" + \
+                 "          self.batch_normalization = batch_normalization\n" + \
+                 "          self.dropout = dropout\n" + \
+                 "          self.optimizer = optimizer\n" + \
+                 "          self.epochs = epochs\n" + \
+                 "          self.verbose = verbose\n" + \
+                 " \n" + \
+                 "      def _keras_build_fn(self, compile_kwargs: Dict[str, Any]):\n" + \
+                 "          model = keras.Sequential()\n" + \
+                 "          inp = keras.layers.Input(shape=(self.n_features_in_))\n" + \
+                 "          model.add(inp)\n" + \
+                 "          for hidden_layer_size in (self.hidden_layer_sizes,):\n" + \
+                 "              layer = keras.layers.Dense(hidden_layer_size, activation=self.activation)\n" + \
+                 "              model.add(layer)\n" + \
+                 "              if self.batch_normalization:\n" + \
+                 "                 layer = keras.layers.BatchNormalization()\n" + \
+                 "                 model.add(layer)\n" + \
+                 "              if self.dropout > 0:\n" + \
+                 "                 layer = keras.layers.Dropout(self.dropout)\n" + \
+                 "                 model.add(layer)\n" + \
+                 "          out = keras.layers.Dense(1)\n" + \
+                 "          model.add(out)\n" + \
+                 "          model.compile(loss='mse', optimizer=compile_kwargs['optimizer'])\n" + \
+                 "          return model\n" 
+                 
     if problem_type == "classification":
        code = code_class 
     else:
@@ -328,6 +405,48 @@ def list_model(pd_level_0):
            string = string + "# " + str(row[1]) + "\n"  
        
     return string    
+
+def ts_dataframe_to_supervised(df, target, n_in=1, n_out=1, dropT=True):
+    """
+    Transform a time series dataframe into a supervised learning dataset.
+    Arguments:
+        df: a dataframe.
+        target: this is the target variable you intend to use in supervised learning
+        n_in: Number of lag observations as input (X).
+        n_out: Number of observations as output (y).
+        dropT: Boolean - whether or not to drop columns at time "t".
+    Returns:
+        Pandas DataFrame of series framed for supervised learning.
+    """
+    namevars = df.columns.tolist()
+    # input sequence (t-n, ... t-1)
+    drops = []
+    for i in range(n_in, -1, -1):
+        if i == 0:
+            for var in namevars:
+                addname = var+'(t)'
+                df.rename(columns={var:addname},inplace=True)
+                drops.append(addname)
+        else:
+            for var in namevars:
+                addname = var+'(t-'+str(i)+')'
+                df[addname] = df[var].shift(i)
+    # forecast sequence (t, t+1, ... t+n)
+    if n_out == 0:
+        n_out = False
+    for i in range(1, n_out):
+        for var in namevars:
+            addname = var+'(t+'+str(i)+')'
+            df[addname] = df[var].shift(-i)
+    # drop rows with NaN values
+    df.dropna(inplace=True,axis=0)
+    # put it all together
+    target = target+'(t)'
+    if dropT:
+        drops.remove(target)
+        df.drop(drops, axis=1, inplace=True)
+    preds = [x for x in list(df) if x not in [target]] 
+    return df, target, preds
 
 # GUI
 project_name = widgets.Text(
@@ -795,7 +914,7 @@ def test_endpoint(schema, test_type):
                     schema['column_name'][ind] + "\"" + ": "
            if schema['column_type'][ind] == 'num':
               if rand_num == 1: 
-                 string = string + str(eval(schema['column_range'][ind])[1] + random.randint(0,10)) 
+                 string = string + str(eval(schema['column_range'][ind])[1] + random.randint(1,10)) 
               else:
                  string = string + str(random.uniform(eval(schema['column_range'][ind])[0], eval(schema['column_range'][ind])[1])) 
            if schema['column_type'][ind] == 'cat':
@@ -923,10 +1042,20 @@ zip.on_click(functools.partial(on_zip_clicked, fc=fc, output=output))
 
 dev_names = ['EDA', 'Split', 'Model', 'Build']
 dev_tabs = [EDA_tab, split_tab, model_tab, build_tab]
-dev_gui = widgets.Tab(dev_tabs)
+dev_tab_layout = widgets.Layout(display='flex')
+#                    flex_flow='column', 
+#                    align_items='stretch', 
+#                    border='solid',
+#                    height='250px')
+dev_gui = widgets.Tab(dev_tabs, layout=dev_tab_layout)
 [dev_gui.set_title(i, title) for i, title in enumerate(dev_names)]
 
 gui_names = ['File & Problem', 'Development', 'Test', 'Zip & Clean']
 gui_tabs = [file_problem_tab, dev_gui, test_tab, zip] 
-EZS_gui = widgets.Tab(gui_tabs)
+gui_tab_layout = widgets.Layout(display='flex')
+#                    flex_flow='column', 
+#                    align_items='stretch', 
+#                    border='solid',
+#                    height='300px')
+EZS_gui = widgets.Tab(gui_tabs, layout=gui_tab_layout)
 [EZS_gui.set_title(i, title) for i, title in enumerate(gui_names)]

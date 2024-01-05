@@ -9,7 +9,7 @@ from scipy.stats import spearmanr
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import squareform
 from pandas.api.types import is_numeric_dtype
-from sklearn.base import BaseEstimator, is_classifier, is_regressor, TransformerMixin
+from sklearn.base import is_classifier, is_regressor
 from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report
 from sklearn.experimental import enable_iterative_imputer
@@ -18,6 +18,7 @@ from sklearn.inspection import partial_dependence
 from sklearn.inspection import PartialDependenceDisplay
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, recall_score 
+
 # Technical functions
 
 def reduce_schema(col, values):
@@ -280,56 +281,6 @@ def plot_sns_corr_regre(df, target_col):
     g.map_diag(sns.kdeplot, lw=3, legend=False)
     g.fig.suptitle('Pairwise data relationships', y=1.01)
     plt.show()
-    
-class Decorrelator(BaseEstimator, TransformerMixin):
-    """
-    Decorrelator is a class used to eliminate too correlated columns depending on a threshold during preprocessing.
-
-    Parameters
-    ----------
-    threshold_corr
-    """  
-    def __init__(self, threshold):
-        self.threshold = threshold
-        self.correlated_columns = None
-
-    def fit(self, X, y=None):
-        correlated_features = set()  
-        if not isinstance(X, pd.DataFrame):
-           X = pd.DataFrame(X)
-        corr_matrix = X.corr()
-        for i in range(len(corr_matrix.columns)):
-            for j in range(i):
-                if abs(corr_matrix.iloc[i, j]) > self.threshold: # we are interested in absolute coeff value
-                    colname = corr_matrix.columns[i]  # getting the name of column
-                    correlated_features.add(colname)
-        self.correlated_features = correlated_features
-        return self
-
-    def transform(self, X, y=None, **kwargs):
-        return (pd.DataFrame(X)).drop(labels=self.correlated_features, axis=1)
-    
-class ColumnsDropper(BaseEstimator, TransformerMixin):
-    """
-    ColumnsDropper is a class used to drop columns from a dataset.
-
-    Parameters
-    ----------
-    cols : list of columns dropped by the transformer
-    """  
-    def __init__(self, cols):
-        if not isinstance(cols, list):
-            self.cols = [cols]
-        else:
-            self.cols = cols
-
-    def fit(self, X: pd.DataFrame, y: pd.Series):
-        # there is nothing to fit
-        return self
-
-    def transform(self, X:pd.DataFrame):
-        X = X.copy()
-        return X[self.cols]    
     
 def model_filtering(level_0, model_imp, nb_model, score_stack, threshold_score):
     """
@@ -1001,7 +952,7 @@ def K_r2(model, X_train, y_train, X_test, y_test):
          'test': [r2_score(y_test, y_pred_test)]}
     display(pd.DataFrame(data=dr2).style.hide_index())
      
-def fastapi_server(model, model_name, X, y):
+def fastapi_server(model, model_name, X, y, Docker=False):
     """
     Generate the fastAPI server file, and save it in the current folder.
 
@@ -1015,11 +966,12 @@ def fastapi_server(model, model_name, X, y):
     """   
     string = ""
     string = string  + "from fastapi import FastAPI\n"
-    string = string  + "from loguru import logger\n"
     string = string  + "from joblib import load\n"
     string = string  + "import pandas as pd\n"
     string = string  + "import numpy as np\n"
-    string = string  + "import uvicorn\n"
+    if Docker==False:
+       string = string  + "import nest_asyncio\n"
+       string = string  + "import uvicorn\n"
     string = string  + "import ast\n"
     string = string  + "import time\n"
     string = string  + "from sklearn.base import is_classifier\n"
@@ -1141,20 +1093,42 @@ def fastapi_server(model, model_name, X, y):
        string = string  + "    return { 'regression_value' : result, 'error' : data_err, 'elapsed time' : elaps, 'cpu time' : cpu}\n"
     
     string = string  + "\n"
-    string = string  + "import nest_asyncio\n"
-    string = string  + "\n"
-    string = string  + "nest_asyncio.apply()\n"
-    string = string  + "uvicorn.run(app, port=8000)\n"
-
-    file_server = open("server.py", "w") 
+    if Docker==False:
+       string = string  + "nest_asyncio.apply()\n"
+       string = string  + "uvicorn.run(app, port=8000)\n"
+       file_server = open("server.py", "w") 
+    else:
+       file_server = open("server_d.py", "w") 
+    
     file_server.write(string)
     file_server.close()  
+
+def dockerize(name, model, model_name, X, y):
+    import os
+    import shutil
+    try:
+        os.mkdir(name)
+    except FileExistsError:
+        shutil.rmtree(os.getcwd() + "/" + name)
+        os.mkdir(name)
+        
+    shutil.copy('EZS_deps/requirements.txt', name)
+    shutil.copy('EZS_deps/Dockerfile', name)
+    name = name + "/app"
+    os.mkdir(name)
+    shutil.copy("model.sav", name)
+    shutil.copy("schema.csv", name)
+    fastapi_server(model, model_name, X, y, Docker=True)
+    shutil.move('server_d.py', name)
+    name = name + "/EZS_deps"
+    os.mkdir(name)
+    shutil.copy('EZS_deps/EZS_model.py', name)    
 
 def store_data(name, path, threshold_corr, threshold_model, threshold_feature, threshold_score, test_size, level_1_model, score_stack_0, score_stack_1, score_stack_2, 
            model_imp_0, model_imp_1, model_imp_2, 
            feature_importance_0, feature_importance_1, feature_importance_2):
     import sqlite3
-    conn = sqlite3.connect('/home/philippe/development/python/EZStacking/EZS_deps/EZS_store.db')
+    conn = sqlite3.connect(os.getcwd() + '/EZS_deps/EZS_store.db')
     cursor = conn.cursor()
 
     search_problem = cursor.execute("SELECT name FROM problem WHERE name = ?", (name,))

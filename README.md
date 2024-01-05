@@ -18,6 +18,7 @@ The **development process** produces:
   * a [**modelling**](#modelling) [building](#build) a reduced-size stacked estimator   
 * a [**server**](#serving-the-model) (with its client) returning a prediction, a measure of the quality of input data and the execution time
 * a [**test generator**](#test) that can be used to evaluate server performance
+* a [**Docker container generator**](#docker) that contains all the necessary files to build the final Docker container based on FastAPI and uvicorn
 * a [**zip package**](#zip--clean) containing all the files produced during the process.
 
 _Notes:_ 
@@ -156,6 +157,21 @@ It opens the server notebook, then execute the line `run server.py` (and check c
 If you have clicked on the link [client](client), it opens the client notebook and you just have to execute the first command, the result should look like the following:
 ![EZStacking Tests_exec](./screenshots/EZStacking_test_exec.png)
 
+## Docker
+The last step of the main notebook is the generation of all the useful files used to build the Docker container associated with the model.
+
+These files are stored in a folder having the name of the project.
+
+Open a terminal in this folder and launch the following command to build the container:
+* `docker build -t <project_name> .`
+
+To run the container:
+* `docker run --rm -p 80:80 <project_name>`
+
+_Notes:_ 
+* _**Models using Keras** will **not work** due to technical problem with SciKeras_
+* _For FastAPI (resp. Docker), the **port are fixed** to 8000 (resp. 80)._
+
 ## Zip & Clean
 ![EZStacking Output](./screenshots/EZStacking_zip_clean.png)
 
@@ -167,7 +183,7 @@ If you click on the button ![EZStacking Zip](./screenshots/EZStacking_zip.png), 
 * the client and the server
 * a generic notebook to test FastAPI endpoint.
 
-Further more, it also suppresses from the folder the elements added to the archive.
+Further more, it also suppresses from the folder the elements added to the archive, the **files generated for the Docker container** are **simply deleted** (it is assumed that the container had been built in Docker). 
 
 _Note: it is advisable to close properly the generated notebooks (`Ctrl + Shift + Q`)._
 

@@ -793,7 +793,7 @@ model_option_1 = widgets.VBox([level_1, level_1_model, cv])
 caption_threshold_mod = widgets.Label(value='Modelling thresholds:')
 
 threshold_corr = widgets.FloatSlider(
-                 value=0.75,
+                 value=1.00,
                  min=0.00,
                  max=1.00,
                  step=0.01,
@@ -1001,18 +1001,20 @@ def zip_files(fc, output):
     zipObj.write(fc, fc.split(os.sep)[-1])
     file_list = [nbname, 'server.ipynb', 'client.ipynb', 'EZS_deps/EZS_func.py', 'model.sav', 'schema.csv', 'test.sh', 'server.py']
     for file in file_list:
-        zipObj.write(file)    
+        zipObj.write(file)
     # close the Zip File
     zipObj.close()
     
-def delete_files(output):
+def delete_files(output, project_name):
     # delete work files
     nbname = output + '.ipynb'
     file_list = [nbname, 'model.sav', 'schema.csv', 'server.py', 'test.sh', 'client.ipynb', 'server.ipynb']  
     for file in file_list:
         os.remove(file)
+    import shutil
+    shutil.rmtree(os.getcwd() + "/" + project_name)
         
-def zip_and_clean(fc, output):
+def zip_and_clean(fc, output, project_name):
     nbname = output + '.ipynb'
     # Check if notebook exists
     if not os.path.isfile(nbname):
@@ -1025,7 +1027,7 @@ def zip_and_clean(fc, output):
     else:
           # if everything is OK, zip and clean in 
           zip_files(fc, output)
-          delete_files(output)
+          delete_files(output, project_name)
     
 zip = widgets.Button(
                 description='Zip & Clean',
@@ -1035,10 +1037,10 @@ zip = widgets.Button(
                 icon=''
                 ) 
 
-def on_zip_clicked(b, fc, output):
-    zip_and_clean(fc.selected, output.value)
+def on_zip_clicked(b, fc, output, project_name):
+    zip_and_clean(fc.selected, output.value, project_name.value)
 
-zip.on_click(functools.partial(on_zip_clicked, fc=fc, output=output))
+zip.on_click(functools.partial(on_zip_clicked, fc=fc, output=output, project_name=project_name))
 
 dev_names = ['EDA', 'Split', 'Model', 'Build']
 dev_tabs = [EDA_tab, split_tab, model_tab, build_tab]

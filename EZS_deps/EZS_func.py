@@ -952,7 +952,7 @@ def K_r2(model, X_train, y_train, X_test, y_test):
          'test': [r2_score(y_test, y_pred_test)]}
     display(pd.DataFrame(data=dr2).style.hide_index())
      
-def fastapi_server(model, model_name, X, y, Docker=False):
+def fastapi_server(model, model_name, X, y, port, Docker=False):
     """
     Generate the fastAPI server file, and save it in the current folder.
 
@@ -962,6 +962,8 @@ def fastapi_server(model, model_name, X, y, Docker=False):
     model_name : name of the saved model
     X: feature dataframe 
     y: target dataframe
+    IP_address: IP address of the server 
+    port: port of the server
     
     """   
     string = ""
@@ -1095,7 +1097,7 @@ def fastapi_server(model, model_name, X, y, Docker=False):
     string = string  + "\n"
     if Docker==False:
        string = string  + "nest_asyncio.apply()\n"
-       string = string  + "uvicorn.run(app, port=8000)\n"
+       string = string  + "uvicorn.run(app, port=" + str(port) +")\n"
        file_server = open("server.py", "w") 
     else:
        file_server = open("server_d.py", "w") 
@@ -1103,9 +1105,85 @@ def fastapi_server(model, model_name, X, y, Docker=False):
     file_server.write(string)
     file_server.close()  
 
-def dockerize(name, model, model_name, X, y):
+def dockerfile_generator(port):
+    string = ""
+    string = string  + "FROM python:3.10\n"
+    string = string  + "\n"
+    string = string  + "WORKDIR /app\n"
+    string = string  + "\n"
+    string = string  + "COPY ./requirements.txt /app/\n"
+    string = string  + "RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt\n"
+    string = string  + "\n"
+    string = string  + "EXPOSE " + str(port)
+    string = string  + "\n"
+    string = string  + "COPY ./app /app/\n"
+    string = string  + "\n"
+    string = string  + 'CMD ["uvicorn", "server_d:app", "--host", "0.0.0.0", "--port", "' + str(port) + '"]\n'
+    dockerfile = open("Dockerfile", "w")
+    dockerfile.write(string)
+    dockerfile.close()
+    
+def kube_yaml_generator(name, port):
+    string = ""
+    string = string  + "apiVersion: v1\n"
+    string = string  + "kind: Service\n"
+    string = string  + "metadata:\n"
+    string = string  + "  name: " + name + "\n"
+    string = string  + "spec:\n"
+    string = string  + "  ports:\n"
+    string = string  + "  - name: " + str(port) + "-tcp\n"
+    string = string  + "    port: " + str(port) + "\n"
+    string = string  + "    protocol: TCP\n"
+    string = string  + "    targetPort: " + str(port) + "\n"
+    string = string  + "  selector:\n"
+    string = string  + "    com.docker.project: " + name + "\n"   
+    string = string  + "  type: LoadBalancer\n"
+    string = string  + "status:\n"
+    string = string  + "  loadBalancer: {}\n"
+    string = string  + "\n"
+    string = string  + "---\n"
+    string = string  + "apiVersion: apps/v1\n"
+    string = string  + "kind: Deployment\n"
+    string = string  + "metadata:\n"
+    string = string  + "  labels:\n"
+    string = string  + "    com.docker.project: " + name + "\n"
+    string = string  + "  name: " + name + "\n"
+    string = string  + "spec:\n"
+    string = string  + "  replicas: 1\n"
+    string = string  + "  selector:\n"
+    string = string  + "    matchLabels:\n"
+    string = string  + "      com.docker.project: " + name + "\n"
+    string = string  + "  strategy:\n"
+    string = string  + "    type: Recreate\n"
+    string = string  + "  template:\n"
+    string = string  + "    metadata:\n"
+    string = string  + "      labels:\n"
+    string = string  + "        com.docker.project: " + name + "\n"
+    string = string  + "    spec:\n"
+    string = string  + "      containers:\n"
+    string = string  + "      - name: " + name + "\n"
+    string = string  + "        image: " + name + "\n"
+    string = string  + "        resources:\n"
+    string = string  + "          limits:\n"
+    string = string  + "            memory: 200Mi\n"
+    string = string  + "          requests:\n"
+    string = string  + "            cpu: 100m\n"
+    string = string  + "            memory: 200Mi\n"
+    string = string  + "        ports:\n"
+    string = string  + "        - containerPort: " + str(port) + "\n"
+    string = string  + "          protocol: TCP\n"
+#    string = string  + "        resources: {}\n"
+    string = string  + "        imagePullPolicy: IfNotPresent\n"
+    string = string  + "      restartPolicy: Always\n"
+    string = string  + "status: {}\n"
+    kubernetes = open(name + "_deployment.yaml", "w")
+    kubernetes.write(string)
+    kubernetes.close()
+    
+def dockerize(name, model, model_name, X, y, port):
     import os
     import shutil
+    
     try:
         os.mkdir(name)
     except FileExistsError:
@@ -1113,13 +1191,21 @@ def dockerize(name, model, model_name, X, y):
         os.mkdir(name)
         
     shutil.copy('EZS_deps/requirements.txt', name)
-    shutil.copy('EZS_deps/Dockerfile', name)
+    
+    dockerfile_generator(port)
+    shutil.move('Dockerfile', name)
+    
+    kube_yaml_generator(name, port)
+    shutil.move(name + "_deployment.yaml", name)
+    
     name = name + "/app"
     os.mkdir(name)
     shutil.copy("model.sav", name)
     shutil.copy("schema.csv", name)
-    fastapi_server(model, model_name, X, y, Docker=True)
+    
+    fastapi_server(model, model_name, X, y, port, Docker=True)
     shutil.move('server_d.py', name)
+    
     name = name + "/EZS_deps"
     os.mkdir(name)
     shutil.copy('EZS_deps/EZS_model.py', name)    

@@ -1,4 +1,4 @@
-import io
+document_xgbimport io
 import os
 import random
 import functools
@@ -11,29 +11,29 @@ from IPython.display import display
 from ipyfilechooser import FileChooser
 from zipfile import ZipFile
 
-def generate(project_name, problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU,\
+def generate(project_name, problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU,\
              with_xgb, with_pipeline, yb, seaborn, ydata_profiling, fast_eda, file, target_col, threshold_NaN,\
              threshold_cat, threshold_Z, test_size, threshold_entropy,\
              undersampling, undersampler, level_1_model, random_state,\
-             threshold_corr, threshold_model, threshold_score, threshold_feature, output):
+             threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     """
     Initialize the notebook, analyze input data from GUI, generate, write and execute the notebook.
     """
     user_drop_cols=[]
     features_of_interest = []
-    nb = analyze(project_name, problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU,\
+    nb = analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU,\
                  with_xgb, with_pipeline, yb, seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols,\
                  features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
                  test_size, threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
                  threshold_corr, threshold_model,\
-                 threshold_score, threshold_feature)
+                 threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port)
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
          nbf.write(nb, f)
                 
 
 def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pipeline, problem_type, 
-               stacking, yb, seaborn, ydata_profiling, fast_eda, data_size, cv, level_1_model):
+               stacking, yb, seaborn, ydata_profiling, fast_eda, data_size, level_1_model):
     """
     Set configuration: load configuration database, generate the different dataframes used to generate
     cells of the notebook according to the data from the GUI.
@@ -134,7 +134,6 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pi
     
     pd_document = document[((document.document_problem == 'both') | (document.document_problem == problem)) & \
                            ((document.document_data_size == 'both') | (document.document_data_size == data_size)) & \
-                           ((document.document_cv == 'both') | (document.document_cv == cv)) & \
                            ((document.document_level_1_model == 'both') | (document.document_level_1_model == level_1_model)) & \
                            ((document.document_stacking == 'both') | \
                            (document.document_stacking == \
@@ -208,18 +207,18 @@ def load_package(nb, pd_pk_import, pd_pk_from):
 
     return nb
 
-def analyze(project_name, problem_type, stacking, data_size, cv, with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
+def analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
             with_pipeline, yb, seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols, features_of_interest,\
             threshold_NaN, threshold_cat, threshold_Z, test_size,\
             threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
-            threshold_corr, threshold_model, threshold_score, threshold_feature):
+            threshold_corr, threshold_model, threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port):
 
     """
     Analyze input data from GUI, set configuration, generate the different cells of the notebook
     """
     pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
                                                                             with_pipeline,problem_type, stacking, yb,\
-                                                                            seaborn, ydata_profiling, fast_eda, data_size, cv, level_1_model)
+                                                                            seaborn, ydata_profiling, fast_eda, data_size, level_1_model)
     
     fileList = ['./EZS_deps/client.ipynb', './EZS_deps/server.ipynb']
     for item in fileList:
@@ -771,24 +770,7 @@ level_1_model = widgets.RadioButtons(
                 disabled=False
                 )
 
-cv = widgets.Checkbox(
-                value=False,
-                description='Level 1 with cross-validation',
-                description_tooltip='The model will use cross-validation during training of level 1 model',
-                disabled=False,
-                indent=False
-                )
-
-# interaction between level_1_model radio button and cv checkbox
-def remove_cv(level_1_model):
-    if level_1_model['new'] == 'regression':
-       cv.layout.display = 'flex'
-    else:
-       cv.layout.display, cv.value  = 'none', False
-
-level_1_model.observe(remove_cv, names='value')
-
-model_option_1 = widgets.VBox([level_1, level_1_model, cv])
+model_option_1 = widgets.VBox([level_1, level_1_model])
 
 caption_threshold_mod = widgets.Label(value='Modelling thresholds:')
 
@@ -858,40 +840,64 @@ run = widgets.Button(
                 icon=''
                 )
 
-def on_run_clicked(b, project_name, problem_type, stacking, data_size, cv, gauss, hgboost, keras, CPU, xgboost, pipeline, fc, yb,\
+deployment = widgets.Label(value='FastAPI and Docker:')
+
+deployment_FastAPI_port = widgets.Text(
+                value='8000',
+                placeholder='Input a port',
+                description_tooltip='Input a port',
+                description='FastAPI port:',
+                disabled=False   
+                ) 
+
+deployment_Docker_port = widgets.Text(
+                value='80',
+                placeholder='Input a port',
+                description_tooltip='Input a port',
+                description='Docker port:',
+                disabled=False   
+                ) 
+
+deployment_fields = widgets.VBox([deployment, deployment_FastAPI_port, deployment_Docker_port])
+
+def on_run_clicked(b, project_name, problem_type, stacking, data_size, gauss, hgboost, keras, CPU, xgboost, pipeline, fc, yb,\
                       seaborn, ydata_profiling, fast_eda, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
                       undersampling, undersampler, level_1_model, random_state,\
-                      threshold_corr, threshold_model, threshold_score, threshold_feature, output):
-
-    generate(project_name.value, problem_type.value, stacking.value, data_size.value, cv.value, gauss.value, hgboost.value,\
+                      threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
+    generate(project_name.value, problem_type.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
              keras.value, CPU.value, xgboost.value, pipeline.value, yb.value, seaborn.value, ydata_profiling.value, fast_eda.value, fc.selected,\
              target_cl.value, threshold_NaN.value, threshold_cat.value, threshold_Z.value,\
              test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value,\
              random_state.value, threshold_corr.value, threshold_model.value,\
-             threshold_score.value, threshold_feature.value, output.value)
+             threshold_score.value, threshold_feature.value, output.value, deployment_FastAPI_port.value, deployment_Docker_port.value)
 
 run.on_click(functools.partial(on_run_clicked, project_name=project_name, problem_type=problem_type, stacking=stacking,\
-                               data_size=data_size, cv=cv, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, xgboost=xgboost,\
+                               data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, xgboost=xgboost,\
                                pipeline=pipeline, yb=yb, seaborn=seaborn, ydata_profiling=ydata_profiling, fast_eda=fast_eda, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,\
                                test_size = test_size, threshold_entropy=threshold_entropy, \
                                undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, random_state = random_state,\
                                threshold_corr = threshold_corr, threshold_model = threshold_model, threshold_score = threshold_score,\
-                               threshold_feature = threshold_feature, output=output))
+                               threshold_feature = threshold_feature, output=output, deployment_FastAPI_port=deployment_FastAPI_port, deployment_Docker_port=deployment_Docker_port))
 
-build_tab = widgets.VBox([caption_output_file, build_tab_content, run])
+
+
+build_tab = widgets.VBox([caption_output_file, build_tab_content, deployment_fields, run])
 
 # tab : test
-def test_endpoint(schema, test_type):
+def test_endpoint(schema, test_type, port, Docker=False):
     """
-    Generate a passing test (i.e. all values belong to the domains define in schema.csv
+    Generate a test (i.e. all values belong to the domains define in schema.csv
     """
     newline = '\n'
     comma_newline = ',\n'
     continuation = " \\"
     string = ""
     string = string + "curl -X 'POST'"  + continuation + newline
-    string = string + "   'http://127.0.0.1:8000/predict'"  + continuation + newline
+    if Docker:
+       string = string + "   'http://0.0.0.0:" + str(port) + "/predict'"  + continuation + newline        
+    else:
+       string = string + "   'http://127.0.0.1:" + str(port) + "/predict'"  + continuation + newline
     string = string + "   -H 'accept: application/json'"  + continuation + newline
     string = string + "   -H 'Content-Type: application/json'"  + continuation + newline
     string = string + "   -d '{\n"
@@ -935,7 +941,7 @@ def test_endpoint(schema, test_type):
     string = string + "}'" + newline 
     return string
 
-def test_generator(nb_ok, nb_ko):
+def test_generator(nb_ok, nb_ko, port, Docker=False):
     """
     Generate file test.sh depending on number of passing and non-passing tests.
     """
@@ -946,13 +952,16 @@ def test_generator(nb_ok, nb_ko):
        schema = pd.read_csv("schema.csv")
        for ind in range(nb_ok):
            string = string + str('echo -e "Test OK: ' + str(ind)) + '"\n'
-           string = string + test_endpoint(schema, 'passing')
+           string = string + test_endpoint(schema, 'passing', port, Docker)
            string = string + str('echo -e ""\n')
        for ind in range(nb_ko):
            string = string + str('echo -e "Test KO: ' + str(ind)) + '"\n'
-           string = string + test_endpoint(schema, 'notpassing')
+           string = string + test_endpoint(schema, 'notpassing', port, Docker)
            string = string + str('echo -e ""\n')
-       file_server = open("test.sh", "w") 
+       if Docker:     
+          file_server = open("test_d.sh", "w")
+       else:     
+          file_server = open("test.sh", "w")
        file_server.write(string)
        file_server.close()  
 
@@ -981,11 +990,25 @@ test = widgets.Button(
                 icon=''
                 )
 
-def on_test_clicked(b, nb_ok, nb_ko):
+def test_gen(nb_ok, nb_ko, project_name, deployment_FastAPI_port, deployment_Docker_port):
+    test_generator(nb_ok.value, nb_ko.value, deployment_FastAPI_port.value, Docker=False)
+    test_generator(nb_ok.value, nb_ko.value, deployment_Docker_port.value, Docker=True)
 
-    test_generator(nb_ok.value, nb_ko.value)
+    source = os.getcwd()
+    destination = source + "/" + str(project_name.value)
+    
+    try:
+        os.remove(destination + "/" + "test_d.sh")
+    except FileNotFoundError:
+        pass
+    
+    shutil.move(source + "/" + "test_d.sh", destination)
 
-test.on_click(functools.partial(on_test_clicked, nb_ok=nb_ok, nb_ko=nb_ko))
+def on_test_clicked(b, nb_ok, nb_ko, project_name,  deployment_FastAPI_port, deployment_Docker_port):
+    test_gen(nb_ok, nb_ko, project_name, deployment_FastAPI_port, deployment_Docker_port)
+
+test.on_click(functools.partial(on_test_clicked, nb_ok=nb_ok, nb_ko=nb_ko, project_name=project_name, \
+              deployment_FastAPI_port=deployment_FastAPI_port, deployment_Docker_port=deployment_Docker_port))
 
 test_tab = widgets.VBox([caption_test, test_nb, test])
 
@@ -998,10 +1021,16 @@ def zip_files(fc, output):
     # Add multiple files to the zip
     nbname = output + '.ipynb'
     # add dataset (without full path)
-    zipObj.write(fc, fc.split(os.sep)[-1])
+    try:
+       zipObj.write(fc, fc.split(os.sep)[-1])
+    except AttributeError:
+       pass
     file_list = [nbname, 'server.ipynb', 'client.ipynb', 'EZS_deps/EZS_func.py', 'model.sav', 'schema.csv', 'test.sh', 'server.py']
     for file in file_list:
-        zipObj.write(file)
+        try:
+           zipObj.write(file)
+        except FileNotFoundError:
+           pass
     # close the Zip File
     zipObj.close()
     
@@ -1010,24 +1039,18 @@ def delete_files(output, project_name):
     nbname = output + '.ipynb'
     file_list = [nbname, 'model.sav', 'schema.csv', 'server.py', 'test.sh', 'client.ipynb', 'server.ipynb']  
     for file in file_list:
-        os.remove(file)
-    import shutil
-    shutil.rmtree(os.getcwd() + "/" + project_name)
+        try:
+           os.remove(file)
+        except FileNotFoundError:
+           pass
+    try:
+       shutil.rmtree(os.getcwd() + "/" + project_name)
+    except FileNotFoundError:
+       pass
         
 def zip_and_clean(fc, output, project_name):
-    nbname = output + '.ipynb'
-    # Check if notebook exists
-    if not os.path.isfile(nbname):
-       print('It seems that the notebook is not generated.')
-    # Check if model exists
-    elif (not os.path.isfile('model.sav') or
-          not os.path.isfile('schema.csv') or
-          not os.path.isfile('server.py')):
-          print('It seems that the model is not built.')
-    else:
-          # if everything is OK, zip and clean in 
-          zip_files(fc, output)
-          delete_files(output, project_name)
+    zip_files(fc, output)
+    delete_files(output, project_name)
     
 zip = widgets.Button(
                 description='Zip & Clean',

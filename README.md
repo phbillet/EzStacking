@@ -1,4 +1,6 @@
-# EZStacking
+<h1 style="text-align: center;">EZStacking: from data to Kubernetes thru Scikit-Learn, FastAPI and Docker</h1>
+
+
 EZStacking is a [**development tool**](#ezstacking---as-development-tool) designed to adress [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems. 
 
 EZStacking handles **classification** and **regression** problems for **structured data** (_cf. Notes hereafter_). 
@@ -18,7 +20,7 @@ The **development process** produces:
   * a [**modelling**](#modelling) [building](#build) a reduced-size stacked estimator   
 * a [**server**](#serving-the-model) (with its client) returning a prediction, a measure of the quality of input data and the execution time
 * a [**test generator**](#test) that can be used to evaluate server performance
-* a [**Docker container generator**](#docker) that contains all the necessary files to build the final Docker container based on FastAPI and uvicorn
+* a [**Docker container generator**](#docker) that contains all the necessary files to build the final Docker container based on FastAPI and uvicorn, and a file for the deployment of the API in Kubernetes
 * a [**zip package**](#zip--clean) containing all the files produced during the process.
 
 _Notes:_ 
@@ -34,6 +36,12 @@ First you have to:
 * launch the **Jupyter server** using the following command: `jupyter-lab --no-browser`
 
 _Note: `jupyter-lab` is a comfortable development tool more flexible than `jupyter notebook`._  
+
+### How to uninstall it
+You simply have to: 
+* **deactivate** the virtual environment using the following command: `conda deactivate`
+* **remove the virtual environment** using the following command: `conda remove --name EZStacking --all`  
+* **remove the kernel** using the following command: `jupyter kernelspec uninstall ezstacking`
 
 # EZStacking - How to use it
 
@@ -58,7 +66,7 @@ _Notes:_
 
 |Model	|Data size | |Model |Data size |
 |------|----------|-|------|----------|
-|[XGBoost](https://arxiv.org/abs/1603.02754)	|both | |[SGD](https://scikit-learn.org/stable/modules/linear_model.html#stochastic-gradient-descent-sgd)	|large |
+|[Gradient Boosting](https://scikit-learn.org/stable/modules/ensemble.html#id36)	|both | |[SGD](https://scikit-learn.org/stable/modules/linear_model.html#stochastic-gradient-descent-sgd)	|both |
 |[Support vector](https://scikit-learn.org/stable/modules/svm.html)	|small | |[Logistic Regression](https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression)	|both |
 |[Keras](https://keras.io/guides/)	|both | |[Linear Regression](https://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares)	|both |
 |[Gaussian Process](https://scikit-learn.org/stable/modules/gaussian_process.html)	|small | |[ElasticNet](https://scikit-learn.org/stable/modules/linear_model.html#elastic-net) |both |
@@ -103,19 +111,13 @@ _Notes:_
 * _if the option **Undersampling** is checked, then an [undersampler](https://imbalanced-learn.org/stable/references/under_sampling.html) must be chosen with care._
 
 ### Modelling
-![EZStacking Modelling](./screenshots/EZStacking_modelling.png)
+![EZStacking Modelling](./screenshots/EZStacking_modelling.png) 
 
-#### Optional models in level 0 model set
-|Option   | Notes                                                   |
-|---------|---------------------------------------------------------|
-|XGBoost  | the model includes a model based on gradient boosting     |
-|HGBoost  | the model includes a model based on including histogram-based gradient boosting|
-|Gauss    | the model includes  models based on gaussian processes |
-|Keras    | the model includes a model based on a Keras neural network       |
+If no estimator is selected, the regressions (resp. classifications) will use linear regressions (resp. logistic regressions).
 
 _Notes:_ 
-* _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on XGBoost or gaussian processes do not benefit of it_
-* _the Gauss option is only available for small dataset ._ 
+* _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on gaussian processes do not benefit of it_
+* _the Gauss option is only available for small dataset._ 
 
 _**Known bugs** using Keras:_
 * _for **classification problems**: the generated **API doesn't work** with Keras_
@@ -158,19 +160,36 @@ If you have clicked on the link [client](client), it opens the client notebook a
 ![EZStacking Tests_exec](./screenshots/EZStacking_test_exec.png)
 
 ## Docker
+
+[**Docker Desktop**](https://www.docker.com/products/docker-desktop/) is the tool used for this part.
+
 The last step of the main notebook is the generation of all the useful files used to build the Docker container associated with the model.
 
 These files are stored in a folder having the name of the project.
 
-Open a terminal in this folder and launch the following command to build the container:
+Open a terminal in this folder and launch the following command to **build** the container:
 * `docker build -t <project_name> .`
 
-To run the container:
+The container can be **run** directly in Docker Desktop, you can also use the following command line:
 * `docker run --rm -p 80:80 <project_name>`
 
-_Notes:_ 
+_**Note**:_ 
 * _**Models using Keras** will **not work** due to technical problem with SciKeras_
-* _For FastAPI (resp. Docker), the **port are fixed** to 8000 (resp. 80)._
+
+### Kubernetes
+The program also generates a file for the API deployment in Kubernetes:
+
+**Deployment** in Kubernetes:
+* `kubectl apply -f <project_name>_deployment.yaml`
+
+**Control** the deployment of the service:
+* `kubectl get svc`
+
+**Delete** the service:
+* `kubectl delete -f <project_name>_deployment.yaml`
+
+_**Note**:_ 
+* _If the container is **running in Docker**, it must be **stopped** before **testing** it in **Kubernetes**._
 
 ## Zip & Clean
 ![EZStacking Output](./screenshots/EZStacking_zip_clean.png)
@@ -309,6 +328,8 @@ Regression with data drift |  Classification without data drift
 The **schema** is also used to build the file of **passing** and **non-passing tests**, indeed a passing test (resp. a non-passing test) means that all features belong to their domains given in the schema (resp. at least one feature does not belong to its domain).
 
 As we have already seen, the server returns the consumption of each request, in the test phase we also have access to the **global consumption** linked to the execution of all requests.
+
+A test file for **Docker** (and Kubernetes) is also created, it is located in the directory associated with the Docker container.
 
 # Some results
 Some results are given in [Kaggle](https://www.kaggle.com/philippebillet/code).

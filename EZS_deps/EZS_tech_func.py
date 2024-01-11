@@ -1,4 +1,4 @@
-document_xgbimport io
+import io
 import os
 import random
 import functools
@@ -12,7 +12,9 @@ from ipyfilechooser import FileChooser
 from zipfile import ZipFile
 
 def generate(project_name, problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU,\
-             with_xgb, with_pipeline, yb, seaborn, ydata_profiling, fast_eda, file, target_col, threshold_NaN,\
+             with_gb, with_pipeline, yb,\
+             with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
+             seaborn, ydata_profiling, fast_eda, file, target_col, threshold_NaN,\
              threshold_cat, threshold_Z, test_size, threshold_entropy,\
              undersampling, undersampler, level_1_model, random_state,\
              threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
@@ -22,7 +24,9 @@ def generate(project_name, problem_type, stacking, data_size, with_gauss, with_h
     user_drop_cols=[]
     features_of_interest = []
     nb = analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU,\
-                 with_xgb, with_pipeline, yb, seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols,\
+                 with_gb, with_pipeline, yb,\
+                 with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
+                 seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols,\
                  features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
                  test_size, threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
                  threshold_corr, threshold_model,\
@@ -32,8 +36,9 @@ def generate(project_name, problem_type, stacking, data_size, with_gauss, with_h
          nbf.write(nb, f)
                 
 
-def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pipeline, problem_type, 
-               stacking, yb, seaborn, ydata_profiling, fast_eda, data_size, level_1_model):
+def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pipeline, problem_type, 
+               stacking, yb, with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,
+               seaborn, ydata_profiling, fast_eda, data_size, level_1_model):
     """
     Set configuration: load configuration database, generate the different dataframes used to generate
     cells of the notebook according to the data from the GUI.
@@ -51,7 +56,14 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pi
     meta_package.loc[meta_package['meta_package_index'] == 'HGB', ['meta_package_valid']] = with_hgboost
     meta_package.loc[meta_package['meta_package_index'] == 'GP', ['meta_package_valid']] = with_gauss
     meta_package.loc[meta_package['meta_package_index'] == 'GNB', ['meta_package_valid']] = with_gauss
-    meta_package.loc[meta_package['meta_package_index'] == 'XGB', ['meta_package_valid']] = with_xgb
+    meta_package.loc[meta_package['meta_package_index'] == 'GB', ['meta_package_valid']] = with_gb
+    meta_package.loc[meta_package['meta_package_index'] == 'ADA', ['meta_package_valid']] = with_adaboost
+    meta_package.loc[meta_package['meta_package_index'] == 'DT', ['meta_package_valid']] = with_decision_tree
+    meta_package.loc[meta_package['meta_package_index'] == 'RF', ['meta_package_valid']] = with_random_forest
+    meta_package.loc[meta_package['meta_package_index'] == 'SGD', ['meta_package_valid']] = with_sgd
+    meta_package.loc[meta_package['meta_package_index'] == 'MLP', ['meta_package_valid']] = with_mlp
+    meta_package.loc[meta_package['meta_package_index'] == 'KN', ['meta_package_valid']] = with_nn
+    meta_package.loc[meta_package['meta_package_index'] == 'SKSV', ['meta_package_valid']] = with_svm
     meta_package.loc[meta_package['meta_package_index'] == 'PIP', ['meta_package_valid']] = with_pipeline
     meta_package.loc[meta_package['meta_package_index'] == 'YB', ['meta_package_valid']] = yb
     meta_package.loc[meta_package['meta_package_index'] == 'SNS', ['meta_package_valid']] = seaborn
@@ -145,11 +157,6 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb, with_pi
                             meta_package[meta_package.meta_package_index == 'KER']\
                             ['meta_package_valid'].tolist()[0]\
                            )) & \
-                           ((document.document_xgb == 'both') | \
-                           (document.document_xgb == \
-                            meta_package[meta_package.meta_package_index == 'XGB']\
-                            ['meta_package_valid'].tolist()[0]\
-                           )) & \
                            ((document.document_pipeline == 'both') | \
                            (document.document_pipeline == \
                             meta_package[meta_package.meta_package_index == 'PIP']\
@@ -207,8 +214,10 @@ def load_package(nb, pd_pk_import, pd_pk_from):
 
     return nb
 
-def analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
-            with_pipeline, yb, seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols, features_of_interest,\
+def analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU, with_gb,\
+            with_pipeline, yb,\
+            with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
+            seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols, features_of_interest,\
             threshold_NaN, threshold_cat, threshold_Z, test_size,\
             threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
             threshold_corr, threshold_model, threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port):
@@ -216,8 +225,9 @@ def analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hg
     """
     Analyze input data from GUI, set configuration, generate the different cells of the notebook
     """
-    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_xgb,\
+    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb,\
                                                                             with_pipeline,problem_type, stacking, yb,\
+                                                                            with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
                                                                             seaborn, ydata_profiling, fast_eda, data_size, level_1_model)
     
     fileList = ['./EZS_deps/client.ipynb', './EZS_deps/server.ipynb']
@@ -685,7 +695,7 @@ stacking = widgets.Checkbox(
 
 gauss = widgets.Checkbox(
                 value=False,
-                description='Gauss',
+                description='Gaussian Methods',
                 description_tooltip='The model will use Gaussian process and Gaussian naive Bayes',
                 disabled=False,
                 indent=False
@@ -695,15 +705,18 @@ gauss = widgets.Checkbox(
 def remove_gauss(data_size):
     if data_size['new'] == 'small':
        gauss.layout.display = 'flex'
+       decision_tree.layout.display = 'flex'
     else:
        gauss.layout.display, gauss.value = 'none', False
+       decision_tree.layout.display, decision_tree.value = 'none', False
+      
 
 data_size.observe(remove_gauss, names='value')
 
 
 hgboost = widgets.Checkbox(
                 value=False,
-                description='HGBoost',
+                description='Histogram-based Gradient Boosting',
                 description_tooltip='The model will use Histogram-based Gradient Boosting',
                 disabled=False,
                 indent=False
@@ -739,13 +752,70 @@ def remove_CPU(keras):
 
 keras.observe(remove_CPU, names='value')
 
-xgboost = widgets.Checkbox(
+gboost = widgets.Checkbox(
                 value=False,
-                description='XGBoost',
+                description='Gradient Boosting',
                 description_tooltip='The model will use extrem gradient boosting', 
                 disabled=False,
                 indent=False
                 )
+
+decision_tree = widgets.Checkbox(
+                value=False,
+                description='Decision Tree',
+                description_tooltip='The model will use decision tree',
+                disabled=False,
+                indent=False
+                )
+
+random_forest = widgets.Checkbox(
+                value=False,
+                description='Random Forest',
+                description_tooltip='The model will use random forest',
+                disabled=False,
+                indent=False
+                )
+
+adaboost = widgets.Checkbox(
+                value=False,
+                description='AdaBoost',
+                description_tooltip='The model will use AdaBoost',
+                disabled=False,
+                indent=False
+                )
+
+sgd = widgets.Checkbox(
+                value=False,
+                description='Stochastic Gradient Descent',
+                description_tooltip='The model will use stochastic gradient descent',
+                disabled=False,
+                indent=False
+                )
+
+mlp = widgets.Checkbox(
+                value=False,
+                description='Multi-layer Perceptron',
+                description_tooltip='The model will use multi-layer perceptron',
+                disabled=False,
+                indent=False
+                )
+
+nn = widgets.Checkbox(
+                value=False,
+                description='Nearest Neighbors',
+                description_tooltip='The model will use nearest neighbors',
+                disabled=False,
+                indent=False
+                )
+
+svm = widgets.Checkbox(
+                value=False,
+                description='Support Vector Machines',
+                description_tooltip='The model will use support vector machines',
+                disabled=False,
+                indent=False
+                )
+
 pipeline = widgets.Checkbox(
 #                value=False,
                 value=True,
@@ -754,11 +824,10 @@ pipeline = widgets.Checkbox(
                 disabled=False,
                 indent=False
                 )
+
 model_keras = widgets.HBox([keras, CPU])
-#model_option2 = widgets.HBox([pipeline, xgboost])
-model_option1 = widgets.VBox([xgboost, hgboost])
-model_option2 = widgets.VBox([gauss, model_keras])
-model_option_grp = widgets.VBox([model_option1, model_option2])
+#model_option2 = widgets.HBox([pipeline, gboost])
+model_option_grp = widgets.VBox([hgboost, gboost, adaboost, decision_tree, random_forest, sgd, nn, svm, gauss, mlp, model_keras])
 
 model_option_0 = widgets.VBox([level_0, model_caption_option, model_option_grp])
 
@@ -860,20 +929,25 @@ deployment_Docker_port = widgets.Text(
 
 deployment_fields = widgets.VBox([deployment, deployment_FastAPI_port, deployment_Docker_port])
 
-def on_run_clicked(b, project_name, problem_type, stacking, data_size, gauss, hgboost, keras, CPU, xgboost, pipeline, fc, yb,\
+def on_run_clicked(b, project_name, problem_type, stacking, data_size, gauss, hgboost, keras, CPU, gboost, pipeline, fc, yb,\
+                      adaboost, decision_tree, random_forest, sgd, mlp, nn, svm,\
                       seaborn, ydata_profiling, fast_eda, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
                       undersampling, undersampler, level_1_model, random_state,\
                       threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     generate(project_name.value, problem_type.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
-             keras.value, CPU.value, xgboost.value, pipeline.value, yb.value, seaborn.value, ydata_profiling.value, fast_eda.value, fc.selected,\
+             keras.value, CPU.value, gboost.value, pipeline.value, yb.value,\
+             adaboost.value, decision_tree.value, random_forest.value, sgd.value, mlp.value, nn.value, svm.value,\
+             seaborn.value, ydata_profiling.value, fast_eda.value, fc.selected,\
              target_cl.value, threshold_NaN.value, threshold_cat.value, threshold_Z.value,\
              test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value,\
              random_state.value, threshold_corr.value, threshold_model.value,\
              threshold_score.value, threshold_feature.value, output.value, deployment_FastAPI_port.value, deployment_Docker_port.value)
 
 run.on_click(functools.partial(on_run_clicked, project_name=project_name, problem_type=problem_type, stacking=stacking,\
-                               data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, xgboost=xgboost,\
-                               pipeline=pipeline, yb=yb, seaborn=seaborn, ydata_profiling=ydata_profiling, fast_eda=fast_eda, fc=fc, target=target,\
+                               data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, gboost=gboost,\
+                               pipeline=pipeline, yb=yb,\
+                               adaboost=adaboost, decision_tree=decision_tree, random_forest=random_forest, sgd=sgd, mlp=mlp, nn=nn, svm=svm,\
+                               seaborn=seaborn, ydata_profiling=ydata_profiling, fast_eda=fast_eda, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,\
                                test_size = test_size, threshold_entropy=threshold_entropy, \
                                undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, random_state = random_state,\
@@ -1002,7 +1076,11 @@ def test_gen(nb_ok, nb_ko, project_name, deployment_FastAPI_port, deployment_Doc
     except FileNotFoundError:
         pass
     
-    shutil.move(source + "/" + "test_d.sh", destination)
+    try:
+        shutil.move(source + "/" + "test_d.sh", destination)
+    except FileNotFoundError:
+        pass
+    
 
 def on_test_clicked(b, nb_ok, nb_ko, project_name,  deployment_FastAPI_port, deployment_Docker_port):
     test_gen(nb_ok, nb_ko, project_name, deployment_FastAPI_port, deployment_Docker_port)

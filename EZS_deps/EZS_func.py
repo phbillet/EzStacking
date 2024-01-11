@@ -1172,7 +1172,6 @@ def kube_yaml_generator(name, port):
     string = string  + "        ports:\n"
     string = string  + "        - containerPort: " + str(port) + "\n"
     string = string  + "          protocol: TCP\n"
-#    string = string  + "        resources: {}\n"
     string = string  + "        imagePullPolicy: IfNotPresent\n"
     string = string  + "      restartPolicy: Always\n"
     string = string  + "status: {}\n"

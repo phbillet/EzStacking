@@ -62,19 +62,6 @@ First select your **file**, then select the **target** name (_i.e._ the variable
 _Notes:_ 
 * _the data size is **small**, if the number of row is smaller than **3000**._
 * _**Random seed** is used for **replicability**_
-* _depending on the data size, EZStacking uses those estimators for the level 0:_
-
-|Model	|Data size | |Model |Data size |
-|------|----------|-|------|----------|
-|[Gradient Boosting](https://scikit-learn.org/stable/modules/ensemble.html#id36)	|both | |[SGD](https://scikit-learn.org/stable/modules/linear_model.html#stochastic-gradient-descent-sgd)	|both |
-|[Support vector](https://scikit-learn.org/stable/modules/svm.html)	|small | |[Logistic Regression](https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression)	|both |
-|[Keras](https://keras.io/guides/)	|both | |[Linear Regression](https://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares)	|both |
-|[Gaussian Process](https://scikit-learn.org/stable/modules/gaussian_process.html)	|small | |[ElasticNet](https://scikit-learn.org/stable/modules/linear_model.html#elastic-net) |both |
-|[Decision Tree](https://scikit-learn.org/stable/modules/tree.html)	|small | |[Multilayer Perceptron](https://scikit-learn.org/stable/modules/neural_networks_supervised.html)	|small |
-|[Random Forest](https://scikit-learn.org/stable/modules/ensemble.html#forests-of-randomized-trees) |both | |[KNeighbors](https://scikit-learn.org/stable/modules/neighbors.html) |small |
-|[AdaBoost](https://scikit-learn.org/stable/modules/ensemble.html#adaboost)	|both | |[Gaussian Naive Bayes](https://scikit-learn.org/stable/modules/naive_bayes.html)	|small     |
-|[Histogram-based Gradient Boosting](https://scikit-learn.org/stable/modules/ensemble.html#histogram-based-gradient-boosting)|both |
-
 ## Development
 Now, let's choose the options:
 
@@ -113,11 +100,26 @@ _Notes:_
 ### Modelling
 ![EZStacking Modelling](./screenshots/EZStacking_modelling.png) 
 
-If no estimator is selected, the regressions (resp. classifications) will use linear regressions (resp. logistic regressions).
 
-_Notes:_ 
+|Model	|Data size | |Model |Data size |
+|------|----------|-|------|----------|
+|[Gradient Boosting](https://scikit-learn.org/stable/modules/ensemble.html#id36)	|both | |[SGD](https://scikit-learn.org/stable/modules/linear_model.html#stochastic-gradient-descent-sgd)	|both |
+|[Support vector](https://scikit-learn.org/stable/modules/svm.html)	|small | |[Logistic Regression](https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression)	|both |
+|[Keras](https://keras.io/guides/)	|both | |[Linear Regression](https://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares)	|both |
+|[Gaussian Process](https://scikit-learn.org/stable/modules/gaussian_process.html)	|small | |[ElasticNet](https://scikit-learn.org/stable/modules/linear_model.html#elastic-net) |both |
+|[Decision Tree](https://scikit-learn.org/stable/modules/tree.html)	|small | |[Multilayer Perceptron](https://scikit-learn.org/stable/modules/neural_networks_supervised.html)	|small |
+|[Random Forest](https://scikit-learn.org/stable/modules/ensemble.html#forests-of-randomized-trees) |both | |[KNeighbors](https://scikit-learn.org/stable/modules/neighbors.html) |small |
+|[AdaBoost](https://scikit-learn.org/stable/modules/ensemble.html#adaboost)	|both | |[Gaussian Naive Bayes](https://scikit-learn.org/stable/modules/naive_bayes.html)	|small     |
+|[Histogram-based Gradient Boosting](https://scikit-learn.org/stable/modules/ensemble.html#histogram-based-gradient-boosting)|both |
+
+
+
+_Notes:_
+* _if the option "**No model optimization**" is checked, the number of models and of features will not be reduced_
+* _if **no estimator** is selected, the **regressions** (resp. **classifications**) will use **linear regressions** (resp. **logistic regressions**)_
+* _depending on the **data size**, EZStacking uses the estimators given in the preceding table for the level 0_
 * _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on gaussian processes do not benefit of it_
-* _the Gauss option is only available for small dataset._ 
+* _the Gaussian methos option is only available for small dataset._ 
 
 _**Known bugs** using Keras:_
 * _for **classification problems**: the generated **API doesn't work** with Keras_

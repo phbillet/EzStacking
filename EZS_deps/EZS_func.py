@@ -708,7 +708,7 @@ def plot_perm_importance(model, X, y, CPU):
     plt.show()
     return perm_imp
 
-def plot_partial_dependence_c(model, X, features, CPU):
+def plot_partial_dependence_c(model, X, features, features_cat, CPU):
     """
     Plot partial dependence of features for a given classification estimator and a given dataset
 
@@ -726,40 +726,38 @@ def plot_partial_dependence_c(model, X, features, CPU):
     target = model.classes_
     for ind in range(len(target)):
         fig, ax = plt.subplots(figsize=(10, 5))
+        
         if CPU==True:
-           display = PartialDependenceDisplay.from_estimator(
-                     estimator = model,
-                     X = X,
-                     features = features,
-                     target = target[ind],
-                     n_cols = 2,
-                     kind = "both",
-                     subsample=50,
-                     n_jobs = -1,
-                     grid_resolution = 20,
-                     ice_lines_kw = {"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-                     pd_line_kw = {"color": "tab:orange", "linestyle": "--"},
-                     ax = ax,
-                     )
+           n_jobs = -1
         else:
-           display = PartialDependenceDisplay.from_estimator(
-                     estimator = model,
-                     X = X,
-                     features = features,
-                     target = target[ind],
-                     n_cols = 2,
-                     kind = "both",
-                     subsample=50,
-                     grid_resolution = 20,
-                     ice_lines_kw = {"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-                     pd_line_kw = {"color": "tab:orange", "linestyle": "--"},
-                     ax = ax,
-                     )
+           n_jobs = None
+        
+        if np.isin(features, features_cat):
+            kind = "average"
+        else:
+            kind = "both"
+        
+        display = PartialDependenceDisplay.from_estimator(
+                  estimator = model,
+                  X = X,
+                  features = features,
+                  target = target[ind],
+                  n_cols = 2,
+                  categorical_features = features_cat,
+                  kind = kind,
+                  subsample=50,
+                  n_jobs = n_jobs,
+                  grid_resolution = 20,
+                  ice_lines_kw = {"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+                  pd_line_kw = {"color": "tab:orange", "linestyle": "--"},
+                  ax = ax,
+                  )
+
         display.figure_.suptitle("Partial dependence for class " + str(target[ind]))
         display.figure_.subplots_adjust(hspace=0.3)
         plt.show()
     
-def plot_partial_dependence_r(model, X, features, CPU):
+def plot_partial_dependence_r(model, X, features, features_cat, CPU):
     """
     Plot partial dependence of features for a given regression estimator and a given dataset
 
@@ -776,32 +774,30 @@ def plot_partial_dependence_r(model, X, features, CPU):
     """      
     fig, ax = plt.subplots(figsize=(10, 5))
     if CPU==True:
-       display = PartialDependenceDisplay.from_estimator(
-                 estimator = model,
-                 X = X,
-                 features = features,
-                 n_cols = 2,
-                 kind="both",
-                 subsample=50,
-                 n_jobs=-1,
-                 grid_resolution=20,
-                 ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-                 pd_line_kw={"color": "tab:orange", "linestyle": "--"},
-                 ax = ax,
-                 )
+       n_jobs = -1
     else:
-       display = PartialDependenceDisplay.from_estimator(
-                 estimator = model,
-                 X = X,
-                 features = features,
-                 n_cols = 2,
-                 kind="both",
-                 subsample=50,
-                 grid_resolution=20,
-                 ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-                 pd_line_kw={"color": "tab:orange", "linestyle": "--"},
-                 ax = ax,
-                 )
+       n_jobs = None
+        
+    if np.isin(features, features_cat):
+       kind = "average"
+    else:
+       kind = "both"
+        
+    display = PartialDependenceDisplay.from_estimator(
+              estimator = model,
+              X = X,
+              features = features,
+              categorical_features = features_cat,
+              n_cols = 2,
+              kind=kind,
+              subsample=50,
+              n_jobs=n_jobs,
+              grid_resolution=20,
+              ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+              pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+              ax = ax,
+              )
+
     display.figure_.suptitle("Partial dependence")
     display.figure_.subplots_adjust(hspace=0.3)
     plt.show() 
@@ -823,24 +819,28 @@ def plot_partial_dependence(model, X, features, CPU):
     """    
     # if input list of features is empty, we use the list of numeric features
     if features == []:
-       features = X.select_dtypes([np.number]).columns.tolist() 
+       features = X.columns.tolist() 
     else:
     #  we keep only numeric features    
-       features = np.intersect1d(features, X.select_dtypes([np.number]).columns.tolist()).tolist() 
+       features = np.intersect1d(features, X.columns.tolist()).tolist() 
+    
+    schema = pd.read_csv('./schema.csv')
+    features_cat = schema[schema['column_type']=='cat'].column_name.tolist()
+    features_num = schema[schema['column_type']=='num'].column_name.tolist()
+    
+    if features_cat == []:
+       features_cat = None 
         
-    if features == []:
-       return "No numeric feature"
+    if is_classifier(model):
+       plot_partial_dependence_c(model, X, features, features_cat, CPU)
     else:
-       if is_classifier(model):
-          plot_partial_dependence_c(model, X, features, CPU)
-       else:
-          plot_partial_dependence_r(model, X, features, CPU)
+       plot_partial_dependence_r(model, X, features, features_cat, CPU)
             
-def pd_ice_plot(model, X_test, feature, CPU):
-    def ppd(model, X_test, feature, CPU):
-        plot_partial_dependence(model, X_test, feature, CPU) 
+def pd_ice_plot(model, X, feature, CPU):
+    def ppd(model, X, feature, CPU):
+        plot_partial_dependence(model, X, feature, CPU) 
         
-    interact(ppd, model=fixed(model), X_test=fixed(X_test), feature=feature, CPU=fixed(CPU));
+    interact(ppd, model=fixed(model), X=fixed(X), feature=feature, CPU=fixed(CPU));
 
 def plot_history(history):
     """

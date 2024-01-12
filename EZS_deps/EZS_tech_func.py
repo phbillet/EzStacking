@@ -16,7 +16,7 @@ def generate(project_name, problem_type, stacking, data_size, with_gauss, with_h
              with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
              seaborn, ydata_profiling, fast_eda, file, target_col, threshold_NaN,\
              threshold_cat, threshold_Z, test_size, threshold_entropy,\
-             undersampling, undersampler, level_1_model, random_state,\
+             undersampling, undersampler, level_1_model, no_optimization, random_state,\
              threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     """
     Initialize the notebook, analyze input data from GUI, generate, write and execute the notebook.
@@ -28,7 +28,7 @@ def generate(project_name, problem_type, stacking, data_size, with_gauss, with_h
                  with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
                  seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols,\
                  features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
-                 test_size, threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
+                 test_size, threshold_entropy, undersampling, undersampler, level_1_model, no_optimization, random_state,\
                  threshold_corr, threshold_model,\
                  threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port)
     fname = output + '.ipynb'
@@ -38,7 +38,7 @@ def generate(project_name, problem_type, stacking, data_size, with_gauss, with_h
 
 def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pipeline, problem_type, 
                stacking, yb, with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,
-               seaborn, ydata_profiling, fast_eda, data_size, level_1_model):
+               seaborn, ydata_profiling, fast_eda, data_size, level_1_model, no_optimization):
     """
     Set configuration: load configuration database, generate the different dataframes used to generate
     cells of the notebook according to the data from the GUI.
@@ -147,6 +147,7 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pip
     pd_document = document[((document.document_problem == 'both') | (document.document_problem == problem)) & \
                            ((document.document_data_size == 'both') | (document.document_data_size == data_size)) & \
                            ((document.document_level_1_model == 'both') | (document.document_level_1_model == level_1_model)) & \
+                           ((document.document_no_optimization == 'both') | (document.document_no_optimization == no_optimization)) & \
                            ((document.document_stacking == 'both') | \
                            (document.document_stacking == \
                             meta_package[meta_package.meta_package_index == 'STACK']\
@@ -219,7 +220,7 @@ def analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hg
             with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
             seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols, features_of_interest,\
             threshold_NaN, threshold_cat, threshold_Z, test_size,\
-            threshold_entropy, undersampling, undersampler, level_1_model, random_state,\
+            threshold_entropy, undersampling, undersampler, level_1_model, no_optimization, random_state,\
             threshold_corr, threshold_model, threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port):
 
     """
@@ -228,7 +229,7 @@ def analyze(project_name, problem_type, stacking, data_size, with_gauss, with_hg
     pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb,\
                                                                             with_pipeline,problem_type, stacking, yb,\
                                                                             with_adaboost, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
-                                                                            seaborn, ydata_profiling, fast_eda, data_size, level_1_model)
+                                                                            seaborn, ydata_profiling, fast_eda, data_size, level_1_model, no_optimization)
     
     fileList = ['./EZS_deps/client.ipynb', './EZS_deps/server.ipynb']
     for item in fileList:
@@ -839,7 +840,16 @@ level_1_model = widgets.RadioButtons(
                 disabled=False
                 )
 
-model_option_1 = widgets.VBox([level_1, level_1_model])
+optimization = widgets.Label(value='Model optimization:')
+no_optimization = widgets.Checkbox(
+                value=False,
+                description='No model optimization',
+                description_tooltip='The model will not be optimized',
+                disabled=False,
+                indent=False
+                )
+
+model_option_1 = widgets.VBox([level_1, level_1_model, optimization, no_optimization])
 
 caption_threshold_mod = widgets.Label(value='Modelling thresholds:')
 
@@ -932,14 +942,14 @@ deployment_fields = widgets.VBox([deployment, deployment_FastAPI_port, deploymen
 def on_run_clicked(b, project_name, problem_type, stacking, data_size, gauss, hgboost, keras, CPU, gboost, pipeline, fc, yb,\
                       adaboost, decision_tree, random_forest, sgd, mlp, nn, svm,\
                       seaborn, ydata_profiling, fast_eda, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
-                      undersampling, undersampler, level_1_model, random_state,\
+                      undersampling, undersampler, level_1_model, no_optimization, random_state,\
                       threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     generate(project_name.value, problem_type.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
              keras.value, CPU.value, gboost.value, pipeline.value, yb.value,\
              adaboost.value, decision_tree.value, random_forest.value, sgd.value, mlp.value, nn.value, svm.value,\
              seaborn.value, ydata_profiling.value, fast_eda.value, fc.selected,\
              target_cl.value, threshold_NaN.value, threshold_cat.value, threshold_Z.value,\
-             test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value,\
+             test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value, no_optimization.value,\
              random_state.value, threshold_corr.value, threshold_model.value,\
              threshold_score.value, threshold_feature.value, output.value, deployment_FastAPI_port.value, deployment_Docker_port.value)
 
@@ -950,7 +960,7 @@ run.on_click(functools.partial(on_run_clicked, project_name=project_name, proble
                                seaborn=seaborn, ydata_profiling=ydata_profiling, fast_eda=fast_eda, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,\
                                test_size = test_size, threshold_entropy=threshold_entropy, \
-                               undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, random_state = random_state,\
+                               undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, no_optimization=no_optimization, random_state=random_state,\
                                threshold_corr = threshold_corr, threshold_model = threshold_model, threshold_score = threshold_score,\
                                threshold_feature = threshold_feature, output=output, deployment_FastAPI_port=deployment_FastAPI_port, deployment_Docker_port=deployment_Docker_port))
 

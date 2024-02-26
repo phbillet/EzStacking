@@ -3,14 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import sys
-from ipywidgets import interact, fixed
+from ipywidgets import interact, interact_manual, fixed, IntText
 from scipy import stats
 from scipy.stats import spearmanr
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import squareform
 from pandas.api.types import is_numeric_dtype
 from sklearn.base import is_classifier, is_regressor
-from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold
+from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold, cross_val_score, TimeSeriesSplit
+from statsmodels.tsa.seasonal import seasonal_decompose, STL, MSTL
+from statsmodels.tsa.statespace.structural import UnobservedComponents
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
@@ -20,26 +23,34 @@ from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, recall_score 
 
 # Technical functions
-
 def reduce_schema(col, values):
     """
-    Internal function used to drop columns from schema.
+    Internal function used to drop columns from schema after feature elimination.
     """    
     schema = pd.read_csv('./schema.csv')
     schema = schema[~schema[col].isin(values)]
     schema.to_csv('./schema.csv', index=False)
-
+    
+def get_features():
+    """
+    Extract the categorical and numerical feature from the schema.
+    Returns:
+        features_cat: list of categorical features
+        features_num: list of numerical features.
+    """      
+    schema = pd.read_csv('./schema.csv')
+    features_cat = schema[schema['column_type']=='cat'].column_name
+    features_num = schema[schema['column_type']=='num'].column_name
+    return features_cat, features_num
+    
+# EDA
 def plot_dataframe_structure(df):
     """
     Plot dataframe structure: It shows the different data types in the dataframe.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    
-    Returns
-    -------
-    Plotting
+    Parameters:
+        df: Pandas dataframe.
+    Returns:
+        Plotting.
     """
     plt.figure()
     df.dtypes.value_counts().plot.pie(ylabel='')
@@ -49,14 +60,10 @@ def plot_dataframe_structure(df):
 def plot_categorical(df):
     """
     Plot the number of different values for each categorical feature in the dataframe.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    
-    Returns
-    -------
-    Plotting
+    Parameters:
+        df: Pandas dataframe.
+    Returns:
+        Plotting.
     """
     plt.figure()
     df.nunique().plot.bar()
@@ -66,14 +73,10 @@ def plot_categorical(df):
 def duplicates(df):
     """
     Remove the duplicate rows from dataframe.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    
-    Returns
-    -------
-    df: Pandas dataframe without duplicate rows 
+    Parameters:
+        df: Pandas dataframe.
+    Returns:
+        df: Pandas dataframe without duplicate rows.
     """    
     duplicate_rows_df = df[df.duplicated()]
     if duplicate_rows_df.shape[0] > 0:
@@ -88,16 +91,12 @@ def duplicates(df):
 def drop_na(df, threshold_NaN):
     """
     Remove the columns from dataframe containing NaN depending on threshold_NaN.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    threshold_NaN: in [0, 1], from GUI
-    
-    Returns
-    -------
-    df: Pandas dataframe 
-    drop_cols: list of dropped columns
+    Parameters:
+        df: Pandas dataframe
+        threshold_NaN: in [0, 1] from GUI.
+    Returns:
+        df: Pandas dataframe 
+        drop_cols: list of dropped columns.
     """    
     isna_stat = (df.isna().sum()/df.shape[0]).sort_values(ascending=True)
     drop_cols = []
@@ -112,17 +111,13 @@ def drop_na(df, threshold_NaN):
 def encoding(df, threshold_cat, target_col):
     """
     Encode the data.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    threshold_cat: integer, if the number of different values of a given column is less than this limit, 
-    this column is considered as categorical. 
-    
-    Returns
-    -------
-    df: Pandas dataframe 
-    encoded_cols: Pandas dataframe of columns with their encoding and range
+    Parameters:
+        df: Pandas dataframe
+        threshold_cat: integer, if the number of different values of a given column is less than this limit, 
+                       this column is considered as categorical. 
+    Returns:
+        df: Pandas dataframe 
+        encoded_cols: Pandas dataframe of columns with their encoding and range.
     """      
     encoded_cols = []
     for c in df.columns:
@@ -150,14 +145,10 @@ def encoding(df, threshold_cat, target_col):
 def imputation(df):
     """
     Impute NaN in the dataframe using IterativeImputer.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    
-    Returns
-    -------
-    df: Pandas dataframe 
+    Parameters:
+        df: Pandas dataframe.
+    Returns:
+        df: Pandas dataframe.
     """        
     isna_stat = (df.isna().sum()/df.shape[0]).sort_values(ascending=True) 
     if isna_stat.max() > 0.0: 
@@ -170,15 +161,11 @@ def imputation(df):
 def outliers(df, threshold_Z):
     """
     Remove the outliers from dataframe according to Z_score.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    threshold_Z: number from GUI. 
-    
-    Returns
-    -------
-    df: Pandas dataframe. 
+    Parameters:
+        df: Pandas dataframe
+        threshold_Z: number from GUI. 
+    Returns:
+        df: Pandas dataframe. 
     """  
     Z_score = np.abs(stats.zscore(df)) 
     df_o_Z = df[(Z_score < threshold_Z).all(axis=1)]
@@ -193,15 +180,12 @@ def correlated_columns(df, threshold_corr, target_col):
     """
     Display correlation matrix of features, and returns the list of the too correlated features
     according to threshold_corr.
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    threshold_corr: number from GUI
-    target: target column
-    Returns
-    -------
-    correlated_features: list of the features having a correlation greater than threshold_corr. 
+    Parameters:
+        df: Pandas dataframe
+        threshold_corr: number from GUI
+        target: target column.
+    Returns:
+        correlated_features: list of the features having a correlation greater than threshold_corr. 
     """  
     df = df.drop(target_col, axis=1)
     corr_matrix = df.corr() 
@@ -215,6 +199,13 @@ def correlated_columns(df, threshold_corr, target_col):
     return correlated_features
 
 def hierarchical_clustering(df):
+    """
+    Plot the hierarchical clustering of the features based on the Spearman rank-order correlations.
+    Parameters:
+        df: Pandas dataframe.
+    Returns:
+        Plotting.
+    """
     # from: https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance_multicollinear.html
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
     corr = spearmanr(df).correlation
@@ -240,19 +231,14 @@ def hierarchical_clustering(df):
     fig.tight_layout()
     plt.show()
 
-
 def plot_sns_corr_class(df, target_col):
     """
     Plot correlation information for classification problem (if Seaborn option is checked).
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    target_col: name of the target column. 
-    
-    Returns
-    -------
-    Plotting. 
+    Parameters:
+        df: Pandas dataframe
+        target_col: name of the target column. 
+    Returns:
+        Plotting. 
     """     
     g = sns.PairGrid(df, hue=target_col) 
     g.map_upper(sns.scatterplot) 
@@ -265,15 +251,11 @@ def plot_sns_corr_class(df, target_col):
 def plot_sns_corr_regre(df, target_col):
     """
     Plot correlation information for regression problem (if Seaborn option is checked).
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    target_col: name of the target column. 
-    
-    Returns
-    -------
-    Plotting. 
+    Parameters:
+        df: Pandas dataframe
+        target_col: name of the target column. 
+    Returns:
+        Plotting. 
     """      
     g = sns.PairGrid(df)
     g.map_upper(sns.scatterplot)
@@ -282,123 +264,13 @@ def plot_sns_corr_regre(df, target_col):
     g.fig.suptitle('Pairwise data relationships', y=1.01)
     plt.show()
     
-def model_filtering(level_0, model_imp, nb_model, score_stack, threshold_score):
-    """
-    Suppress estimators from level 0 having a test score smaller than threshold_score (from score_stack), then 
-    keep nb_model best estimators (according to model_imp).
-    Parameters
-    ----------
-    level_0: list of estimators of level 0
-    model_imp: sorted array of model importance
-    nb_model : number of model to keep
-    score_stack: accuracy of estimators on train and test sets in a tabular
-    threshold_score : minimal score
-    
-    Returns
-    -------
-    list of filtered estimators of level 0
-    """
-    # it is not possible to keep more models than we initially have
-    if nb_model > len(level_0):
-       nb_model = len(level_0)
-    
-    # keep model names and test scores
-    score_stack = np.delete(np.delete(score_stack, 1, axis =1), -1, axis = 0)
-    # keep models having test score greater than threshold_score 
-    score_stack = score_stack[score_stack[:,1] > threshold_score]
-    
-    # it is not possible to keep more models than we have filtered    
-    if nb_model > len(score_stack):
-       nb_model = len(score_stack)
-    
-    # keep models (in importance array) having test score greater than threshold_score
-    model_imp = model_imp[np.in1d(model_imp[:, 0], score_stack)]
-    model_imp_f = model_imp[np.argpartition(model_imp[:,1], -nb_model)[-nb_model:]].T[0]
-    
-    return list(filter(lambda x: x[0] in model_imp_f, level_0))
-
-def feature_filtering(feature_importance, nb_feature):
-    """
-    Separate features in two lists, the first one contains the nb_feature most important features, 
-    the second one contains the complement
-    Parameters
-    ----------
-    feature_importance: array of features with their importance
-    nb_feature: number of features we want to keep
-    
-    Returns
-    -------
-    best_feature: list of nb_feature most important features
-    worst_feature: list of the worst important features
-    """
-    # check nb_feature
-    if nb_feature > feature_importance.shape[0]:
-       nb_feature = feature_importance.shape[0] 
-    
-    best_feature = feature_importance[np.argpartition(feature_importance[:,1], -nb_feature)[-nb_feature:]].T[0]
-    worst_feature = list(set(feature_importance.T[0]) - set(best_feature))
-
-    return best_feature, worst_feature
-
-def split(X, y, random_state, test_size=0.33, threshold_entropy=0.7, undersampling=False, undersampler=None):
-    """
-    Split dataframe into train and test sets.
-    If the Shannon entropy of the target dataset is less than 0.7, RepeatedStratifiedKFold is used
-
-    Parameters
-    ----------
-    X: feature dataframe
-    y: target dataframe
-    
-    Returns
-    -------
-    X_train: train feature dataframe 
-    X_test: test feature dataframe
-    y_train: train target dataframe
-    y_test: test target dataframe
-    """
-    s_e = shannon_entropy(y)
-    if s_e < threshold_entropy:
-       if undersampling: 
-          if undersampler == 'Random': 
-             from imblearn.under_sampling import RandomUnderSampler
-             us = RandomUnderSampler()
-          elif undersampler == 'Centroids': 
-             from imblearn.under_sampling import ClusterCentroids
-             us = ClusterCentroids()
-          elif undersampler == 'AllKNN': 
-             from imblearn.under_sampling import AllKNN
-             us = AllKNN()
-          elif undersampler == 'TomekLinks': 
-             from imblearn.under_sampling import TomekLinks
-             us = TomekLinks()
-          else:
-             print("Unknown undersampler")       
-          X, y = us.fit_resample(X, y)
-          print("Shannon Entropy = {:.4}, split using undersampler {} and RepeatedStratifiedKFold".format(s_e, undersampler)) 
-       else: 
-          print("Shannon Entropy = {:.4}, split using RepeatedStratifiedKFold".format(s_e)) 
-       skfold = RepeatedStratifiedKFold(n_splits=5, random_state = random_state)
-       # enumerate the splits and summarize the distributions
-       for ind_train, ind_test in skfold.split(X, y):
-           X_train, X_test = X.iloc[ind_train], X.iloc[ind_test]
-           y_train, y_test = y.iloc[ind_train], y.iloc[ind_test] 
-    else:    
-       X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=None,\
-                                                           shuffle=True, random_state = random_state)
-    return X_train, X_test, y_train, y_test
-    
 def downcast_dtypes(df):
     """
-    Compress dataframe
-
-    Parameters
-    ----------
-    df: Pandas dataframe
-    
-    Returns
-    -------
-    df: Pandas dataframe
+    Compress the input dataframe.
+    Parameters:
+        df: Pandas dataframe.
+    Returns:
+        df: Pandas dataframe.
     """      
     start_mem = df.memory_usage().sum() / 1024**2
     print(('Memory usage of dataframe is {:.2f}' 
@@ -436,15 +308,11 @@ def downcast_dtypes(df):
 
 def shannon_entropy(y):
     """
-    Compute Shannon entropy of a dataset
-
-    Parameters
-    ----------
-    y: univariate Pandas dataframe
-    
-    Returns
-    -------
-    shannon entropy: float
+    Compute Shannon entropy of a dataset.
+    Parameters:
+        y: univariate Pandas dataframe.
+    Returns:
+        shannon entropy: float.
     """     
     from collections import Counter
     from numpy import log
@@ -455,23 +323,118 @@ def shannon_entropy(y):
     
     H = -sum([ (count/n) * log((count/n)) for clas,count in classes]) #shannon entropy
     return H/log(k)
+    
+# Dataset splitting
+def split(X, y, random_state, test_size=0.33, threshold_entropy=0.7, undersampling=False, undersampler=None):
+    """
+    Split dataframe into train and test sets.
+    If the Shannon entropy of the target dataset is less than 0.7, RepeatedStratifiedKFold is used.
+    Parameters:
+        X: feature dataframe
+        y: target dataframe.
+    Returns:
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    """
+    s_e = shannon_entropy(y)
+    if s_e < threshold_entropy:
+       if undersampling: 
+          if undersampler == 'Random': 
+             from imblearn.under_sampling import RandomUnderSampler
+             us = RandomUnderSampler()
+          elif undersampler == 'Centroids': 
+             from imblearn.under_sampling import ClusterCentroids
+             us = ClusterCentroids()
+          elif undersampler == 'AllKNN': 
+             from imblearn.under_sampling import AllKNN
+             us = AllKNN()
+          elif undersampler == 'TomekLinks': 
+             from imblearn.under_sampling import TomekLinks
+             us = TomekLinks()
+          else:
+             print("Unknown undersampler")       
+          X, y = us.fit_resample(X, y)
+          print("Shannon Entropy = {:.4}, split using undersampler {} and RepeatedStratifiedKFold".format(s_e, undersampler)) 
+       else: 
+          print("Shannon Entropy = {:.4}, split using RepeatedStratifiedKFold".format(s_e)) 
+       skfold = RepeatedStratifiedKFold(n_splits=5, random_state = random_state)
+       # enumerate the splits and summarize the distributions
+       for ind_train, ind_test in skfold.split(X, y):
+           X_train, X_test = X.iloc[ind_train], X.iloc[ind_test]
+           y_train, y_test = y.iloc[ind_train], y.iloc[ind_test] 
+    else:    
+       X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=None,\
+                                                           shuffle=True, random_state = random_state)
+    return X_train, X_test, y_train, y_test
+    
+# Modelling functions
+def model_filtering(level_0, model_imp, nb_model, score_stack, threshold_score):
+    """
+    Suppress estimators from level 0 having a test score smaller than threshold_score (from score_stack), then 
+    keep nb_model best estimators (according to model_imp).
+    Parameters:
+        level_0: list of estimators of level 0
+        model_imp: sorted array of model importance
+        nb_model : number of model to keep
+        score_stack: accuracy of estimators on train and test sets in a tabular
+        threshold_score : minimal score.
+    Returns:
+        list of filtered estimators of level 0.
+    """
+    # it is not possible to keep more models than we initially have
+    if nb_model > len(level_0):
+       nb_model = len(level_0)
+    
+    # keep model names and test scores
+    score_stack = np.delete(np.delete(score_stack, 1, axis =1), -1, axis = 0)
+    # keep models having test score greater than threshold_score 
+    score_stack = score_stack[score_stack[:,1] > threshold_score]
+    
+    # it is not possible to keep more models than we have filtered    
+    if nb_model > len(score_stack):
+       nb_model = len(score_stack)
+    
+    # keep models (in importance array) having test score greater than threshold_score
+    model_imp = model_imp[np.in1d(model_imp[:, 0], score_stack)]
+    model_imp_f = model_imp[np.argpartition(model_imp[:,1], -nb_model)[-nb_model:]].T[0]
+    
+    return list(filter(lambda x: x[0] in model_imp_f, level_0))
 
+def feature_filtering(feature_importance, nb_feature):
+    """
+    Separate features in two lists, the first one contains the nb_feature most important features, 
+    the second one contains the complement.
+    Parameters:
+        feature_importance: array of features with their importance
+        nb_feature: number of features we want to keep.
+    Returns
+        best_feature: list of nb_feature most important features
+        worst_feature: list of the worst important features.
+    """
+    # check nb_feature
+    if nb_feature > feature_importance.shape[0]:
+       nb_feature = feature_importance.shape[0] 
+    
+    best_feature = feature_importance[np.argpartition(feature_importance[:,1], -nb_feature)[-nb_feature:]].T[0]
+    worst_feature = list(set(feature_importance.T[0]) - set(best_feature))
+
+    return best_feature, worst_feature
+
+# Model evaluation functions
 def score_stacking_c(model, X_train, y_train, X_test, y_test):
     """
-    Compute the score of the stacked classification estimator and of each level_0 estimator
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X_train: train feature dataframe 
-    X_test: test feature dataframe
-    y_train: train target dataframe
-    y_test: test target dataframe
-    
-    Returns
-    -------
-    plotting: accuracy of estimators on train and test sets
-    res_stack: accuracy of estimators on train and test sets in a tabular
+    Compute the score of the stacked classification estimator and of each level_0 estimator.
+    Parameters:
+        model: estimator obtained after fitting
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    Returns:
+        plotting: accuracy of estimators on train and test sets
+        res_stack: accuracy of estimators on train and test sets in a tabular.
     """       
     nb_estimators = len(model.estimators_)
     res_stack = np.empty((nb_estimators + 1, 3), dtype='object')
@@ -507,20 +470,16 @@ def score_stacking_c(model, X_train, y_train, X_test, y_test):
 
 def score_stacking_r(model, X_train, y_train, X_test, y_test):
     """
-    Compute the score of the stacked regression estimator and of each level_0 estimator
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X_train: train feature dataframe 
-    X_test: test feature dataframe
-    y_train: train target dataframe
-    y_test: test target dataframe
-    
-    Returns
-    -------
-    plotting: accuracy of estimators on train and test sets
-    res_stack: accuracy of estimators on train and test sets in a tabular
+    Compute the score of the stacked regression estimator and of each level_0 estimator.
+    Parameters:
+        model: estimator obtained after fitting
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    Returns:
+        plotting: accuracy of estimators on train and test sets
+        res_stack: accuracy of estimators on train and test sets in a tabular.
     """        
     nb_estimators = len(model.estimators_)
     res_stack = np.empty((nb_estimators + 1, 3), dtype='object')
@@ -546,22 +505,18 @@ def score_stacking_r(model, X_train, y_train, X_test, y_test):
 
 def score_stacking(model, X_train, y_train, X_test, y_test):
     """
-    Compute the score of the stacked estimator and of each level_0 estimator
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X_train: train feature dataframe 
-    X_test: test feature dataframe
-    y_train: train target dataframe
-    y_test: test target dataframe
-    
-    Returns
-    -------
-    plotting: accuracy of estimators on train and test sets
-    res_stack: accuracy of estimators on train and test sets in a tabular
-    plotting: model importance according to performance
-    mod_imp: model importance in a tabular
+    Compute the score of the stacked estimator and of each level_0 estimator.
+    Parameters:
+        model: estimator obtained after fitting
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    Returns:
+        plotting: accuracy of estimators on train and test sets
+        res_stack: accuracy of estimators on train and test sets in a tabular
+        plotting: model importance according to performance
+        mod_imp: model importance in a table.
     """     
     if is_classifier(model):
        res_stack = score_stacking_c(model, X_train, y_train, X_test, y_test)
@@ -596,15 +551,11 @@ def find_coeff(model):
         
 def model_importance_c(model, level_1_model):
     """
-    Compute the model importance depending on final estimator coefficients for classification
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-
-    Returns
-    -------
-    mod_imp: sorted array of model importance 
+    Compute the model importance depending on final estimator coefficients for classification.
+    Parameters:
+        model: estimator obtained after fitting.
+    Returns:
+        mod_imp: sorted array of model importance. 
     """        
     level_0 = np.array(list(model.named_estimators_.keys()))
     n_classes = model.classes_.shape[0]
@@ -631,15 +582,11 @@ def model_importance_c(model, level_1_model):
 
 def model_importance_r(model, level_1_model):
     """
-    Compute the model importance depending on final estimator coefficients for regression
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    
-    Returns
-    -------
-    mod_imp: sorted array of model importance 
+    Compute the model importance depending on final estimator coefficients for regression.
+    Parameters:
+        model: estimator obtained after fitting.
+    Returns:
+        mod_imp: sorted array of model importance.
     """         
     level_0 = np.array(list(model.named_estimators_.keys()))
     coeff = find_coeff(model.final_estimator_)
@@ -651,16 +598,12 @@ def model_importance_r(model, level_1_model):
 
 def plot_model_importance(model, level_1_model):
     """
-    Compute the model importance depending on final estimator coefficients
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    
-    Returns
-    -------
-    plotting: model importance according to aggragator coefficients
-    mod_imp: sorted array of model importance 
+    Compute the model importance depending on final estimator coefficients.
+    Parameters:
+        model: estimator obtained after fitting.
+    Returns:
+        plotting: model importance according to aggregator coefficients
+        mod_imp: sorted array of model importance.
     """      
     if is_classifier(model):
        mod_imp = model_importance_c(model, level_1_model)
@@ -669,26 +612,22 @@ def plot_model_importance(model, level_1_model):
     mod_imp.T[1] = mod_imp.T[1] / np.sum(mod_imp.T[1])
     fig, ax = plt.subplots()
     ax.barh(mod_imp.T[0], mod_imp.T[1])
-    ax.set_title("Model Importance according to aggragator coefficients")
+    ax.set_title("Model Importance according to aggregator coefficients")
     fig.tight_layout()
     plt.show()
     return mod_imp
 
 def plot_perm_importance(model, X, y, CPU):
     """
-    Compute the feature permutation importance
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X: feature dataframe
-    y: target dataframe
-    CPU: boolean for CPU training
-    
-    Returns
-    -------
-    plotting: feature permutation importance
-    perm_imp: sorted array of feature permutation importance
+    Compute the feature permutation importance.
+    Parameters:
+        model: estimator obtained after fitting
+        X: feature dataframe
+        y: target dataframe
+        CPU: boolean for CPU training.
+    Returns:
+        plotting: feature permutation importance
+        perm_imp: sorted array of feature permutation importance.
     """       
     if is_classifier(model):
        scoring = 'accuracy'
@@ -708,20 +647,16 @@ def plot_perm_importance(model, X, y, CPU):
     plt.show()
     return perm_imp
 
-def plot_partial_dependence_c(model, X, features, features_cat, CPU):
+def plot_partial_dependence_c(model, X, features, features_cat, CPU, target_encoder):
     """
-    Plot partial dependence of features for a given classification estimator and a given dataset
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X: feature dataframe
-    features: list of features
-    CPU: boolean for CPU training
-    
-    Returns
-    -------
-    plotting: partial dependence of input features
+    Plot partial dependence of features for a given classification estimator and a given dataset.
+    Parameters:
+        model: estimator obtained after fitting
+        X: feature dataframe
+        features: list of features
+        CPU: boolean for CPU training.
+    Returns:
+        plotting: partial dependence of input features.
     """      
     target = model.classes_
     for ind in range(len(target)):
@@ -753,24 +688,20 @@ def plot_partial_dependence_c(model, X, features, features_cat, CPU):
                   ax = ax,
                   )
 
-        display.figure_.suptitle("Partial dependence for class " + str(target[ind]))
+        display.figure_.suptitle("Partial dependence for the class: " + str(target_encoder.inverse_transform([ind])[0]))
         display.figure_.subplots_adjust(hspace=0.3)
         plt.show()
     
 def plot_partial_dependence_r(model, X, features, features_cat, CPU):
     """
-    Plot partial dependence of features for a given regression estimator and a given dataset
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X: feature dataframe
-    features: list of features
-    CPU: boolean for CPU training
-    
-    Returns
-    -------
-    plotting: partial dependence of input features
+    Plot partial dependence of features for a given regression estimator and a given dataset.
+    Parameters:
+        model: estimator obtained after fitting
+        X: feature dataframe
+        features: list of features
+        CPU: boolean for CPU training.
+    Returns:
+        plotting: partial dependence of input features.
     """      
     fig, ax = plt.subplots(figsize=(10, 5))
     if CPU==True:
@@ -802,21 +733,17 @@ def plot_partial_dependence_r(model, X, features, features_cat, CPU):
     display.figure_.subplots_adjust(hspace=0.3)
     plt.show() 
 
-def plot_partial_dependence(model, X, features, CPU):
+def plot_partial_dependence(model, X, features, CPU, target_encoder):
     """
-    Plot partial dependence of features for a given estimator and a given dataset
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X: feature dataframe
-    features: list of features, if features = [], partial dependences will be plot for all numeric features
-    CPU: boolean for CPU training
-    
-    Returns
-    -------
-    plotting: partial dependence of input features
-    """    
+    Plot partial dependence of features for a given estimator and a given dataset.
+    Parameters:
+        model: estimator obtained after fitting
+        X: feature dataframe
+        features: list of features, if features = [], partial dependences will be plot for all numeric features
+        CPU: boolean for CPU training.
+    Returns:
+        plotting: partial dependence of input features.
+    """
     # if input list of features is empty, we use the list of numeric features
     if features == []:
        features = X.columns.tolist() 
@@ -824,35 +751,40 @@ def plot_partial_dependence(model, X, features, CPU):
     #  we keep only numeric features    
        features = np.intersect1d(features, X.columns.tolist()).tolist() 
     
-    schema = pd.read_csv('./schema.csv')
-    features_cat = schema[schema['column_type']=='cat'].column_name.tolist()
-    features_num = schema[schema['column_type']=='num'].column_name.tolist()
+    features_cat, features_num = get_features()
     
-    if features_cat == []:
+    if features_cat.tolist() == []:
        features_cat = None 
         
     if is_classifier(model):
-       plot_partial_dependence_c(model, X, features, features_cat, CPU)
+       plot_partial_dependence_c(model, X, features, features_cat, CPU, target_encoder)
     else:
        plot_partial_dependence_r(model, X, features, features_cat, CPU)
             
-def pd_ice_plot(model, X, feature, CPU):
-    def ppd(model, X, feature, CPU):
-        plot_partial_dependence(model, X, feature, CPU) 
+def pd_ice_plot(model, X, feature, CPU, target_encoder=None):
+    """
+    Interactively plot partial dependence of features for a given estimator and a given dataset.
+    Parameters:
+        model: estimator obtained after fitting
+        X: feature dataframe
+        features: list of features, if features = [], partial dependences will be plot for all numeric features
+        CPU: boolean for CPU training.
+    Returns:
+        plotting: partial dependence of input features.
+    """    
+    
+    def ppd(model, X, feature, CPU, target_encoder):
+        plot_partial_dependence(model, X, feature, CPU, target_encoder) 
         
-    interact(ppd, model=fixed(model), X=fixed(X), feature=feature, CPU=fixed(CPU));
+    interact(ppd, model=fixed(model), X=fixed(X), feature=feature, CPU=fixed(CPU), target_encoder=fixed(target_encoder));
 
 def plot_history(history):
     """
-    Plot learning curves of Keras neural network
-
-    Parameters
-    ----------
-    history: history of Keras neural network
-    
-    Returns
-    -------
-    plotting: learning curves of Keras neural network
+    Plot learning curves of Keras neural network.
+    Parameters:
+        history: history of Keras neural network.
+    Returns:
+        plotting: learning curves of Keras neural network.
     """     
     pd.DataFrame(history.history).plot(figsize=(12, 9))
     plt.title("Learning Curve")
@@ -863,19 +795,15 @@ def plot_history(history):
     
 def K_confusion_matrix(model, X_train, y_train, X_test, y_test):
     """
-    Plot confusion matrix of a classification estimator on train and test sets
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X_train: train feature dataframe 
-    X_test: test feature dataframe
-    y_train: train target dataframe
-    y_test: test target dataframe
-    
-    Returns
-    -------
-    plotting: confusion matrix on train and test sets
+    Plot confusion matrix of a classification estimator on train and test sets.
+    Parameters:
+        model: estimator obtained after fitting
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    Returns:
+        plotting: confusion matrix on train and test sets.
     """     
     from sklearn.metrics import confusion_matrix
     y_pred = model.predict(X_train)
@@ -901,19 +829,15 @@ def K_confusion_matrix(model, X_train, y_train, X_test, y_test):
     
 def K_classification_report(model, X_train, y_train, X_test, y_test):
     """
-    Plot classification report of a classification estimator on train and test sets
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X_train: train feature dataframe 
-    X_test: test feature dataframe
-    y_train: train target dataframe
-    y_test: test target dataframe
-    
-    Returns
-    -------
-    plotting: classification report on train and test sets
+    Plot classification report of a classification estimator on train and test sets.
+    Parameters:
+        model: estimator obtained after fitting
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    Returns:
+        plotting: classification report on train and test sets.
     """        
     y_pred = model.predict(X_train)
     if len(y_pred.shape)>1:
@@ -933,38 +857,50 @@ def K_classification_report(model, X_train, y_train, X_test, y_test):
 def K_r2(model, X_train, y_train, X_test, y_test):
     """
     Compute R^2 of a regression estimator on train and test sets.
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    X_train: train feature dataframe 
-    X_test: test feature dataframe
-    y_train: train target dataframe
-    y_test: test target dataframe
-    
-    Returns
-    -------
-    array: scores on train and test sets
+    Parameters:
+        model: estimator obtained after fitting
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    Returns:
+        array: scores on train and test sets.
     """         
     y_pred_train = model.predict(X_train)    
     y_pred_test = model.predict(X_test)
     dr2={'train': [r2_score(y_train, y_pred_train)],\
          'test': [r2_score(y_test, y_pred_test)]}
     display(pd.DataFrame(data=dr2).style.hide_index())
+    
+def K_mape(model, X_train, y_train, X_test, y_test):
+    """
+    Compute mean absolute percentage error of time series forcasting on train and test sets.
+    Parameters:
+        model: estimator obtained after fitting
+        X_train: train feature dataframe 
+        X_test: test feature dataframe
+        y_train: train target dataframe
+        y_test: test target dataframe.
+    Returns:
+        array: scores on train and test sets.
+    """         
+    y_pred_train = model.predict(X_train)    
+    y_pred_test = model.predict(X_test)
+    dmape={'train': [mean_absolute_percentage_error(y_train, y_pred_train)],\
+           'test': [mean_absolute_percentage_error(y_test, y_pred_test)]}
+    display(pd.DataFrame(data=dmape).style.hide_index())
      
+# Fast API, Docker, Kubernetes functions
 def fastapi_server(model, model_name, X, y, port, Docker=False):
     """
     Generate the fastAPI server file, and save it in the current folder.
-
-    Parameters
-    ----------
-    model: estimator obtained after fitting
-    model_name : name of the saved model
-    X: feature dataframe 
-    y: target dataframe
-    IP_address: IP address of the server 
-    port: port of the server
-    
+    Parameters:
+        model: estimator obtained after fitting
+        model_name : name of the saved model
+        X: feature dataframe 
+        y: target dataframe
+        IP_address: IP address of the server 
+        port: port of the server.  
     """   
     string = ""
     string = string  + "from fastapi import FastAPI\n"
@@ -1106,6 +1042,11 @@ def fastapi_server(model, model_name, X, y, port, Docker=False):
     file_server.close()  
 
 def dockerfile_generator(port):
+    """
+    Generate the Docker dockerfile, and save it in the current folder.
+    Parameters:
+        port: port of the server.   
+    """   
     string = ""
     string = string  + "FROM python:3.10\n"
     string = string  + "\n"
@@ -1124,6 +1065,12 @@ def dockerfile_generator(port):
     dockerfile.close()
     
 def kube_yaml_generator(name, port):
+    """
+    Generate the Kubernetes yaml file, and save it in the current folder.
+    Parameters:
+        name: name of the server
+        port: port of the server.   
+    """   
     string = ""
     string = string  + "apiVersion: v1\n"
     string = string  + "kind: Service\n"
@@ -1180,6 +1127,16 @@ def kube_yaml_generator(name, port):
     kubernetes.close()
     
 def dockerize(name, model, model_name, X, y, port):
+    """
+    Prepare a package for Docker delivery.
+    Parameters:
+        name: name of the server
+        model: estimator obtained after fitting
+        model_name: name of the saved model
+        X: feature dataframe 
+        y: target dataframe
+        port: port of the server.   
+    """   
     import os
     import shutil
     
@@ -1270,3 +1227,343 @@ def store_data(name, path, threshold_corr, threshold_model, threshold_feature, t
 
     conn.commit()
     conn.close()
+
+# Functions used in time series analysis
+def plot_correlation(df):
+    """
+    Compute and plot the correlation and the hierarchical clustering of the features of the input time series dataframe
+    Parameters:
+        df: a dataframe.
+    Returns:
+        Plotting of the correlation and the hierarchical clustering.
+    """
+    if df.shape[1] > 1:
+       print('Correlation matrix')
+       corr = df.corr()
+       display(corr.style.background_gradient(cmap='coolwarm'))
+       print('Hierarchical clustering')
+       hierarchical_clustering(df)
+    else:
+       print('No correlation for univariate time series') 
+    
+def plot_acf_pacf(df, column):
+    """
+    Compute and plot the autocorrelation and partial autocorrelation functions of a selected feature of the input time series dataframe.
+    For more information: 
+    - https://www.statsmodels.org/devel/generated/statsmodels.graphics.tsaplots.plot_acf.html
+    - https://www.statsmodels.org/devel/generated/statsmodels.graphics.tsaplots.plot_pacf.html.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe interactively selected.
+    Returns:
+        Plotting of the autocorrelation and partial autocorrelation functions.
+    """
+    def p_a_p(df, column):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+        plot_acf(df[column], ax=ax1)
+        plot_pacf(df[column], ax=ax2)
+        fig.suptitle("Autocorrelation information of " + str(column))
+        plt.show()
+        
+    interact(p_a_p, df=fixed(df), column=column)
+
+def plot_seasonal_decompose(df, column, model, period):
+    """
+    Interactively plot the seasonal decomposition of a selected feature of the input time series dataframe.
+    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.seasonal.seasonal_decompose.html.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe
+        model: additive/multiplicative
+        period: period of the series.
+    Returns:
+        Plotting of the seasonal decomposition.
+    """    
+    def p_s_d(df, column, model, period):
+        result = seasonal_decompose(df[column], model=model, period=period)
+        fig = result.plot()
+        fig.set_size_inches((10, 10))
+        fig.tight_layout()
+        plt.show()
+       
+    interact(p_s_d, df=fixed(df), column=column, model=model, period=period, continuous_update=False)
+    
+def plot_seasonal_decompose_2(df, column, period1, period2):
+    """
+    Interactively plot the seasonal decomposition of a selected feature of the input time series dataframe taking into account 2 periods.
+    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.seasonal.MSTL.html#statsmodels.tsa.seasonal.MSTL.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe
+        period1: 1st period of the series
+        period2: 2nd period of the series.
+    Returns:
+        Plotting of the seasonal decomposition.
+    """
+    def p_s_d_2(df, column, period1, period2):
+        result = MSTL(df[column], periods=(period1, period1*period2)).fit()
+        fig = result.plot()
+        fig.set_size_inches((10, 10))
+        fig.tight_layout()
+        plt.show()
+       
+    interact_manual(p_s_d_2, df=fixed(df), column=column, period1=period1, period2=period2)
+
+# Constants used in the fuction plot_unobserved_components
+local_linear_trend_model = {
+    'level': 'local linear trend', 'trend': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True
+}
+
+smooth_trend_model = {
+    'level': 'smooth trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True, 'trend': True
+}
+
+random_trend_model = {
+    'level': 'random trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True, 'trend': True
+}
+
+local_level_with_deterministic_trend_model = {
+    'level': 'local linear deterministic trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True
+}
+
+random_walk_with_drift_model = {
+    'level': 'random walk with drift', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True
+}
+
+model_uc = [('local linear trend', local_linear_trend_model), ('smooth trend', smooth_trend_model), 
+         ('random trend', random_trend_model), ('local linear deterministic trend', local_level_with_deterministic_trend_model), 
+         ('random walk with drift', random_walk_with_drift_model)
+        ]
+
+method = [('modified Powell’s method', 'powell'), ('Nelder-Mead', 'nm'), ('Broyden-Fletcher-Goldfarb-Shanno', 'bfgs'), 
+          ('limited-memory BFGS with optional box constraints','lbfgs'),  ('Newton-Raphson','newton'), 
+          ('conjugate gradient', 'cg'), ('Newton-conjugate gradient', 'ncg'), ('basin-hopping solver', 'basinhopping')]
+
+def plot_unobserved_components(df, column, model, method, confidence):
+    """
+    Interactively plot the univariate unobserved components of a selected feature of the input time series dataframe.
+    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.statespace.structural.UnobservedComponents.html#statsmodels.tsa.statespace.structural.UnobservedComponents.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe
+        model: model used to compute the unobserved components
+        method: method used to compute the unobserved components
+        confidence: confidence intervals for the components.
+    Returns:
+        Plotting of the univariate unobserved components.
+    """    
+    def p_u_c(df, column, model, method, confidence):
+        qwargs = model
+        output_mod = UnobservedComponents(df[column], **qwargs)
+        output_res = output_mod.fit(method=method, disp=False)
+        output_res.plot_components(legend_loc='upper left', fig=plt.tight_layout(), figsize=(10, 16), alpha=1-confidence)
+        plt.show();
+        print(output_res.summary())
+       
+    interact_manual(p_u_c, df=fixed(df), column=column, model=model, method=method, confidence=confidence)
+
+def ts_dataframe_to_supervised(df, target, n_in=1, n_out=0, dropT=True):
+    """
+    Transform a time series dataframe into a supervised learning dataset.
+    Parameters:
+        df: a dataframe.
+        target: this is the target variable you intend to use in supervised learning
+        n_in: Number of lag observations as input (X).
+        n_out: Number of observations as output (y).
+        dropT: Boolean - whether or not to drop columns at time "t".
+    Returns:
+        Pandas DataFrame of series framed for supervised learning.
+    """
+    namevars = df.columns.tolist()
+    # input sequence (t-n, ... t-1)
+    drops = []
+    for i in range(n_in, -1, -1):
+        if i == 0:
+            for var in namevars:
+                addname = var+'_t'
+                df.rename(columns={var:addname},inplace=True)
+                drops.append(addname)
+        else:
+            for var in namevars:
+                addname = var+'_t_'+str(i)
+                df[addname] = df[var].shift(i)
+    # forecast sequence (t, t+1, ... t+n)
+    if n_out == 0:
+        n_out = False
+    for i in range(1, n_out):
+        for var in namevars:
+            addname = var+'_t_'+str(i)
+            df[addname] = df[var].shift(-i)
+    # drop rows with NaN values
+    df.dropna(inplace=True,axis=0)
+    # put it all together
+    target = target+'_t'
+    if dropT:
+        drops.remove(target)
+        df.drop(drops, axis=1, inplace=True)
+    preds = [x for x in list(df) if x not in [target]] 
+    return df, target, preds
+
+def timeseries_train_test_split(X, y, test_size):
+    """
+    Perform train-test split with respect to time series structure.
+    Parameters:
+        X: feature dataframe
+        y: target dataframe
+        test_size: proportion reserved for the test file.
+    Returns:
+        X_train: train set (features)
+        X_test: test set (features)
+        y_train: train set (target)
+        y_test: test set (target).
+    """
+    test_index = int(len(X) * (1 - test_size))
+    X_train = X[:test_index]
+    X_test = X[test_index:]
+    y_train = y[:test_index]
+    y_test = y[test_index:]
+    return X_train, X_test, y_train, y_test
+
+def mean_absolute_percentage_error(y_true, y_pred):
+    """
+    Compute the mean absolute percentage error .
+    Parameters:
+        y_true: correct target values
+        y_pred: predicted target values. 
+    Returns:
+        the mean absolute percentage error.
+    """
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+def plot_model_results(X, y, test_size, model, confidence, plot_intervals, plot_anomalies):
+    """
+    Interactively plot:
+        - the modelled vs original values
+        - the prediction intervals according to a given confidence interval
+        - the anomalies (points that resides outside the confidence interval)
+        - the feature permutation importance.
+    Parameters:
+        X: feature dataframe
+        y: target dataframe 
+        test_size: proportion reserved for the test file
+        model: model used for predictions
+        confidence: confidence intervals
+        plot_intervals: Boolean for displaying confidence intervals
+        plot_anomalies: Boolean for displaying anomalies. 
+    Returns:
+        Plottings.
+    """    
+    def p_m_s(X, y, test_size, model, confidence, plot_intervals, plot_anomalies):
+        
+        X_train, X_test, y_train, y_test = timeseries_train_test_split(X, y, test_size)
+
+        # we are using random forest here, feel free to swap this out
+        # with your favorite regression model
+        model.fit(X_train, y_train)
+        prediction = model.predict(X_test)
+
+        plt.figure(figsize=(15, 7))
+
+        x = X_test.index.date
+        # x = range(prediction.size)
+        plt.plot(x, prediction, label='prediction', linewidth=2.0)
+        plt.plot(x, y_test, label='actual', linewidth=2.0)
+        if plot_intervals:
+            timeseries_cv = TimeSeriesSplit(n_splits=5)
+            cv = cross_val_score(model, X_train, y_train, 
+                                 cv=timeseries_cv, scoring='neg_mean_absolute_error')
+            mae = -1 * cv.mean()
+            deviation = cv.std()
+
+            # confidence interval computation
+            scale = stats.norm.ppf(confidence)
+            margin_error = mae + scale * deviation
+            lower = prediction - margin_error
+            upper = prediction + margin_error
+
+            fill_alpha = 0.2
+            fill_color = '#66C2D7'
+            plt.fill_between(x, lower, upper, color=fill_color, alpha=fill_alpha, label= str(confidence*100) + '% CI')      
+
+            if plot_anomalies:
+                anomalies = np.array([np.nan] * len(y_test))
+                anomalies[y_test < lower] = y_test[y_test < lower]
+                anomalies[y_test > upper] = y_test[y_test > upper]
+                plt.plot(anomalies, 'o', markersize=10, label='Anomalies')
+
+        error = mean_absolute_percentage_error(prediction, y_test)
+        plt.title('Model: ' + str(model) + '\nMean absolute percentage error: {0:.2f}%'.format(error))
+        plt.legend(loc='best')
+        plt.tight_layout()
+        plt.grid(True)
+
+        plot_perm_importance(model, X_test, y_test, CPU=True)
+        
+    interact_manual(p_m_s, X=fixed(X), y=fixed(y), test_size=test_size, model=model, confidence=confidence, plot_intervals=plot_intervals, plot_anomalies=plot_anomalies)
+    
+def plot_ts_results(X_train, y_train, X_test, y_test, model, confidence, plot_intervals, plot_anomalies):
+    """
+    Interactively plot:
+        - the modelled vs original values
+        - the prediction intervals according to a given confidence interval
+        - the anomalies (points that resides outside the confidence interval)
+    Parameters:
+        X_train: train feature dataframe
+        y_train: train target dataframe 
+        X_test: test feature dataframe
+        y_test: test target dataframe 
+        model: model used for predictions
+        confidence: confidence intervals
+        plot_intervals: Boolean for displaying confidence intervals
+        plot_anomalies: Boolean for displaying anomalies. 
+    Returns:
+        Plottings.
+    """    
+    def p_m_s(X_train, y_train, X_test, y_test, model, confidence, plot_intervals, plot_anomalies):
+        
+        prediction = model.predict(X_test)
+
+        plt.figure(figsize=(15, 7))
+
+        x = X_test.index.date
+        # x = range(prediction.size)
+        plt.plot(x, prediction, label='prediction', linewidth=2.0)
+        plt.plot(x, y_test, label='actual', linewidth=2.0)
+        if plot_intervals:
+            timeseries_cv = TimeSeriesSplit(n_splits=5)
+            cv = cross_val_score(model, X_train, y_train, 
+                                 cv=timeseries_cv, scoring='neg_mean_absolute_error')
+            mae = -1 * cv.mean()
+            deviation = cv.std()
+
+            # confidence interval computation
+            scale = stats.norm.ppf(confidence)
+            margin_error = mae + scale * deviation
+            lower = prediction - margin_error
+            upper = prediction + margin_error
+
+            fill_alpha = 0.2
+            fill_color = '#66C2D7'
+            plt.fill_between(x, lower, upper, color=fill_color, alpha=fill_alpha, label= str(confidence*100) + '% CI')      
+
+            if plot_anomalies:
+                anomalies = np.array([np.nan] * len(y_test))
+                anomalies[y_test < lower] = y_test[y_test < lower]
+                anomalies[y_test > upper] = y_test[y_test > upper]
+                plt.plot(anomalies, 'o', markersize=10, label='Anomalies')
+
+        error = mean_absolute_percentage_error(prediction, y_test)
+        plt.title('Mean absolute percentage error: {0:.2f}%'.format(error))
+        plt.legend(loc='best')
+        plt.tight_layout()
+        plt.grid(True)
+        
+    interact_manual(p_m_s, X_train=fixed(X_train), y_train=fixed(y_train), X_test=fixed(X_test), y_test=fixed(y_test), model=fixed(model), confidence=confidence, plot_intervals=plot_intervals, plot_anomalies=plot_anomalies)
+    
+
+

@@ -1,0 +1,40 @@
+name: ezstacking
+channels:
+ - defaults
+dependencies:
+ - python=3.10
+ - anaconda
+ - pip
+ - pip:
+   - jupyterlab==3.6.1
+   - jupyter==1.0.0
+   - ipython==8.10.0
+   - notebook==6.5.2
+   - nbconvert==7.2.9
+   - matplotlib==3.7.3
+   - pandas==1.5.3
+   - yellowbrick==1.5
+   - ydata-profiling==4.6.0
+   - pyts==0.12.0
+   - statsmodels==0.14.1
+#   - sktime==0.25.0
+   - fasteda==1.0.1
+   - seaborn==0.12.2
+   - graphviz==0.20.1
+   - papermill==2.3.4
+   - openpyxl==3.1.1
+   - scikit-learn==1.4.1.post1
+   - imbalanced-learn==0.11.0
+   - tensorflow==2.15.0
+   - keras==2.15.0
+   - scikeras==0.12.0
+   - xgboost==2.0.3
+   - ipywidgets==8.0.4
+   - ipyfilechooser==0.6.0
+   - odfpy==1.4.1
+   - fastapi==0.92.0
+   - uvicorn==0.20.0
+   - nest_asyncio==1.5.6
+   - loguru==0.6.0
+   - absl-py==1.4.0
+   - six==1.16.0

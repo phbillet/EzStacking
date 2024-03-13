@@ -1,16 +1,16 @@
-<h1 style="text-align: center;">EZStacking: from data to Kubernetes thru Scikit-Learn, FastAPI and Docker</h1>
+<h1 style="text-align: center;">EzStacking: from data to Kubernetes thru Scikit-Learn, Keras, FastAPI and Docker</h1>
 
 
-EZStacking is a [**development tool**](#ezstacking---as-development-tool) designed to adress [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems. 
+EzStacking is a [**development tool**](#ezstacking---as-development-tool) designed to adress [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems. 
 
-EZStacking handles **classification**, **regression** and **time series forecasting** problems for **structured data** (_cf. Notes hereafter_). 
+EzStacking handles **classification**, **regression** and **time series forecasting** problems for **structured data** (_cf. Notes hereafter_). 
 
-EZStacking allows the **final model** to be **optimised** along three axes:
+EzStacking allows the **final model** to be **optimised** along three axes:
 - the number of **features**
 - the number of **level 0 models**
 - the **complexity** (depth) of the level 0 models.
 
-The main principles used in EZStacking are also presented in these two articles:
+The main principles used in EzStacking are also presented in these two articles:
 - [Model stacking to improve prediction and variable importance robustness for soft sensor development](https://www.sciencedirect.com/science/article/pii/S2772508122000254) Maxwell Barton, Barry Lennox - Digital Chemical Engineering Volume 3, June 2022
 - [Stacking with Neural network for Cryptocurrency investment](https://arxiv.org/pdf/1902.07855v1.pdf) Avinash Barnwal, Haripad Bharti, Aasim Ali, and Vishal Singh - Inncretech Inc., Princeton, February 2019.
 
@@ -25,15 +25,15 @@ The **development process** produces:
 
 _Notes:_ 
 * _the time series forecasting problem is based on the transformation of time series to supervised learning problem_
-* _EZStacking **must** be used with *.csv dataset using separator ','_  
+* _EzStacking **must** be used with *.csv dataset using separator ','_  
 * _the column names **must not** contain spaces (otherwise it will produce error during server generation)_
 * _for the **time series** forecasting, one of the columns in the dataset must be a **temporal value**._
 
-# EZStacking - How to install it
+# EzStacking - How to install it
 First you have to:
 * install [**Anaconda**](https://anaconda.org/) 
-* create the **virtual environment** EZStacking using the following command: `conda env create -f EZStacking.yaml`
-* **activate** the virtual environment using the following command: `conda activate EZStacking`
+* create the **virtual environment** EzStacking using the following command: `conda env create -f ezstacking.yaml`
+* **activate** the virtual environment using the following command: `conda activate ezstacking`
 * **install kernel** in ipython using the following command: `ipython kernel install --user --name=ezstacking`
 * launch the **Jupyter server** using the following command: `jupyter-lab --no-browser`
 
@@ -42,24 +42,24 @@ _Note: `jupyter-lab` is a comfortable development tool more flexible than `jupyt
 ### How to uninstall it
 You simply have to: 
 * **deactivate** the virtual environment using the following command: `conda deactivate`
-* **remove the virtual environment** using the following command: `conda remove --name EZStacking --all`  
+* **remove the virtual environment** using the following command: `conda remove --name ezstacking --all`  
 * **remove the kernel** using the following command: `jupyter kernelspec uninstall ezstacking`
 
-# EZStacking - How to use it
+# EzStacking - How to use it
 
 ## Input file and problem characteristics
 
-In Jupyter, first open the notebook named `EZStacking.ipynb`:
+In Jupyter, first open the notebook named `ezstacking.ipynb`:
 
 ![First launch](./screenshots/EZStacking_first_launch.png)
 
 Then click on `Run All Cells`:
 
-![EZStacking GUI](./screenshots/EZStacking_gui.png)
+![ezstacking GUI](./screenshots/EZStacking_gui.png)
 
 First select your **file**, then select the **target** name (_i.e._ the variable on which we want to make predictions), the **problem type** (_i.e._ **classification** if the target is **discrete**, **regression** if the target is **continous**, if the problem is **time dependent**, the **time indexing column** and the **lag number** must be filled) and the **data size**:
 
-![EZStacking GUI](./screenshots/EZStacking_file_selection.png)
+![ezstacking GUI](./screenshots/EZStacking_file_selection.png)
 
 ![EZStacking GUI_ts](./screenshots/EZStacking_ts.png)
 
@@ -70,7 +70,7 @@ _Notes:_
 ## Development
 Now, let's choose the options:
 
-![EZStacking GUI](./screenshots/EZStacking_dev_tab.png)
+![ezstacking GUI](./screenshots/EZStacking_dev_tab.png)
 
 ### EDA
 
@@ -90,7 +90,7 @@ _Notes:_
 * _the visualisation option Seaborn can produce time consuming graphics._
 
 #### Thresholds in EDA
-![EZStacking Thresholds EDA](./screenshots/EZStacking_thresholds_eda.png)
+![ezstacking Thresholds EDA](./screenshots/EZStacking_thresholds_eda.png)
 
 _Notes:_
 * _threshold_cat: if the **number of different values** in a column is less than this number, the column will be considered as a **categorical column**_
@@ -100,7 +100,7 @@ _Notes:_
 
 ### Splitting
 
-![EZStacking Splitting](./screenshots/EZStacking_thresholds_split.png)
+![ezstacking Splitting](./screenshots/EZStacking_thresholds_split.png)
 
 _Notes:_
 * _test size: **proportion** of the dataset to include in the test split_
@@ -108,7 +108,7 @@ _Notes:_
 * _if the option **Undersampling** is checked, then an [undersampler](https://imbalanced-learn.org/stable/references/under_sampling.html) must be chosen with care._
 
 ### Modelling
-![EZStacking Modelling](./screenshots/EZStacking_modelling.png) 
+![ezstacking Modelling](./screenshots/EZStacking_modelling.png) 
 
 
 |Model	|Data size | |Model |Data size |
@@ -124,9 +124,9 @@ _Notes:_
 
 _Notes:_
 * _if the option "**No correleation**" is checked, the model will not integrate decorrelation step_
-* _if the option "**No model optimization**" is checked, the number of models and of features will not be reduced_
+* _if the option "**No model optimization**" is checked, the number of models and of features will not be reduced automatically_
 * _if **no estimator** is selected, the **regressions** (resp. **classifications**) will use **linear regressions** (resp. **logistic regressions**)_
-* _depending on the **data size**, EZStacking uses the estimators given in the preceding table for the level 0_
+* _depending on the **data size**, EzStacking uses the estimators given in the preceding table for the level 0_
 * _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on gaussian processes do not benefit of it_
 * _the Gaussian methos option is only available for small dataset._ 
 
@@ -152,23 +152,23 @@ _Notes:_
 ### Build
 Simply enter a file name:
 
-![EZStacking Output](./screenshots/EZStacking_build.png)
+![ezstacking output](./screenshots/EZStacking_build.png)
 
-Just click on the button ![EZStacking Generate](./screenshots/EZStacking_generate.png), you should find **your notebook** in the **current folder** (otherwise a Python error will be emitted).
+Just click on the button ![ezstacking generate](./screenshots/EZStacking_generate.png), you should find **your notebook** in the **current folder** (otherwise a Python error will be emitted).
 
 Then open the notebook, and click on the button `Run All Cells`.
 
 ## Test
-![EZStacking Output](./screenshots/EZStacking_test.png)
+![ezstacking Output](./screenshots/EZStacking_test.png)
 
-You just have to fill the numbers of (passing and non-passing) tests. Then click on the button ![EZStacking Generate Tests](./screenshots/EZStacking_generate_tests.png), it will generate the file `test.sh`.
+You just have to fill the numbers of (passing and non-passing) tests. Then click on the button ![ezstacking generate tests](./screenshots/EZStacking_generate_tests.png), it will generate the file `test.sh`.
 
-Now, at the bottom of the generated notebook, click on the link ![EZStacking link](./screenshots/EZStacking_link.png).
+Now, at the bottom of the generated notebook, click on the link ![ezstacking link](./screenshots/EZStacking_link.png).
 
 It opens the server notebook, then execute the line `run server.py` (and check carfully if the server is well started). If you have chosen the link http://127.0.0.1:8000/docs it opens the classical test gui of FastAPI.
 
 If you have clicked on the link [client](client), it opens the client notebook and you just have to execute the first command, the result should look like the following:
-![EZStacking Tests_exec](./screenshots/EZStacking_test_exec.png)
+![ezstacking Tests_exec](./screenshots/EZStacking_test_exec.png)
 
 ## Docker
 
@@ -203,9 +203,9 @@ _**Note**:_
 * _If the container is **running in Docker**, it must be **stopped** before **testing** it in **Kubernetes**._
 
 ## Zip & Clean
-![EZStacking Output](./screenshots/EZStacking_zip_clean.png)
+![ezstacking output](./screenshots/EZStacking_zip_clean.png)
 
-If you click on the button ![EZStacking Zip](./screenshots/EZStacking_zip.png), EZStacking generates a zip archive file containing:
+If you click on the button ![ezstacking Zip](./screenshots/EZStacking_zip.png), EzStacking generates a zip archive file containing:
 * the initial dataset
 * the developement notebook
 * the model
@@ -217,7 +217,7 @@ Further more, it also suppresses from the folder the elements added to the archi
 
 _Note: it is advisable to close properly the generated notebooks (`Ctrl + Shift + Q`)._
 
-# EZStacking - As development tool
+# EzStacking - As development tool
 ## Development process
 Once the first notebook has been generated, the development process can be launched.
 
@@ -322,7 +322,7 @@ Regression |  Classification
 
 
 ## Serving the model
-EZStacking also generates an API based on [**FastAPI**](https://fastapi.tiangolo.com/).
+EzStacking also generates an API based on [**FastAPI**](https://fastapi.tiangolo.com/).
 
 The complete **development process** produces three objects:
 * a **schema**
@@ -347,22 +347,28 @@ As we have already seen, the server returns the consumption of each request, in 
 A test file for **Docker** (and Kubernetes) is also created, it is located in the directory associated with the Docker container.
 
 # Some results
-Some results are given in [Kaggle](https://www.kaggle.com/philippebillet/code).
+I spent some time on [Kaggle](https://www.kaggle.com/philippebillet/code), some results about the optimisation process described here are given in this site, moreover and analysis of the results can be found [here](https://www.kaggle.com/code/philippebillet/stacking-importances-result-analysis). 
+I became Nobebooks Master with this project.
+
+Time has passed and EzStacking continues to evolve, some full projects (in zip format) can be found in the `example` folder on [GitHub](https://github.com/phbillet/EzStacking).
 
 # Resources used for this project:
 * Stacking, Model importance and Others
-  * [Stacked generalization](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231) David H. Wolpert, Neural Networks, Volume 5, Issue 2, 1992, Pages 241-259
-  * [Issues in Stacked Generalization](https://arxiv.org/pdf/1105.5466.pdf) K. M. Ting, I. H. Witten
-  * [Model stacking to improve prediction and variable importance robustness for soft sensor development](https://www.sciencedirect.com/science/article/pii/S2772508122000254) Maxwell Barton, Barry Lennox - Digital Chemical Engineering Volume 3, June 2022, 100034
-  * [Stacking with Neural network for Cryptocurrency investment](https://arxiv.org/pdf/1902.07855v1.pdf) Avinash Barnwal, Haripad Bharti, Aasim Ali, and Vishal Singh - Inncretech Inc., Princeton
-  * [Gaussian Processes for Machine Learning](http://gaussianprocess.org/gpml/chapters/RW.pdf) Carl Eduard Rasmussen and Christopher K.I. Williams MIT Press 2006
-  * [The Kernel Cookbook](https://www.cs.toronto.edu/~duvenaud/cookbook/) David Duvenaud
+  * [Stacked generalization](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231), David H. Wolpert, Neural Networks, Volume 5, Issue 2, 1992, Pages 241-259
+  * [Issues in Stacked Generalization](https://arxiv.org/pdf/1105.5466.pdf), K. M. Ting, I. H. Witten
+  * [Model stacking to improve prediction and variable importance robustness for soft sensor development](https://www.sciencedirect.com/science/article/pii/S2772508122000254), Maxwell Barton, Barry Lennox - Digital Chemical Engineering Volume 3, June 2022, 100034
+  * [Stacking with Neural network for Cryptocurrency investment](https://arxiv.org/pdf/1902.07855v1.pdf), Avinash Barnwal, Haripad Bharti, Aasim Ali, and Vishal Singh - Inncretech Inc., Princeton
+  * [Gaussian Processes for Machine Learning](http://gaussianprocess.org/gpml/chapters/RW.pdf), Carl Eduard Rasmussen and Christopher K.I. Williams MIT Press 2006
+  * [The Kernel Cookbook](https://www.cs.toronto.edu/~duvenaud/cookbook/), David Duvenaud
+  * [Time series](http://ethen8181.github.io/machine-learning/time_series/3_supervised_time_series.html), MingYu (Ethen) Liu
   * ...
 * Machine learning tools
   * [scikit-learn](https://scikit-learn.org/stable/)
   * [pandas](https://pandas.pydata.org/)
   * [keras](https://keras.io/)
   * [seaborn](https://seaborn.pydata.org/)
+  * [statsmodels](https://www.statsmodels.org)
+  * [YData Profiling](https://docs.profiling.ydata.ai/latest/)
   * ...
 * Good ressources to learn Python and machine learning (those I used...)
   * [Python courses](https://youtu.be/82KLS2C_gNQ) (in French), Guillaume Saint-Cirgue

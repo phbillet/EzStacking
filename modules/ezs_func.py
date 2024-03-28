@@ -891,7 +891,7 @@ def K_mape(model, X_train, y_train, X_test, y_test):
     display(pd.DataFrame(data=dmape).style.hide_index())
      
 # Fast API, Docker, Kubernetes functions
-def fastapi_server(model, model_name, X, y, port, Docker=False):
+def fastapi_server(model, model_name, X, y, port, Docker=False, keras=False):
     """
     Generate the fastAPI server file, and save it in the current folder.
     Parameters:
@@ -940,10 +940,7 @@ def fastapi_server(model, model_name, X, y, port, Docker=False):
     string = string  + "schema = pd.read_csv('schema.csv')" 
     string = string  + "\n" 
     
-    modulename = 'keras'
-    keras_bool = False
-    if modulename in sys.modules:
-       keras_bool = True 
+    if keras:
        from modules.ezs_tech_func import keras_nn
        if is_classifier(model):
           string = string  + keras_nn('classification')
@@ -1126,7 +1123,7 @@ def kube_yaml_generator(name, port):
     kubernetes.write(string)
     kubernetes.close()
     
-def dockerize(name, model, model_name, X, y, port):
+def dockerize(name, model, model_name, X, y, port, keras):
     """
     Prepare a package for Docker delivery.
     Parameters:
@@ -1159,7 +1156,7 @@ def dockerize(name, model, model_name, X, y, port):
     shutil.copy("model.sav", name)
     shutil.copy("schema.csv", name)
     
-    fastapi_server(model, model_name, X, y, port, Docker=True)
+    fastapi_server(model, model_name, X, y, port, Docker=True, keras=keras)
     shutil.move('server_d.py', name)
     
     name = name + "/modules"

@@ -12,7 +12,7 @@ from ipyfilechooser import FileChooser
 from zipfile import ZipFile
 
 def generate(project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU,\
-             with_gb, with_pipeline, yb, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
+             with_gb, with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
              seaborn, ydata_profiling, fast_eda, file, target_col, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
              undersampling, undersampler, level_1_model, no_decorrelator, no_optimization, random_state,\
              threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
@@ -22,7 +22,7 @@ def generate(project_name, problem_type, time_dep, lag_number, date_idx, stackin
     user_drop_cols=[]
     features_of_interest = []
     nb = analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU,\
-                 with_gb, with_pipeline, yb, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
+                 with_gb, with_pipeline, yb,  skev,with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
                  seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols, features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
                  test_size, threshold_entropy, undersampling, undersampler, level_1_model, no_decorrelator, no_optimization, random_state,\
                  threshold_corr, threshold_model, threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port)
@@ -32,7 +32,7 @@ def generate(project_name, problem_type, time_dep, lag_number, date_idx, stackin
                 
 
 def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pipeline, problem_type, time_dep, lag_number, date_idx,
-               stacking, yb, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,
+               stacking, yb, skev, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,
                seaborn, ydata_profiling, fast_eda, data_size, level_1_model, no_decorrelator, no_optimization):
     """
     Set configuration: load configuration database, generate the different dataframes used to generate
@@ -71,6 +71,7 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pip
     meta_package.loc[meta_package['meta_package_index'] == 'KN', ['meta_package_valid']] = with_nn
     meta_package.loc[meta_package['meta_package_index'] == 'PIP', ['meta_package_valid']] = with_pipeline
     meta_package.loc[meta_package['meta_package_index'] == 'YB', ['meta_package_valid']] = yb
+    meta_package.loc[meta_package['meta_package_index'] == 'SKEV', ['meta_package_valid']] = skev
     meta_package.loc[meta_package['meta_package_index'] == 'SNS', ['meta_package_valid']] = seaborn
     meta_package.loc[meta_package['meta_package_index'] == 'YDP', ['meta_package_valid']] = ydata_profiling
     meta_package.loc[meta_package['meta_package_index'] == 'FEDA', ['meta_package_valid']] = fast_eda
@@ -175,6 +176,11 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pip
                             meta_package[meta_package.meta_package_index == 'YB']\
                             ['meta_package_valid'].tolist()[0]\
                            )) & \
+                           ((document.document_skev == 'both') | \
+                           (document.document_skev == \
+                            meta_package[meta_package.meta_package_index == 'SKEV']\
+                            ['meta_package_valid'].tolist()[0]\
+                           )) & \
                            ((document.document_ydp == 'both') | \
                            (document.document_ydp == \
                             meta_package[meta_package.meta_package_index == 'YDP']\
@@ -223,7 +229,7 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     return nb
 
 def analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, with_gauss, with_hgboost, with_keras, with_CPU, with_gb,\
-            with_pipeline, yb, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
+            with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
             seaborn, ydata_profiling, fast_eda, file, target_col, user_drop_cols, features_of_interest,\
             threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy, undersampling, undersampler, level_1_model,\
             no_decorrelator, no_optimization, random_state, threshold_corr, threshold_model, threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port):
@@ -232,7 +238,7 @@ def analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking
     Analyze input data from GUI, set configuration, generate the different cells of the notebook
     """
     pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb,\
-                                                                            with_pipeline,problem_type, time_dep, lag_number, date_idx, stacking, yb,\
+                                                                            with_pipeline,problem_type, time_dep, lag_number, date_idx, stacking, yb, skev,\
                                                                             with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,\
                                                                             seaborn, ydata_profiling, fast_eda, data_size, level_1_model, no_decorrelator, no_optimization)
     
@@ -556,6 +562,14 @@ yb = widgets.Checkbox(
                 value=False,
                 description='Yellow Brick',
                 description_tooltip='Visulization will use Yellow Brick',
+                disabled=False,
+                indent=False
+                )
+
+skev = widgets.Checkbox(
+                value=False,
+                description='Sklearn-evaluation',
+                description_tooltip='Visulization will use Sklearn-evaluation',
                 disabled=False,
                 indent=False
                 )
@@ -974,13 +988,13 @@ deployment_Docker_port = widgets.Text(
 
 deployment_fields = widgets.VBox([deployment, deployment_FastAPI_port, deployment_Docker_port])
 
-def on_run_clicked(b, project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, gauss, hgboost, keras, CPU, gboost, pipeline, fc, yb,\
+def on_run_clicked(b, project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, gauss, hgboost, keras, CPU, gboost, pipeline, fc, yb, skev,\
                       adaboost, bagging, decision_tree, random_forest, sgd, mlp, nn, svm,\
                       seaborn, ydata_profiling, fast_eda, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
                       undersampling, undersampler, level_1_model, no_decorrelator, no_optimization, random_state,\
                       threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     generate(project_name.value, problem_type.value, time_dep.value, lag_number.value, date_idx.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
-             keras.value, CPU.value, gboost.value, pipeline.value, yb.value,\
+             keras.value, CPU.value, gboost.value, pipeline.value, yb.value, skev.value,\
              adaboost.value, bagging.value, decision_tree.value, random_forest.value, sgd.value, mlp.value, nn.value, svm.value,\
              seaborn.value, ydata_profiling.value, fast_eda.value, fc.selected,\
              target_cl.value, threshold_NaN.value, threshold_cat.value, threshold_Z.value,\
@@ -990,7 +1004,7 @@ def on_run_clicked(b, project_name, problem_type, time_dep, lag_number, date_idx
 
 run.on_click(functools.partial(on_run_clicked, project_name=project_name, problem_type=problem_type, time_dep=time_dep, lag_number=lag_number, date_idx=date_idx, stacking=stacking,\
                                data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, gboost=gboost,\
-                               pipeline=pipeline, yb=yb,\
+                               pipeline=pipeline, yb=yb, skev=skev,\
                                adaboost=adaboost, bagging=bagging, decision_tree=decision_tree, random_forest=random_forest, sgd=sgd, mlp=mlp, nn=nn, svm=svm,\
                                seaborn=seaborn, ydata_profiling=ydata_profiling, fast_eda=fast_eda, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,\

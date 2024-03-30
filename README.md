@@ -123,7 +123,7 @@ _Notes:_
 |[Histogram-based Gradient Boosting](https://scikit-learn.org/stable/modules/ensemble.html#histogram-based-gradient-boosting)|both |
 
 _Notes:_
-* _if the option "**No correleation**" is checked, the model will not integrate decorrelation step_
+* _if the option "**No correlation**" is checked, the model will not integrate decorrelation step_
 * _if the option "**No model optimization**" is checked, the number of models and of features will not be reduced automatically_
 * _if **no estimator** is selected, the **regressions** (resp. **classifications**) will use **linear regressions** (resp. **logistic regressions**)_
 * _depending on the **data size**, EzStacking uses the estimators given in the preceding table for the level 0_
@@ -138,7 +138,6 @@ _**Known bugs** using Keras:_
 |Option                   | Notes                                                   |
 |-------------------------|---------------------------------------------------------|
 |Level 1 model type       | Regression (linear or logistic) or decision tree        |
-|Level 1 cross validation | Apply cross validation on level 1 model during training |
 
 
 #### Thresholds in modelling
@@ -279,7 +278,7 @@ This initial model is maybe too large, the modelling process **reduces** its siz
 |-------------------------|-------------------------|
 |![](./screenshots/EZStacking_feat_imp_regre.png)  |  ![](./screenshots/EZStacking_feat_imp_classi.png)|
 
-4. those columns are added to variable `dropped_cols` depending on the value of `threshold_feature`
+4. those columns are added to the variable `dropped_cols` depending on the value of `threshold_feature`
 5. `dropped_cols` can be added to `user_drop_cols` at the departure of the EDA (then it is necessary to **re-launch** from the EDA).
 
 _Notes:_ 

@@ -891,7 +891,7 @@ def K_mape(model, X_train, y_train, X_test, y_test):
     display(pd.DataFrame(data=dmape).style.hide_index())
      
 # Fast API, Docker, Kubernetes functions
-def fastapi_server(model, model_name, X, y, port, Docker=False, keras=False):
+def fastapi_server(model, model_name, X, y, port, Docker=False, with_keras=False):
     """
     Generate the fastAPI server file, and save it in the current folder.
     Parameters:
@@ -940,7 +940,7 @@ def fastapi_server(model, model_name, X, y, port, Docker=False, keras=False):
     string = string  + "schema = pd.read_csv('schema.csv')" 
     string = string  + "\n" 
     
-    if keras:
+    if with_keras:
        from modules.ezs_tech_func import keras_nn
        if is_classifier(model):
           string = string  + keras_nn('classification')
@@ -1008,7 +1008,7 @@ def fastapi_server(model, model_name, X, y, port, Docker=False, keras=False):
        string = string  + "    return { 'class' : classes[result], 'error' : data_err, 'elapsed time' : elaps, 'cpu time' : cpu}\n"
     else: 
        string = string  + "    # Predicting the regression value\n"
-       if keras_bool: 
+       if with_keras: 
           string = string  + "    result = model.predict(pd.DataFrame(np.array([test_data[0],]*2),\n"
        else:
           string = string  + "    result = model.predict(pd.DataFrame(test_data,\n"        
@@ -1123,7 +1123,7 @@ def kube_yaml_generator(name, port):
     kubernetes.write(string)
     kubernetes.close()
     
-def dockerize(name, model, model_name, X, y, port, keras):
+def dockerize(name, model, model_name, X, y, port, with_keras):
     """
     Prepare a package for Docker delivery.
     Parameters:
@@ -1156,7 +1156,7 @@ def dockerize(name, model, model_name, X, y, port, keras):
     shutil.copy("model.sav", name)
     shutil.copy("schema.csv", name)
     
-    fastapi_server(model, model_name, X, y, port, Docker=True, keras=keras)
+    fastapi_server(model, model_name, X, y, port, Docker=True, with_keras=with_keras)
     shutil.move('server_d.py', name)
     
     name = name + "/modules"

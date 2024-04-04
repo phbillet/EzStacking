@@ -1203,20 +1203,20 @@ zip.on_click(functools.partial(on_zip_clicked, fc=fc, output=output, project_nam
 
 dev_names = ['EDA', 'Split', 'Model', 'Build']
 dev_tabs = [EDA_tab, split_tab, model_tab, build_tab]
-dev_tab_layout = widgets.Layout(display='flex',
-                    flex_flow='column', 
+dev_tab_layout = widgets.Layout(display='flex')
+#                    flex_flow='column', 
 #                    align_items='stretch', 
 #                    border='solid',
-                    height='500px')
+#                    height='250px')
 dev_gui = widgets.Tab(dev_tabs, layout=dev_tab_layout)
 [dev_gui.set_title(i, title) for i, title in enumerate(dev_names)]
 
 gui_names = ['File & Problem', 'Development', 'Test', 'Zip & Clean']
 gui_tabs = [file_problem_tab, dev_gui, test_tab, zip] 
-gui_tab_layout = widgets.Layout(display='flex',
-                    flex_flow='column', 
+gui_tab_layout = widgets.Layout(display='flex')
+#                    flex_flow='column', 
 #                    align_items='stretch', 
 #                    border='solid',
-                    height='600px')
+#                    height='300px')
 ezs_gui = widgets.Tab(gui_tabs, layout=gui_tab_layout)
 [ezs_gui.set_title(i, title) for i, title in enumerate(gui_names)]

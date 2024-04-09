@@ -12,9 +12,9 @@ dependencies:
    - notebook==6.5.2
    - nbconvert==7.2.9
    - matplotlib==3.7.3
+   - threadpoolctl==3.4.0
    - pandas==1.5.3
    - yellowbrick==1.5
-   - sklearn-evaluation==0.12.1
    - ydata-profiling==4.6.0
    - pyts==0.12.0
    - statsmodels==0.14.1

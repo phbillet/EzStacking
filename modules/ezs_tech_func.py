@@ -738,19 +738,6 @@ gauss = widgets.Checkbox(
                 indent=False
                 )
 
-# interaction between data_size radio button and gauss checkbox
-def remove_gauss(data_size):
-    if data_size['new'] == 'small':
-       gauss.layout.display = 'flex'
-       decision_tree.layout.display = 'flex'
-    else:
-       gauss.layout.display, gauss.value = 'none', False
-       decision_tree.layout.display, decision_tree.value = 'none', False
-      
-
-data_size.observe(remove_gauss, names='value')
-
-
 hgboost = widgets.Checkbox(
                 value=False,
                 description='Histogram-based Gradient Boosting',
@@ -871,7 +858,27 @@ pipeline = widgets.Checkbox(
                 )
 
 model_keras = widgets.HBox([keras, CPU])
-#model_option2 = widgets.HBox([pipeline, gboost])
+
+# interaction between data_size radio button and level-0 model list
+def remove_small_model(data_size):
+    if data_size['new'] == 'small':
+       gauss.layout.display = 'flex'
+       decision_tree.layout.display = 'flex'
+       mlp.layout.display = 'flex'
+       nn.layout.display = 'flex'
+       svm.layout.display = 'flex'
+    else:
+       gauss.layout.display, gauss.value = 'none', False
+       decision_tree.layout.display, decision_tree.value = 'none', False
+       mlp.layout.display, mlp.value = 'none', False
+       nn.layout.display, nn.value = 'none', False
+       svm.layout.display, svm.value = 'none', False
+       
+data_size.observe(remove_small_model, names='value')
+
+
+
+
 model_option_grp = widgets.VBox([hgboost, gboost, adaboost, bagging, decision_tree, random_forest, sgd, nn, svm, gauss, mlp, model_keras])
 
 model_option_0 = widgets.VBox([level_0, model_caption_option, model_option_grp])

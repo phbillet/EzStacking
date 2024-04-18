@@ -577,7 +577,8 @@ def model_importance_c(model, level_1_model):
     model_importance = np.empty((len(level_0), 2), dtype='object')
     for ind in range(len(level_0)):
         model_importance[ind, 0] = level_0[ind]
-        model_importance[ind, 1] = np.abs(coeff[ind])
+#        model_importance[ind, 1] = np.abs(coeff[ind])
+        model_importance[ind, 1] = coeff[ind]
     return model_importance[model_importance[:, 1].argsort()]
 
 def model_importance_r(model, level_1_model):
@@ -593,7 +594,8 @@ def model_importance_r(model, level_1_model):
     model_importance = np.empty((len(level_0), 2), dtype='object')
     for ind in range(len(level_0)):
         model_importance[ind, 0] = level_0[ind]
-        model_importance[ind, 1] = np.abs(coeff[ind])
+#        model_importance[ind, 1] = np.abs(coeff[ind])
+        model_importance[ind, 1] = coeff[ind]
     return model_importance[model_importance[:, 1].argsort()]
 
 def plot_model_importance(model, level_1_model):

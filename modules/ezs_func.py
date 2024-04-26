@@ -88,7 +88,7 @@ def duplicates(df):
        print('No duplicate rows.')
     return df
 
-def drop_na(df, threshold_NaN):
+def drop_na(df, target_col, threshold_NaN):
     """
     Remove the columns from dataframe containing NaN depending on threshold_NaN.
     Parameters:
@@ -106,6 +106,7 @@ def drop_na(df, threshold_NaN):
        df = df.drop(drop_cols, axis=1)
     else:
        print('No need to drop columns.')
+    
     return df, drop_cols
 
 def encoding(df, threshold_cat, target_col):
@@ -198,11 +199,12 @@ def correlated_columns(df, threshold_corr, target_col):
     correlated_features = list(dict.fromkeys(correlated_features))
     return correlated_features
 
-def hierarchical_clustering(df):
+def hierarchical_clustering(df, t):
     """
     Plot the hierarchical clustering of the features based on the Spearman rank-order correlations.
     Parameters:
-        df: Pandas dataframe.
+        df: Pandas dataframe,
+        t: distance threshold.
     Returns:
         Plotting.
     """
@@ -230,6 +232,17 @@ def hierarchical_clustering(df):
     ax2.set_yticklabels(dendro["ivl"])
     fig.tight_layout()
     plt.show()
+    
+    from collections import defaultdict
+
+    cluster_ids = hierarchy.fcluster(dist_linkage, t=t, criterion="distance")
+    print('cluster_ids = ', cluster_ids)
+    cluster_id_to_feature_ids = defaultdict(list)
+    for idx, cluster_id in enumerate(cluster_ids):
+        cluster_id_to_feature_ids[cluster_id].append(idx)
+    selected_features = [v[0] for v in cluster_id_to_feature_ids.values()]
+    selected_features_names = df.columns[selected_features].tolist()
+    return selected_features_names
 
 def plot_sns_corr_class(df, target_col):
     """
@@ -525,7 +538,6 @@ def score_stacking(model, X_train, y_train, X_test, y_test):
     nb_estimators = len(model.estimators_)
     res_level_0 = res_stack[0:nb_estimators]
     mod_imp = np.delete(res_level_0[res_level_0[:, 2].argsort()], 1, axis=1)
-    mod_imp.T[1] = mod_imp.T[1] / np.sum(mod_imp.T[1])
     fig, ax = plt.subplots()
     ax.barh(mod_imp.T[0], mod_imp.T[1])
     ax.set_title("Model Importance according to performance")
@@ -577,7 +589,6 @@ def model_importance_c(model, level_1_model):
     model_importance = np.empty((len(level_0), 2), dtype='object')
     for ind in range(len(level_0)):
         model_importance[ind, 0] = level_0[ind]
-#        model_importance[ind, 1] = np.abs(coeff[ind])
         model_importance[ind, 1] = coeff[ind]
     return model_importance[model_importance[:, 1].argsort()]
 
@@ -594,7 +605,6 @@ def model_importance_r(model, level_1_model):
     model_importance = np.empty((len(level_0), 2), dtype='object')
     for ind in range(len(level_0)):
         model_importance[ind, 0] = level_0[ind]
-#        model_importance[ind, 1] = np.abs(coeff[ind])
         model_importance[ind, 1] = coeff[ind]
     return model_importance[model_importance[:, 1].argsort()]
 
@@ -611,7 +621,6 @@ def plot_model_importance(model, level_1_model):
        mod_imp = model_importance_c(model, level_1_model)
     else:
        mod_imp = model_importance_r(model, level_1_model)
-    mod_imp.T[1] = mod_imp.T[1] / np.sum(mod_imp.T[1])
     fig, ax = plt.subplots()
     ax.barh(mod_imp.T[0], mod_imp.T[1])
     ax.set_title("Model Importance according to aggregator coefficients")
@@ -641,7 +650,6 @@ def plot_perm_importance(model, X, y, CPU):
        result = permutation_importance(model, X, y, scoring=scoring, n_repeats=10)
     sorted_idx = result.importances_mean.argsort()
     perm_imp = np.array([X.columns[sorted_idx], result.importances[sorted_idx].mean(axis=1).T]).T
-    perm_imp.T[1] = perm_imp.T[1] / np.sum(perm_imp.T[1])
     fig, ax = plt.subplots()
     ax.barh(perm_imp.T[0], perm_imp.T[1])
     ax.set_title("Permutation Importance")
@@ -1228,11 +1236,12 @@ def store_data(name, path, threshold_corr, threshold_model, threshold_feature, t
     conn.close()
 
 # Functions used in time series analysis
-def plot_correlation(df):
+def plot_correlation(df, t=1):
     """
     Compute and plot the correlation and the hierarchical clustering of the features of the input time series dataframe
     Parameters:
-        df: a dataframe.
+        df: a dataframe,
+        t: distance threshold.
     Returns:
         Plotting of the correlation and the hierarchical clustering.
     """
@@ -1241,7 +1250,8 @@ def plot_correlation(df):
        corr = df.corr()
        display(corr.style.background_gradient(cmap='coolwarm'))
        print('Hierarchical clustering')
-       hierarchical_clustering(df)
+       selected_features_names = hierarchical_clustering(df.drop(target_col, axis=1), t=1)
+       print('selected_features_names = ', selected_features_names)
     else:
        print('No correlation for univariate time series') 
     
@@ -1439,72 +1449,6 @@ def mean_absolute_percentage_error(y_true, y_pred):
     """
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-def plot_model_results(X, y, test_size, model, confidence, plot_intervals, plot_anomalies):
-    """
-    Interactively plot:
-        - the modelled vs original values
-        - the prediction intervals according to a given confidence interval
-        - the anomalies (points that resides outside the confidence interval)
-        - the feature permutation importance.
-    Parameters:
-        X: feature dataframe
-        y: target dataframe 
-        test_size: proportion reserved for the test file
-        model: model used for predictions
-        confidence: confidence intervals
-        plot_intervals: Boolean for displaying confidence intervals
-        plot_anomalies: Boolean for displaying anomalies. 
-    Returns:
-        Plottings.
-    """    
-    def p_m_s(X, y, test_size, model, confidence, plot_intervals, plot_anomalies):
-        
-        X_train, X_test, y_train, y_test = timeseries_train_test_split(X, y, test_size)
-
-        # we are using random forest here, feel free to swap this out
-        # with your favorite regression model
-        model.fit(X_train, y_train)
-        prediction = model.predict(X_test)
-
-        plt.figure(figsize=(15, 7))
-
-        x = X_test.index.date
-        # x = range(prediction.size)
-        plt.plot(x, prediction, label='prediction', linewidth=2.0)
-        plt.plot(x, y_test, label='actual', linewidth=2.0)
-        if plot_intervals:
-            timeseries_cv = TimeSeriesSplit(n_splits=5)
-            cv = cross_val_score(model, X_train, y_train, 
-                                 cv=timeseries_cv, scoring='neg_mean_absolute_error')
-            mae = -1 * cv.mean()
-            deviation = cv.std()
-
-            # confidence interval computation
-            scale = stats.norm.ppf(confidence)
-            margin_error = mae + scale * deviation
-            lower = prediction - margin_error
-            upper = prediction + margin_error
-
-            fill_alpha = 0.2
-            fill_color = '#66C2D7'
-            plt.fill_between(x, lower, upper, color=fill_color, alpha=fill_alpha, label= str(confidence*100) + '% CI')      
-
-            if plot_anomalies:
-                anomalies = np.array([np.nan] * len(y_test))
-                anomalies[y_test < lower] = y_test[y_test < lower]
-                anomalies[y_test > upper] = y_test[y_test > upper]
-                plt.plot(anomalies, 'o', markersize=10, label='Anomalies')
-
-        error = mean_absolute_percentage_error(prediction, y_test)
-        plt.title('Model: ' + str(model) + '\nMean absolute percentage error: {0:.2f}%'.format(error))
-        plt.legend(loc='best')
-        plt.tight_layout()
-        plt.grid(True)
-
-        plot_perm_importance(model, X_test, y_test, CPU=True)
-        
-    interact_manual(p_m_s, X=fixed(X), y=fixed(y), test_size=test_size, model=model, confidence=confidence, plot_intervals=plot_intervals, plot_anomalies=plot_anomalies)
-    
 def plot_ts_results(X_train, y_train, X_test, y_test, model, confidence, plot_intervals, plot_anomalies):
     """
     Interactively plot:

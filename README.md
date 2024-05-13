@@ -1,13 +1,109 @@
 <h1 style="text-align: center;">EzStacking: from data to Kubernetes thru Scikit-Learn, Keras, FastAPI and Docker</h1>
 
-# Introduction
-EzStacking is a [**development tool**](#ezstacking---as-development-tool) designed to adress [**supervised learning**](https://en.wikipedia.org/wiki/Supervised_learning) problems. 
+# Theoretical preamble
+## Learning algorithm
+Tom Mitchell provides the following definition of a **learning program** : “A computer program is said to **learn** from **experience $E$** with respect to some class of **tasks $T$** and **performance measure $P$**, if its performance at tasks in $T$, as measured by $P$, improves with experience $E$.”
 
-EzStacking handles **classification**, **regression** and **time series forecasting** problems for **structured data** (_cf. Notes hereafter_) using [**stacked generalization**](https://scikit-learn.org/stable/modules/ensemble.html#stacking), that is an ensemble learning approach that trains a **level 1 model** to integrate the predictions of multiple **level 0 models**, with the aim of generating more robust and precise predictions than any of the individual base models.
+The algorithm associated to this learning program is called a **learning algorithm**.
+
+## Supervised learning problems
+Let's assume that there is a function $f:U\subset \mathbb{R}^{n}\rightarrow V\subset \mathbb{R}^{p}$, $f$ is unknown and is called the **parent function** or the **objective function**, $U$ is the **input space**, $V$ is the **output space**. For the sake of simplicity, let's assume that $p=1$.
+
+The only thing we know about $f$ is a set of samples $L=\{\left(x_i, y_i\left(=f\left(x_i\right)\right)\right)\in U\times V\}_{i\in \{1,..,I\}}$, $x$ are called **features**, $y$ the **target** and $L$ the **learning set**.
+
+We would like to find an approximation $\tilde{f}$ of $f$ built from the learning set and a learning algorithm, this is a **supervised learning problem**.
+
+Here, the experience $E$ is the learning set, the task is to find the function $\tilde{f}$ and the performance measure is the gap between the prediction and the ground truth (i.e. the target $y_{i}$ in the learning set). 
+
+### Regression / Classification
+If $V$ is **continuous** (resp. **discrete**) in the preceding definition, then it is a **regression** (resp. **classification**) problem.
+
+### Time series forecasting
+Let's imagine an experiment during which a result $X_{t}$ is measured over time, $\{X_{t}\}_{t}$ is a **time series**. How can we predict $X_{t+\tau}$ (where $\tau$ is the time step)? 
+
+Let's assume that $X_{t+1}$ depends on the $k$ preceding measures ($k$ is the **window size** or **lag number**), we can suppose that there is a function $f$ such that: $X_{t+\tau}=f \left(X_{t}, X_{t-\tau},.., X_{t-k\tau} \right)$.
+
+Let's define $L=\{\left(X_{t} ,X_{t-\tau},.., X_{t-k\tau},X_{t+\tau} \right)\}_{t}$, that is typically a regression learning set.
+
+## Useful operators
+### Feature and target extractors
+Let's say we have a learning set $L=\{ \left( x, y \right)  \in U \times V\} \}$, the **feature extractor** $\pi_{f}$ is defined by $\pi_{f}\left(L\right)=\{x, \left( x, y \right)  \in L \}$, the **target extractor** $\pi_{t}$ is defined by $\pi_{t}\left(L\right)=\{y, \left( x, y \right)  \in L \}$.
+
+### Training operator
+The **training operator** $T$ is the operator that transforms a learning algorithm into a **model** or **estimator** fitted on a learning set. 
+Let $A$ be a learning algorithm and a learning set $L$, $M^{A}_{L}=T\left(A,L \right)$ is the model obtained after training $A$ on $L$.
+
+During the training process, the learning set $L$ is divided into a training set $L_{train}$ and a test set $L_{test}$, and the algorithm $A$ is trained on the training set (i.e. optimised so that the gap between the prediction and the ground truth is minimal). A function $S$ called **score** measures the gap mean.
+
+$S_{train}=S\left(M^{A}_{L_{train}}\left(\pi_{f}\left(L_{train}\right) \right),\pi_{t}\left(L_{train}\right) \right)$ is the **train error**, $S_{test}=S\left(M^{A}_{L_{train}}\left(\pi_{f}\left(L_{test}\right) \right),\pi_{t}\left(L_{test}\right) \right)$ is the **test error**. 
+
+## Folding and cross-validation
+Let's say we have a learning set $L=\{\left(x_i, y_i\right)\in U\times V\}_{i\in \{1,..,I\}}$ (it is assumed that $I$ is not prime), $J$ is a divisor of $I$. It is possible to split (**randomly** for **regression** and **classfication** problems, but for **time series** forecasting, the **temporal order** must be **respected**) $L$ into $J$ equal (and usually disjoint) parts $\{L_{j}\}_{j\in \{1,..,J\}}$.
+
+$L_{j}$ is the **test set** and $L^{\hat{\jmath}}=L-L_{j}$ is the **train set** for the $j$th **fold** of the **$J$ fold cross-validation**.
+
+Some properties:
+* If $J==I$:
+   * $L_{i}\neq L_{i}$, if $i\neq j$ 
+   * $\bigcup_{i} L_{i}=L$
+   * as there is only one element in each test set, this technique is suitable for small amount of data.
+
+* If $J|I$:  
+   * $\#L^{\hat{\jmath}}=\frac{I}{J}$ 
+   * $L^{\hat{\imath}} \cap L^{\hat{\jmath}}=\emptyset$, if $i\neq j$ 
+   * $\bigcup_{i} L^{\hat{\jmath}}=L$
+   * this technique is suitable for large amount of data.
+
+$T$ is the training operator, invoking the learning algorithm $A$ on the training set $L^{\hat{\jmath}}$ induces a model $M^{\hat{\jmath}}_{A}==T\left(A,L^{\hat{\jmath}}\right)$. 
+
+The [cross-validation](https://scikit-learn.org/stable/modules/cross_validation.html) error (or **cross-validation score**) is given by:
+$S_{CV}\left(M_{A},L\right)=\frac{1}{J}\sum_{j=1}^{J}\delta\left(M^{\hat{\jmath}}_{A_{j}}\left(\pi_{f}\left(L_{j}\right)\right)-\pi_{t}\left(L_{j}\right) \right) $, where $\delta$ measures the gap between prediction of $M^{\hat{\jmath}}_{A_{j}}$ and ground truth. 
+
+Ideally, $S_{train}$ should be closed to $S_{CV}$; if $S_{train}$ is closed to $S_{CV}$ and $S_{train}$ is large, the model suffers from **underfitting** (the model has **large biais**); if $S_{train}$ is small and $S_{CV}$ is largely greater than $S_{train}$, the model suffers from **overfitting** (the model has **large variance**)   
+
+The technique of **minimal cross-validation error** says that given a set of candidate learning algorithms $\{A_{k}\}_{k \in \{1,..,K\}}$ and a learning set $L$, one should generalize from $L$ with a model $M_{l}=T\left(A_{l},L\right) \in \{T\left(A_{k},L\right)\}_{k \in \{1,..,K\}}$ such that $S_{CV}\left(M_{l},L\right) <S_{CV}\left(M_{j},L\right)$, $\forall j \ne l$. 
+
+
+### Stacked generalization
+Let $\{A_{k}\}_{k \in \{1,..,K\}}$ be a finite set of learning algorithm.
+We can define a finite set of models $\{M_{k}^{\hat{\jmath}}\}_{k \in \{1,..,K\}}$, where $M^{\hat{\jmath}}_{k}=T\left(A_{k},L^{\hat{\jmath}}\right)$, they are called the **level 0 models**.
+
+Let's define $z_{nk}=M^{\hat{\jmath}}_{k}\left( x_n \right)$ for all $x_n \in \pi_{f}\left(L_{j}\right)$.
+
+At the end of the entire cross-validation process, the dataset assembled from the outputs of the $K$ models is: $L_{CV}=\{\left(z_{1i},..,z_{Ki}, y_i\right)\}_{i\in \{1,..,I\}}$.
+
+Let $\bar A$ be another learning algorithm, $\bar M=T\left(\bar A,L_{CV}\right)$, $\bar M$ is called the **level 1 model**.
+
+The level 0 models are retrained on the whole learning set $\{M_{k}\}_{k \in \{1,..,K\}}=\{T\left(A_{k},L\right)\}_{k \in \{1,..,K\}}$, and finally $\tilde{f}=\bar M\left( M_{1},..,M_{K} \right)$, which is the **stacked model**.
+
+## Questioning
+### Wolpert's black art 
+In his paper on classification and stacked generalization, D. Wolpert underlines 3 points:
+ * no rules saying what level 0 learning algorithms one should use
+ * no rules saying what level 1 learning algorithms one should use
+ * how to choose the number of level 0 learning algorithms.
+ 
+### Model importance
+#### Regression
+In his paper on regression and stacked generalization, L. Breiman indicates that if a linear regression is used as level 1 learning algorithm, a non-negativity constraint on the coefficients must be added.
+
+#### Classification
+In their paper, K. M. Ting and I. H. Witten explain that, for classification, the level 1 learning algorithm should be a multi-response least-squares regression based on class probabilities (confidence measure), but no non-negativity constraint is needed. 
+
+However, the non-negativity constraint increases the interpretability, and these coefficients can be used to define the **model importance** of the level 0 models. 
+
+### Model selection
+So, if the initial set of level 0 learning algorithms is large enough, it can be shrinked according to the model importances (moreover, the train and test scores must also be considered, to avoid underfitting and overfitting), this is the **model selection**. 
+
+
+# Introduction
+EzStacking is a [**development tool**](#ezstacking---as-development-tool) designed to adress **supervised learning** problems. It can be viewed like an extension of the idea proposed in the article [No Free Lunch:Free at Last!](https://www.researchgate.net/publication/341233408_No_Free_LunchFree_at_Last).
+
+EzStacking handles **classification**, **regression** and **time series forecasting** problems for **structured data** (_cf. Notes hereafter_) using **stacked generalization**, that is an ensemble learning approach that trains a **level 1 model** to integrate the predictions of multiple **level 0 models**, with the aim of generating more robust and precise predictions than any of the individual base models.
 
 Sometimes, the stacked models can be heavy, slow or not accurate, they can contain bad level 0 models or some features have bad influence on score, EzStacking allows the **final model** to be **optimised** along three axes:
-- the number of **features** (reduced using feature importance)
 - the number of **level 0 models** (reduced using model importance)
+- the number of **features** (reduced using feature importance)
 - the **complexity** (depth) of the level 0 models (depending on the user's choices).
 
 The main principles used in EzStacking are also presented in these two articles:
@@ -33,7 +129,7 @@ The **development process** produces:
 I spent some time on [Kaggle](https://www.kaggle.com/philippebillet/code), some results about the optimisation process described here are given in this site, moreover and analysis of the results can be found [here](https://www.kaggle.com/code/philippebillet/stacking-importances-result-analysis). 
 I became Nobebooks Master with this project.
 
-Time has passed and EzStacking continues to evolve, some full projects (in zip format) can be found in the `example` folder on [GitHub](https://github.com/phbillet/EzStacking).
+Time has passed and EzStacking continues to evolve, some full projects (in zip format) can be found in the `examples` folder on [GitHub](https://github.com/phbillet/EzStacking).
 
 # EzStacking - How to install it
 First you have to:
@@ -114,7 +210,7 @@ _Notes:_
 _Notes:_
 * _threshold_cat: if the **number of different values** in a column is less than this number, the column will be considered as a **categorical column**_
 * _threshold_NaN: if the proportion of **NaN** is greater than this number the column will be **dropped**_
-* _threshold_Z: if the **Z_score**  (indicating **outliers**) is greater than this number, the row will be **dropped**._
+* _threshold_Z: if the **Z_score**  (indicating **outliers**) is greater than this number, the rows will be **dropped**._
 
 
 ### Splitting
@@ -147,17 +243,17 @@ _Notes:_
 * _if **no estimator** is selected, the **regressions** (resp. **classifications**) will use **linear regressions** (resp. **logistic regressions**)_
 * _depending on the **data size**, EzStacking uses the estimators given in the preceding table for the level 0_
 * _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on gaussian processes do not benefit from it_
-* _the Gaussian methos option is only available for small dataset._ 
+* _the Gaussian methodes option is only available for small dataset._ 
 
 _**Known bugs** using Keras:_
 * _for **classification problems**: the generated **API doesn't work** with Keras_
 * _the **ReduceLROnPlateau** callback produces an error when **saving the model**._
 
 #### Level 1 model options
-|Option                   | Notes                                                   |
-|-------------------------|---------------------------------------------------------|
-|Level 1 model type       | Regression (linear or logistic) or decision tree        |
-
+|Level 1 model type              | Notes                                        |
+|--------------------------------|----------------------------------------------|
+|Regression (linear or logistic) |the option `Non-negativity` should be checked |
+|Decision tree                   |alternative approach to the importance        |
 
 #### Thresholds in modeling
 
@@ -244,7 +340,7 @@ You simply have to follows the following workflow:
 
 <img src="./screenshots/EZStacking_development_process.png" data-canonical-src="./screenshots/EZStacking_development_process.png" width="50%" height="50%" />
 
-Fortunately, if the option "**No model optimization**" is not checked in the modeling step, the entire process is automated, you just have to fix the thresholds.
+Fortunately, if the option "**No model optimization**" is not checked in the modeling step, the entire process is automated, you just have to fix the thresholds and choose your models.
 
 ## Data quality & EDA
 EDA can be seen as a **toolbox** to evaluate **data quality** like: 
@@ -283,9 +379,9 @@ During the splitting step:
 _Note: for **imbalanced class management**, EZStacking also offers different **subsampling methods** as an option._
 
 This initial model is maybe too large, the modeling process **reduces** its size in terms of **models** and **features** as follow:
-1. the set of **estimators** is reduced according to the **test scores** and the **importance** of each level 0 models
+1. the set of **estimators** is reduced according to the **test scores** and the **importance** of each level 0 model
 
-|Regression test scores  |  Classification test scores |
+|Regression train and test scores  |  Classification train and test scores |
 |-------------------------|-------------------------|
 |![](./screenshots/EZStacking_test_score_regre.png)  |  ![](./screenshots/EZStacking_test_score_classi.png)|
 
@@ -293,7 +389,7 @@ This initial model is maybe too large, the modeling process **reduces** its size
 |-------------------------|-------------------------|
 |![](./screenshots/EZStacking_mod_imp_regre.png)  |  ![](./screenshots/EZStacking_mod_imp_classi.png)|
 
-2. the reduced estimator is trained 
+2. the stack based on the reduced estimator set is trained 
 3. the **feature importance** graphic indicates which columns could also be **dropped**
 
 |Regression feature importance  |  Classification feature importance |
@@ -369,8 +465,11 @@ A test file for **Docker** (and **Kubernetes**) is also created, it is located i
 
 # Resources used for this project:
 * Stacking, Model importance and Others
+  * [Machine Learning](http://www.cs.cmu.edu/~tom/files/MachineLearningTomMitchell.pdf), Tom Mitchell, McGraw Hill, 1997
   * [Stacked generalization](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231), David H. Wolpert, Neural Networks, Volume 5, Issue 2, 1992, Pages 241-259
+  * [Stacked regressions](https://statistics.berkeley.edu/sites/default/files/tech-reports/367.pdf), Leo Breiman
   * [Issues in Stacked Generalization](https://arxiv.org/pdf/1105.5466.pdf), K. M. Ting, I. H. Witten
+  * [No Free Lunch:Free at Last!](https://www.researchgate.net/publication/341233408_No_Free_LunchFree_at_Last), Ali Almashhadani, Neelang Parghi, Weihao Bi, Raman Kannan
   * [Model stacking to improve prediction and variable importance robustness for soft sensor development](https://www.sciencedirect.com/science/article/pii/S2772508122000254), Maxwell Barton, Barry Lennox - Digital Chemical Engineering Volume 3, June 2022, 100034
   * [Stacking with Neural network for Cryptocurrency investment](https://arxiv.org/pdf/1902.07855v1.pdf), Avinash Barnwal, Haripad Bharti, Aasim Ali, and Vishal Singh - Inncretech Inc., Princeton
   * [Gaussian Processes for Machine Learning](http://gaussianprocess.org/gpml/chapters/RW.pdf), Carl Eduard Rasmussen and Christopher K.I. Williams MIT Press 2006

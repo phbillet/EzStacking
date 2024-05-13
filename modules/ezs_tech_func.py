@@ -15,7 +15,7 @@ def generate(project_name, problem_type, time_dep, lag_number, date_idx, stackin
              with_keras, with_CPU, with_gb, with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
              with_random_forest, with_sgd, with_mlp, with_nn, with_svm, seaborn, ydata_profiling, fast_eda, file,\
              target_col, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
-             undersampling, undersampler, level_1_model, no_decorrelator, no_optimization, random_state,\
+             undersampling, undersampler, level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state,\
              threshold_corr, threshold_model, threshold_score, threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     """
     Initialize the notebook, analyze input data from GUI, generate, write and execute the notebook.
@@ -26,7 +26,7 @@ def generate(project_name, problem_type, time_dep, lag_number, date_idx, stackin
                  with_keras, with_CPU, with_gb, with_pipeline, yb,  skev,with_adaboost, with_bagging, with_decision_tree,\
                  with_random_forest, with_sgd, with_mlp, with_nn, with_svm, seaborn, ydata_profiling, fast_eda, file,\
                  target_col, user_drop_cols, features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
-                 test_size, threshold_entropy, undersampling, undersampler, level_1_model, no_decorrelator, no_optimization, random_state,\
+                 test_size, threshold_entropy, undersampling, undersampler, level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state,\
                  threshold_corr, threshold_model, threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port)
     fname = output + '.ipynb'
     with open(fname, 'w') as f:
@@ -35,7 +35,7 @@ def generate(project_name, problem_type, time_dep, lag_number, date_idx, stackin
 
 def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pipeline, problem_type, time_dep, lag_number, date_idx,
                stacking, yb, skev, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,
-               seaborn, ydata_profiling, fast_eda, data_size, level_1_model, no_decorrelator, no_optimization):
+               seaborn, ydata_profiling, fast_eda, data_size, level_1_model, level_1_model_pos, no_decorrelator, no_optimization):
     """
     Set configuration: load configuration database, generate the different dataframes used to generate
     cells of the notebook according to the data from the GUI.
@@ -156,6 +156,7 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pip
                            ((document.document_ts == 'both') | (document.document_ts == time_dep)) & \
                            ((document.document_data_size == 'both') | (document.document_data_size == data_size)) & \
                            ((document.document_level_1_model == 'both') | (document.document_level_1_model == level_1_model)) & \
+                           ((document.document_level_1_model_pos == 'both') | (document.document_level_1_model_pos == level_1_model_pos)) & \
                            ((document.document_no_decorrelator == 'both') | (document.document_no_decorrelator == no_decorrelator)) & \
                            ((document.document_no_optimization == 'both') | (document.document_no_optimization == no_optimization)) & \
                            ((document.document_stacking == 'both') | \
@@ -234,7 +235,7 @@ def analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking
             with_keras, with_CPU, with_gb, with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
             with_random_forest, with_sgd, with_mlp, with_nn, with_svm,seaborn, ydata_profiling, fast_eda, file, target_col,\
             user_drop_cols, features_of_interest, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
-            undersampling, undersampler, level_1_model, no_decorrelator, no_optimization, random_state, threshold_corr,\
+            undersampling, undersampler, level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state, threshold_corr,\
             threshold_model, threshold_score, threshold_feature, deployment_FastAPI_port, deployment_Docker_port):
 
     """
@@ -244,7 +245,7 @@ def analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking
                                                                             with_pipeline,problem_type, time_dep, lag_number, date_idx,\
                                                                             stacking, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
                                                                             with_random_forest, with_sgd, with_mlp, with_nn, with_svm, seaborn, ydata_profiling,\
-                                                                            fast_eda, data_size, level_1_model, no_decorrelator, no_optimization)
+                                                                            fast_eda, data_size, level_1_model, level_1_model_pos, no_decorrelator, no_optimization)
     
     fileList = ['./modules/client.ipynb', './modules/server.ipynb']
     for item in fileList:
@@ -876,9 +877,6 @@ def remove_small_model(data_size):
        
 data_size.observe(remove_small_model, names='value')
 
-
-
-
 model_option_grp = widgets.VBox([hgboost, gboost, adaboost, bagging, decision_tree, random_forest, sgd, nn, svm, gauss, mlp, model_keras])
 
 model_option_0 = widgets.VBox([level_0, model_caption_option, model_option_grp])
@@ -888,8 +886,37 @@ level_1_model = widgets.RadioButtons(
                 options=['regression', 'tree'],
                 value='regression',
                 description='Level 1 model type:',
+                layout=widgets.Layout(width='150px'),
                 disabled=False
                 )
+
+level_1_model_pos_lb = widgets.Label(value='')
+#                                     layout=widgets.Layout(height='-20px'))
+                                     
+level_1_model_pos = widgets.Checkbox(
+                value=True,
+                description='Non-negativity',
+                description_tooltip='Force the coefficients to be non-negative',
+                disabled=False,
+                indent=False,
+                layout=widgets.Layout(width='150px')
+                )
+
+level_1_model_pos_x = widgets.VBox([level_1_model_pos_lb, level_1_model_pos])
+
+level_1_model_pos.layout.display, level_1_model_pos.value = 'flex', True
+
+# interaction between level_1_model radio button and positive coefficient checkbox
+def remove_pos_coeff(level_1_model):
+    if level_1_model['new'] == 'tree':
+       level_1_model_pos.layout.display, level_1_model_pos.value = 'none', False
+    else:
+       level_1_model_pos.layout.display, level_1_model_pos.value = 'flex', True
+      
+level_1_model.observe(remove_pos_coeff, names='value')
+
+
+level_1_mod = widgets.HBox([level_1_model, level_1_model_pos_x])
 
 decorrelator = widgets.Label(value='Decorrelation in model:')
 no_decorrelator = widgets.Checkbox(
@@ -909,7 +936,7 @@ no_optimization = widgets.Checkbox(
                 indent=False
                 )
 
-model_option_1 = widgets.VBox([level_1, level_1_model, decorrelator, no_decorrelator, optimization, no_optimization])
+model_option_1 = widgets.VBox([level_1, level_1_mod, decorrelator, no_decorrelator, optimization, no_optimization])
 
 caption_threshold_mod = widgets.Label(value='Modelling thresholds:')
 
@@ -1002,13 +1029,13 @@ deployment_fields = widgets.VBox([deployment, deployment_FastAPI_port, deploymen
 def on_run_clicked(b, project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, gauss, hgboost, keras, CPU, gboost,\
                    pipeline, fc, yb, skev, adaboost, bagging, decision_tree, random_forest, sgd, mlp, nn, svm, seaborn, ydata_profiling,\
                    fast_eda, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy, undersampling, undersampler,\
-                   level_1_model, no_decorrelator, no_optimization, random_state, threshold_corr, threshold_model, threshold_score,\
+                   level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state, threshold_corr, threshold_model, threshold_score,\
                    threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     generate(project_name.value, problem_type.value, time_dep.value, lag_number.value, date_idx.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
              keras.value, CPU.value, gboost.value, pipeline.value, yb.value, skev.value, adaboost.value, bagging.value, decision_tree.value, random_forest.value,\
              sgd.value, mlp.value, nn.value, svm.value, seaborn.value, ydata_profiling.value, fast_eda.value, fc.selected, target_cl.value, threshold_NaN.value,\
              threshold_cat.value, threshold_Z.value, test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value,\
-             no_decorrelator.value, no_optimization.value, random_state.value, threshold_corr.value, threshold_model.value,\
+             level_1_model_pos.value, no_decorrelator.value, no_optimization.value, random_state.value, threshold_corr.value, threshold_model.value,\
              threshold_score.value, threshold_feature.value, output.value, deployment_FastAPI_port.value, deployment_Docker_port.value)
 
 run.on_click(functools.partial(on_run_clicked, project_name=project_name, problem_type=problem_type, time_dep=time_dep, lag_number=lag_number,\
@@ -1016,10 +1043,10 @@ run.on_click(functools.partial(on_run_clicked, project_name=project_name, proble
                                pipeline=pipeline, yb=yb, skev=skev, adaboost=adaboost, bagging=bagging, decision_tree=decision_tree, random_forest=random_forest,\
                                sgd=sgd, mlp=mlp, nn=nn, svm=svm, seaborn=seaborn, ydata_profiling=ydata_profiling, fast_eda=fast_eda, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,test_size = test_size, threshold_entropy=threshold_entropy,\
-                               undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, no_decorrelator=no_decorrelator,\
-                               no_optimization=no_optimization, random_state=random_state, threshold_corr = threshold_corr, threshold_model = threshold_model,\
-                               threshold_score = threshold_score, threshold_feature = threshold_feature, output=output, deployment_FastAPI_port=deployment_FastAPI_port,\
-                               deployment_Docker_port=deployment_Docker_port))
+                               undersampling = undersampling, undersampler = undersampler, level_1_model=level_1_model, level_1_model_pos=level_1_model_pos,\
+                               no_decorrelator=no_decorrelator, no_optimization=no_optimization, random_state=random_state, threshold_corr = threshold_corr,\
+                               threshold_model = threshold_model, threshold_score = threshold_score, threshold_feature = threshold_feature, output=output,\
+                               deployment_FastAPI_port=deployment_FastAPI_port, deployment_Docker_port=deployment_Docker_port))
 
 build_tab = widgets.VBox([caption_output_file, build_tab_content, deployment_fields, run])
 

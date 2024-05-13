@@ -1236,7 +1236,7 @@ def store_data(name, path, threshold_corr, threshold_model, threshold_feature, t
     conn.close()
 
 # Functions used in time series analysis
-def plot_correlation(df, t=1):
+def plot_correlation(df, target_col, t=1):
     """
     Compute and plot the correlation and the hierarchical clustering of the features of the input time series dataframe
     Parameters:
@@ -1250,7 +1250,7 @@ def plot_correlation(df, t=1):
        corr = df.corr()
        display(corr.style.background_gradient(cmap='coolwarm'))
        print('Hierarchical clustering')
-       selected_features_names = hierarchical_clustering(df.drop(target_col, axis=1), t=1)
+       selected_features_names = hierarchical_clustering(df.drop(target_col, axis=1), t=t)
        print('selected_features_names = ', selected_features_names)
     else:
        print('No correlation for univariate time series') 

@@ -35,7 +35,7 @@ Let $A$ be a learning algorithm and a learning set $L$, $M^{A}_{L}=T\left(A,L \r
 
 During the training process, the learning set $L$ is divided into a training set $L_{train}$ and a test set $L_{test}$, and the algorithm $A$ is trained on the training set (i.e. optimised so that the gap between the prediction and the ground truth is minimal). A function $S$ called **score** measures the gap mean.
 
-$S_{train}=S\left(M^{A}_{L_{train}}\left(\pi_{f}\left(L_{train}\right) \right),\pi_{t}\left(L_{train}\right) \right)$ is the **train error**, $S_{test}=S\left(M^{A}_{L_{train}}\left(\pi_{f}\left(L_{test}\right) \right),\pi_{t}\left(L_{test}\right) \right)$ is the **test error**. 
+$S_{train}=S\left(M^{A}\_{L_{train}}\left(\pi_{f}\left(L_{train}\right) \right),\pi_{t}\left(L_{train}\right) \right)$ is the **train error**, $S_{test}=S\left(M^{A}\_{L_{train}}\left(\pi_{f}\left(L_{test}\right) \right),\pi_{t}\left(L_{test}\right) \right)$ is the **test error**. 
 
 ## Folding and cross-validation
 Let's say we have a learning set $L=\lbrace\left(x_{i}, y_{i}\right)\in U\times V\rbrace_{i\in \lbrace 1,..,I\rbrace}$ (it is assumed that $I$ is not prime), $J$ is a divisor of $I$. It is possible to split (**randomly** for **regression** and **classfication** problems, but for **time series** forecasting, the **temporal order** must be **respected**) $L$ into $J$ equal (and usually disjoint) parts $\lbrace L_{j}\rbrace_{j\in \lbrace 1,..,J\rbrace}$.
@@ -49,7 +49,7 @@ Some properties:
    * as there is only one element in each test set, this technique is suitable for small amount of data.
 
 * If $J|I$:  
-   * $\#L^{\hat{\jmath}}=\frac{I}{J}$ 
+   * $\sharp L^{\hat{\jmath}}=\frac{I}{J}$ 
    * $L^{\hat{\imath}} \cap L^{\hat{\jmath}}=\emptyset$, if $i\neq j$ 
    * $\bigcup_{i} L^{\hat{\jmath}}=L$
    * this technique is suitable for large amount of data.
@@ -57,18 +57,18 @@ Some properties:
 $T$ is the training operator, invoking the learning algorithm $A$ on the training set $L^{\hat{\jmath}}$ induces a model $M^{\hat{\jmath}}_{A}=T\left(A,L^{\hat{\jmath}}\right)$. 
 
 The [cross-validation](https://scikit-learn.org/stable/modules/cross_validation.html) error (or **cross-validation score**) is given by:
-$S_{CV}\left(M_{A},L\right)=\frac{1}{J}\sum_{j=1}^{J}\delta\left(M^{\hat{\jmath}}_{A_{j}}\left(\pi_{f}\left(L_{j}\right)\right)-\pi_{t}\left(L_{j}\right) \right) $, where $\delta$ measures the gap between prediction of $M^{\hat{\jmath}}_{A_{j}}$ and ground truth. 
+$$S_{CV}\left(M_{A},L\right)=\frac{1}{J}\sum_{j=1}^{J}\delta\left(M^{\hat{\jmath}}\_{A_{j}}\left(\pi_{f}\left(L_{j}\right)\right)-\pi_{t}\left(L_{j}\right) \right) $$ where $\delta$ measures the gap between prediction of $M^{\hat{\jmath}}\_{A_{j}}$ and ground truth. 
 
 Ideally, $S_{train}$ should be closed to $S_{CV}$; if $S_{train}$ is closed to $S_{CV}$ and $S_{train}$ is large, the model suffers from **underfitting** (the model has **large biais**); if $S_{train}$ is small and $S_{CV}$ is largely greater than $S_{train}$, the model suffers from **overfitting** (the model has **large variance**)   
 
-The technique of **minimal cross-validation error** says that given a set of candidate learning algorithms $\lbrace A_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}$ and a learning set $L$, one should generalize from $L$ with a model $M_{l}=T\left(A_{l},L\right) \in \lbrace T\left(A_{k},L\right)\rbrace_{k \in \lbrace 1,..,K\rbrace}$ such that $S_{CV}\left(M_{l},L\right) <S_{CV}\left(M_{j},L\right)$, $\forall j \ne l$. 
+The technique of **minimal cross-validation error** says that given a set of candidate learning algorithms $\lbrace A_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}$ and a learning set $L$, one should generalize from $L$ with a model $M_{l}=T\left(A_{l},L\right) \in \lbrace T\left(A_{k},L\right)\rbrace_{k \in \lbrace 1,..,K\rbrace}$ such that $S_{CV}\left(M_{l},L\right) \lt S_{CV}\left(M_{j},L\right)$, $\forall j \ne l$. 
 
 
 ### Stacked generalization
 Let $\lbrace A_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}$ be a finite set of learning algorithm.
-We can define a finite set of models $\lbrace M_{k}^{\hat{\jmath}}\rbrace_{k \in \lbrace 1,..,K\rbrace}$, where $M^{\hat{\jmath}}_{k}=T\left(A_{k},L^{\hat{\jmath}}\right)$, they are called the **level 0 models**.
+We can define a finite set of models $\lbrace M\_{k}^{\hat{\jmath}}\rbrace\_{k \in \lbrace 1,..,K\rbrace}$, where $M^{\hat{\jmath}}\_{k}=T\left(A_{k},L^{\hat{\jmath}}\right)$, they are called the **level 0 models**.
 
-Let's define $z_{nk}=M^{\hat{\jmath}}_{k}\left( x_n \right)$ for all $x_n \in \pi_{f}\left(L_{j}\right)$.
+Let's define $z_{nk}=M^{\hat{\jmath}}\_{k}\left( x_n \right)$ for all $x_n \in \pi_{f}\left(L_{j}\right)$.
 
 At the end of the entire cross-validation process, the dataset assembled from the outputs of the $K$ models is: $L_{CV}=\lbrace\left(z_{1i},..,z_{Ki}, y_i\right)\rbrace_{i\in \lbrace 1,..,I\rbrace}$.
 

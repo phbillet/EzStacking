@@ -9,7 +9,7 @@ The algorithm associated to this learning program is called a **learning algorit
 ## Supervised learning problems
 Let's assume that there is a function $f:U\subset \mathbb{R}^{n}\rightarrow V\subset \mathbb{R}^{p}$, $f$ is unknown and is called the **parent function** or the **objective function**, $U$ is the **input space**, $V$ is the **output space**. For the sake of simplicity, let's assume that $p=1$.
 
-The only thing we know about $f$ is a set of samples $L=\{\left(x_i, y_i\left(=f\left(x_i\right)\right)\right)\in U\times V\}_{i\in \{1,..,I\}}$, $x$ are called **features**, $y$ the **target** and $L$ the **learning set**.
+The only thing we know about $f$ is a set of samples $L=\lbrace\left(x_i, y_i\left(=f\left(x_i\right)\right)\right)\in U\times V\rbrace_{i\in \lbrace 1,..,I \rbrace}$, $x$ are called **features**, $y$ the **target** and $L$ the **learning set**.
 
 We would like to find an approximation $\tilde{f}$ of $f$ built from the learning set and a learning algorithm, this is a **supervised learning problem**.
 
@@ -19,18 +19,18 @@ Here, the experience $E$ is the learning set, the task is to find the function $
 If $V$ is **continuous** (resp. **discrete**) in the preceding definition, then it is a **regression** (resp. **classification**) problem.
 
 ### Time series forecasting
-Let's imagine an experiment during which a result $X_{t}$ is measured over time, $\{X_{t}\}_{t}$ is a **time series**. How can we predict $X_{t+\tau}$ (where $\tau$ is the time step)? 
+Let's imagine an experiment during which a result $X_{t}$ is measured over time, $\lbrace X_{t}\rbrace_{t}$ is a **time series**. How can we predict $X_{t+\tau}$ (where $\tau$ is the time step)? 
 
-Let's assume that $X_{t+1}$ depends on the $k$ preceding measures ($k$ is the **window size** or **lag number**), we can suppose that there is a function $f$ such that: $X_{t+\tau}=f \left(X_{t}, X_{t-\tau},.., X_{t-k\tau} \right)$.
+Let's assume that $X_{t+\tau}$ depends on the $k$ preceding measures ($k$ is the **window size** or **lag number**), we can suppose that there is a function $f$ such that: $X_{t+\tau}=f \left(X_{t}, X_{t-\tau},.., X_{t-k\tau} \right)$.
 
-Let's define $L=\{\left(X_{t} ,X_{t-\tau},.., X_{t-k\tau},X_{t+\tau} \right)\}_{t}$, that is typically a regression learning set.
+Let's define $L=\lbrace\left(X_{t} ,X_{t-\tau},.., X_{t-k\tau},X_{t+\tau} \right)\rbrace_{t}$, that is typically a regression learning set.
 
 ## Useful operators
 ### Feature and target extractors
-Let's say we have a learning set $L=\{ \left( x, y \right)  \in U \times V\} \}$, the **feature extractor** $\pi_{f}$ is defined by $\pi_{f}\left(L\right)=\{x, \left( x, y \right)  \in L \}$, the **target extractor** $\pi_{t}$ is defined by $\pi_{t}\left(L\right)=\{y, \left( x, y \right)  \in L \}$.
+Let's say we have a learning set $L=\lbrace \left( x, y \right)  \in U \times V \rbrace$, the **feature extractor** $\pi_{f}$ is defined by $\pi_{f}\left(L\right)=\lbrace x, \left( x, y \right)  \in L \rbrace$, the **target extractor** $\pi_{t}$ is defined by $\pi_{t}\left(L\right)=\lbrace y, \left( x, y \right)  \in L \rbrace$.
 
 ### Training operator
-The **training operator** $T$ is the operator that transforms a learning algorithm into a **model** or **estimator** fitted on a learning set. 
+The **training operator** $T$ is the operator that transforms a learning algorithm into a **model** (or **estimator**) fitted on a learning set. 
 Let $A$ be a learning algorithm and a learning set $L$, $M^{A}_{L}=T\left(A,L \right)$ is the model obtained after training $A$ on $L$.
 
 During the training process, the learning set $L$ is divided into a training set $L_{train}$ and a test set $L_{test}$, and the algorithm $A$ is trained on the training set (i.e. optimised so that the gap between the prediction and the ground truth is minimal). A function $S$ called **score** measures the gap mean.
@@ -38,13 +38,13 @@ During the training process, the learning set $L$ is divided into a training set
 $S_{train}=S\left(M^{A}_{L_{train}}\left(\pi_{f}\left(L_{train}\right) \right),\pi_{t}\left(L_{train}\right) \right)$ is the **train error**, $S_{test}=S\left(M^{A}_{L_{train}}\left(\pi_{f}\left(L_{test}\right) \right),\pi_{t}\left(L_{test}\right) \right)$ is the **test error**. 
 
 ## Folding and cross-validation
-Let's say we have a learning set $L=\{\left(x_i, y_i\right)\in U\times V\}_{i\in \{1,..,I\}}$ (it is assumed that $I$ is not prime), $J$ is a divisor of $I$. It is possible to split (**randomly** for **regression** and **classfication** problems, but for **time series** forecasting, the **temporal order** must be **respected**) $L$ into $J$ equal (and usually disjoint) parts $\{L_{j}\}_{j\in \{1,..,J\}}$.
+Let's say we have a learning set $L=\lbrace\left(x_{i}, y_{i}\right)\in U\times V\rbrace_{i\in \lbrace 1,..,I\rbrace}$ (it is assumed that $I$ is not prime), $J$ is a divisor of $I$. It is possible to split (**randomly** for **regression** and **classfication** problems, but for **time series** forecasting, the **temporal order** must be **respected**) $L$ into $J$ equal (and usually disjoint) parts $\lbrace L_{j}\rbrace_{j\in \lbrace 1,..,J\rbrace}$.
 
 $L_{j}$ is the **test set** and $L^{\hat{\jmath}}=L-L_{j}$ is the **train set** for the $j$th **fold** of the **$J$ fold cross-validation**.
 
 Some properties:
 * If $J==I$:
-   * $L_{i}\neq L_{i}$, if $i\neq j$ 
+   * $L_{i}\neq L_{j}$, if $i\neq j$ 
    * $\bigcup_{i} L_{i}=L$
    * as there is only one element in each test set, this technique is suitable for small amount of data.
 
@@ -54,27 +54,27 @@ Some properties:
    * $\bigcup_{i} L^{\hat{\jmath}}=L$
    * this technique is suitable for large amount of data.
 
-$T$ is the training operator, invoking the learning algorithm $A$ on the training set $L^{\hat{\jmath}}$ induces a model $M^{\hat{\jmath}}_{A}==T\left(A,L^{\hat{\jmath}}\right)$. 
+$T$ is the training operator, invoking the learning algorithm $A$ on the training set $L^{\hat{\jmath}}$ induces a model $M^{\hat{\jmath}}_{A}=T\left(A,L^{\hat{\jmath}}\right)$. 
 
 The [cross-validation](https://scikit-learn.org/stable/modules/cross_validation.html) error (or **cross-validation score**) is given by:
 $S_{CV}\left(M_{A},L\right)=\frac{1}{J}\sum_{j=1}^{J}\delta\left(M^{\hat{\jmath}}_{A_{j}}\left(\pi_{f}\left(L_{j}\right)\right)-\pi_{t}\left(L_{j}\right) \right) $, where $\delta$ measures the gap between prediction of $M^{\hat{\jmath}}_{A_{j}}$ and ground truth. 
 
 Ideally, $S_{train}$ should be closed to $S_{CV}$; if $S_{train}$ is closed to $S_{CV}$ and $S_{train}$ is large, the model suffers from **underfitting** (the model has **large biais**); if $S_{train}$ is small and $S_{CV}$ is largely greater than $S_{train}$, the model suffers from **overfitting** (the model has **large variance**)   
 
-The technique of **minimal cross-validation error** says that given a set of candidate learning algorithms $\{A_{k}\}_{k \in \{1,..,K\}}$ and a learning set $L$, one should generalize from $L$ with a model $M_{l}=T\left(A_{l},L\right) \in \{T\left(A_{k},L\right)\}_{k \in \{1,..,K\}}$ such that $S_{CV}\left(M_{l},L\right) <S_{CV}\left(M_{j},L\right)$, $\forall j \ne l$. 
+The technique of **minimal cross-validation error** says that given a set of candidate learning algorithms $\lbrace A_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}$ and a learning set $L$, one should generalize from $L$ with a model $M_{l}=T\left(A_{l},L\right) \in \lbrace T\left(A_{k},L\right)\rbrace_{k \in \lbrace 1,..,K\rbrace}$ such that $S_{CV}\left(M_{l},L\right) <S_{CV}\left(M_{j},L\right)$, $\forall j \ne l$. 
 
 
 ### Stacked generalization
-Let $\{A_{k}\}_{k \in \{1,..,K\}}$ be a finite set of learning algorithm.
-We can define a finite set of models $\{M_{k}^{\hat{\jmath}}\}_{k \in \{1,..,K\}}$, where $M^{\hat{\jmath}}_{k}=T\left(A_{k},L^{\hat{\jmath}}\right)$, they are called the **level 0 models**.
+Let $\lbrace A_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}$ be a finite set of learning algorithm.
+We can define a finite set of models $\lbrace M_{k}^{\hat{\jmath}}\rbrace_{k \in \lbrace 1,..,K\rbrace}$, where $M^{\hat{\jmath}}_{k}=T\left(A_{k},L^{\hat{\jmath}}\right)$, they are called the **level 0 models**.
 
 Let's define $z_{nk}=M^{\hat{\jmath}}_{k}\left( x_n \right)$ for all $x_n \in \pi_{f}\left(L_{j}\right)$.
 
-At the end of the entire cross-validation process, the dataset assembled from the outputs of the $K$ models is: $L_{CV}=\{\left(z_{1i},..,z_{Ki}, y_i\right)\}_{i\in \{1,..,I\}}$.
+At the end of the entire cross-validation process, the dataset assembled from the outputs of the $K$ models is: $L_{CV}=\lbrace\left(z_{1i},..,z_{Ki}, y_i\right)\rbrace_{i\in \lbrace 1,..,I\rbrace}$.
 
 Let $\bar A$ be another learning algorithm, $\bar M=T\left(\bar A,L_{CV}\right)$, $\bar M$ is called the **level 1 model**.
 
-The level 0 models are retrained on the whole learning set $\{M_{k}\}_{k \in \{1,..,K\}}=\{T\left(A_{k},L\right)\}_{k \in \{1,..,K\}}$, and finally $\tilde{f}=\bar M\left( M_{1},..,M_{K} \right)$, which is the **stacked model**.
+The level 0 models are retrained on the whole learning set $\lbrace M_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}=\lbrace T\left(A_{k},L\right)\rbrace_{k \in \lbrace 1,..,K\rbrace}$, and finally $\tilde{f}=\bar M\left( M_{1},..,M_{K} \right)$, which is the **stacked model**.
 
 ## Questioning
 ### Wolpert's black art 

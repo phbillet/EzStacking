@@ -1,10 +1,10 @@
-<h1 style="text-align: center;">EzStacking: from data to Kubernetes thru Scikit-Learn, Keras, FastAPI and Docker</h1>
+<h1 style="text-align: center;">EzStacking: from data to Kubernetes via Scikit-Learn, Keras, FastAPI and Docker</h1>
 
 # Theoretical preamble
 ## Learning algorithm
 Tom Mitchell provides the following definition of a **learning program** : “A computer program is said to **learn** from **experience $E$** with respect to some class of **tasks $T$** and **performance measure $P$**, if its performance at tasks in $T$, as measured by $P$, improves with experience $E$.”
 
-The algorithm associated to this learning program is called a **learning algorithm**.
+The algorithm associated to this learning computer program is called a **learning algorithm**.
 
 ## Supervised learning problems
 Let's assume that there is a function $f:U\subset \mathbb{R}^{n}\rightarrow V\subset \mathbb{R}^{p}$, $f$ is unknown and is called the **parent function** or the **objective function**, $U$ is the **input space**, $V$ is the **output space**. For the sake of simplicity, let's assume that $p=1$.
@@ -13,7 +13,7 @@ The only thing we know about $f$ is a set of samples $L=\lbrace\left(x_i, y_i\le
 
 We would like to find an approximation $\tilde{f}$ of $f$ built from the learning set and a learning algorithm, this is a **supervised learning problem**.
 
-Here, the experience $E$ is the learning set, the task is to find the function $\tilde{f}$ and the performance measure is the gap between the prediction and the ground truth (i.e. the target $y_{i}$ in the learning set). 
+Here, the experience $E$ is the learning set, the task $T$ is to find the function $\tilde{f}$ and the performance measure $P$ is the gap between the prediction and the ground truth (i.e. the target $y_{i}$ in the learning set). 
 
 ### Regression / Classification
 If $V$ is **continuous** (resp. **discrete**) in the preceding definition, then it is a **regression** (resp. **classification**) problem.
@@ -83,18 +83,61 @@ In his paper on classification and stacked generalization, D. Wolpert underlines
  * no rules saying what level 1 learning algorithms one should use
  * how to choose the number of level 0 learning algorithms.
  
-### Model importance
-#### Regression
-In his paper on regression and stacked generalization, L. Breiman indicates that if a linear regression is used as level 1 learning algorithm, a non-negativity constraint on the coefficients must be added.
+#### Model importance
+##### Regression
+In his paper on regression and stacked generalization, L. Breiman indicates that if a linear regression is used as level 1 learning algorithm, a **non-negativity** constraint on the coefficients must be added.
 
-#### Classification
+##### Classification
 In their paper, K. M. Ting and I. H. Witten explain that, for classification, the level 1 learning algorithm should be a multi-response least-squares regression based on class probabilities (confidence measure), but no non-negativity constraint is needed. 
 
 However, the non-negativity constraint increases the interpretability, and these coefficients can be used to define the **model importance** of the level 0 models. 
 
-### Model selection
+#### Model selection
 So, if the initial set of level 0 learning algorithms is large enough, it can be shrinked according to the model importances (moreover, the train and test scores must also be considered, to avoid underfitting and overfitting), this is the **model selection**. 
 
+### About the Data 
+Until now, nothing has been said about the data, yet the proper training of a learning algorithm requires data analysis, this is the **exploratory data analysis** (or **EDA**) phase.
+#### Data quality
+Trivially, in some cases the **data** is **not usable**:
+ * the rows for which the target is not specified must be deleted
+ * if a given feature has a unique value, the corresponding column must be dropped
+ * the features, for which the percentage of unspecified values is too high, should be deleted (if this percentage is quite low, missing values can be filled using imputation).
+ 
+Another important point is **outliers** (some data differs significantly from other observations), they can be detected using $Z$ score; it must be used with care, some important data can be lost.
+
+This is the **data cleaning** (or **cleansing**).
+
+#### Data description
+Depending on the learning algorithm, some data types are not supported, which is why a preprocessing phase is necessary. For each data item, the data description indicates its type (numeric or categorical) and its value range (an interval (resp. a list of values) for a feature of numeric (resp. categorical) type and is stored in a **schema**. The data description drives the preprocessing. The value range can be used to evaluate input data used to make predictions.
+ 
+#### Data correlation and feature importance
+Following Occam's razor, simpler models are preferable. A model with fewer features is simpler and often better. 
+
+Some reasons to remove correlated features:
+ * speed: fewer features typically improve the speed of the learning algorithm due to the curse of dimensionality
+ * harmful bias: removing correlated features can reduce harmful bias 
+ * interpretability: to make a model more interpretable, reducing the number of features is beneficial. Simplified models are easier to understand.
+ 
+However, if correlated features are informative and correlated with the target, they should be retained.
+
+**Feature importance** refers to techniques that assign a score to input features based on their usefulness in predicting a target variable. Due to their heterogeneity, stacked models are not capable of directly providing importance; **permutation feature importance** is then a good alternative. However, this method is also sensitive to the correlation of features.
+
+This process of eliminating unnecessary features is called **feature selection**; given the previous remarks, it must be carried out diligently.
+
+## Requirements
+
+Let's imagine that we want to create notebooks like those that can be found on [Kaggle.com](https://www.kaggle.com/code), but with the following required steps:
+ * taking into account problems of regression, classification and time series forecasting 
+ * EDA with data cleaning, feature selection (based on correlation), schema generation 
+ * modeling using stacking including: preprocessing (based on schema), training, model evaluation and model inspection
+ * model selection based on model importance
+ * feature selection based on permutation feature importance 
+ * basic testing: performance measurement using test generator and FastAPI
+ * deployment in Docker.
+
+Of course, a graphical interface allows you to select the dataset and the models, set the parameters, generate the notebook, the test set, the deployment files...
+
+**EzStacking** will try to cover these different requirements.
 
 # Introduction
 EzStacking is a [**development tool**](#ezstacking---as-development-tool) designed to adress **supervised learning** problems. It can be viewed like an extension of the idea proposed in the article [No Free Lunch:Free at Last!](https://www.researchgate.net/publication/341233408_No_Free_LunchFree_at_Last).
@@ -105,10 +148,6 @@ Sometimes, the stacked models can be heavy, slow or not accurate, they can conta
 - the number of **level 0 models** (reduced using model importance)
 - the number of **features** (reduced using feature importance)
 - the **complexity** (depth) of the level 0 models (depending on the user's choices).
-
-The main principles used in EzStacking are also presented in these two articles:
-- [Model stacking to improve prediction and variable importance robustness for soft sensor development](https://www.sciencedirect.com/science/article/pii/S2772508122000254) Maxwell Barton, Barry Lennox - Digital Chemical Engineering Volume 3, June 2022
-- [Stacking with Neural network for Cryptocurrency investment](https://arxiv.org/pdf/1902.07855v1.pdf) Avinash Barnwal, Haripad Bharti, Aasim Ali, and Vishal Singh - Inncretech Inc., Princeton, February 2019.
 
 _Notes:_ 
 * _the **time series forecasting** problem is based on the **transformation** of **time series** to **supervised learning problem**_
@@ -241,7 +280,7 @@ _Notes:_
 * _if the option "**No correlation**" is checked, the model will not integrate decorrelation step_
 * _if the option "**No model optimization**" is checked, the number of models and of features will not be reduced automatically_
 * _if **no estimator** is selected, the **regressions** (resp. **classifications**) will use **linear regressions** (resp. **logistic regressions**)_
-* _depending on the **data size**, EzStacking uses the estimators given in the preceding table for the level 0_
+* _depending on the **data size**, EzStacking uses the estimators given in the preceding table for the level 0 models_
 * _estimators based on **Keras** or on **Histogram-Based Gradient Boosting** benefit from [**early stopping**](https://en.wikipedia.org/wiki/Early_stopping), those based on gaussian processes do not benefit from it_
 * _the Gaussian methodes option is only available for small dataset._ 
 
@@ -261,16 +300,16 @@ _Notes:_
 * _threshold_corr: if the **correlation** is greater than this number the column will be **dropped**_
 * _threshold_score:  **keep** models having **test score** greater than this number._
 * _threshold_model: **keep** this number of **best models** (in the sens of **model importance**)_
-* _threshold_feature: **keep** this number of **most important features**_
+* _threshold_feature: **keep** this number of **most important features**._
 
 ### Build
 Simply enter a file name:
 
 ![ezstacking output](./screenshots/EZStacking_build.png)
 
-Just click on the button ![ezstacking generate](./screenshots/EZStacking_generate.png), you should find **your notebook** in the **current folder** (otherwise a Python error will be emitted).
+Just click on the button ![ezstacking generate](./screenshots/EZStacking_generate.png), you should find **your notebook** in the **current folder**.
 
-Then open the notebook, and click on the button `Run All Cells`.
+Then open this notebook, and click on the button `Run All Cells`.
 
 ## Test
 ![ezstacking Output](./screenshots/EZStacking_test.png)
@@ -400,7 +439,7 @@ This initial model is maybe too large, the modeling process **reduces** its size
 5. `dropped_cols` can be added to `user_drop_cols` at the departure of the EDA (then it is necessary to **re-launch** from the EDA).
 
 _Notes:_ 
-* _the calculation of the **model importance** is based on the coefficients of the regularized linear regression used as level 1 estimator_
+* _the calculation of the **model importance** is based on the coefficients of level 1 estimator_
 * _the **feature importance** is computed using [permutation importance](https://scikit-learn.org/stable/modules/permutation_importance.html)_
 * _it is important not to be too stingy, it is not necessary to remove too many estimators and features, as this can lead to a decrease in performance._
 
@@ -475,6 +514,8 @@ A test file for **Docker** (and **Kubernetes**) is also created, it is located i
   * [Gaussian Processes for Machine Learning](http://gaussianprocess.org/gpml/chapters/RW.pdf), Carl Eduard Rasmussen and Christopher K.I. Williams MIT Press 2006
   * [The Kernel Cookbook](https://www.cs.toronto.edu/~duvenaud/cookbook/), David Duvenaud
   * [Time series](http://ethen8181.github.io/machine-learning/time_series/3_supervised_time_series.html), MingYu (Ethen) Liu
+  * [Correlated features](https://datascience.stackexchange.com/questions/24452/in-supervised-learning-why-is-it-bad-to-have-correlated-features)
+  * [Correlated features and permutation feature importance](https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance_multicollinear.html#sphx-glr-auto-examples-inspection-plot-permutation-importance-multicollinear-py)
   * ...
 * Machine learning tools
   * [scikit-learn](https://scikit-learn.org/stable/)

@@ -382,7 +382,7 @@ def split(X, y, random_state, test_size=0.33, threshold_entropy=0.7, undersampli
                                                            shuffle=True, random_state = random_state)
     return X_train, X_test, y_train, y_test
     
-# Modelling functions
+# Modeling functions
 def model_filtering(level_0, model_imp, nb_model, score_stack, threshold_score):
     """
     Suppress estimators from level 0 having a test score smaller than threshold_score (from score_stack), then 
@@ -900,6 +900,279 @@ def K_mape(model, X_train, y_train, X_test, y_test):
            'test': [mean_absolute_percentage_error(y_test, y_pred_test)]}
     display(pd.DataFrame(data=dmape).style.hide_index())
      
+# Functions used in time series analysis
+def plot_correlation(df, target_col, t=1):
+    """
+    Compute and plot the correlation and the hierarchical clustering of the features of the input time series dataframe
+    Parameters:
+        df: a dataframe,
+        t: distance threshold.
+    Returns:
+        Plotting of the correlation and the hierarchical clustering.
+    """
+    if df.shape[1] > 1:
+       print('Correlation matrix')
+       corr = df.corr()
+       display(corr.style.background_gradient(cmap='coolwarm'))
+       print('Hierarchical clustering')
+       selected_features_names = hierarchical_clustering(df.drop(target_col, axis=1), t=t)
+       print('selected_features_names = ', selected_features_names)
+    else:
+       print('No correlation for univariate time series') 
+    
+def plot_acf_pacf(df, column):
+    """
+    Compute and plot the autocorrelation and partial autocorrelation functions of a selected feature of the input time series dataframe.
+    For more information: 
+    - https://www.statsmodels.org/devel/generated/statsmodels.graphics.tsaplots.plot_acf.html
+    - https://www.statsmodels.org/devel/generated/statsmodels.graphics.tsaplots.plot_pacf.html.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe interactively selected.
+    Returns:
+        Plotting of the autocorrelation and partial autocorrelation functions.
+    """
+    def p_a_p(df, column):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+        plot_acf(df[column], ax=ax1)
+        plot_pacf(df[column], ax=ax2)
+        fig.suptitle("Autocorrelation information of " + str(column))
+        plt.show()
+        
+    interact(p_a_p, df=fixed(df), column=column)
+
+def plot_seasonal_decompose(df, column, model, period):
+    """
+    Interactively plot the seasonal decomposition of a selected feature of the input time series dataframe.
+    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.seasonal.seasonal_decompose.html.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe
+        model: additive/multiplicative
+        period: period of the series.
+    Returns:
+        Plotting of the seasonal decomposition.
+    """    
+    def p_s_d(df, column, model, period):
+        result = seasonal_decompose(df[column], model=model, period=period)
+        fig = result.plot()
+        fig.set_size_inches((10, 10))
+        fig.tight_layout()
+        plt.show()
+       
+    interact(p_s_d, df=fixed(df), column=column, model=model, period=period, continuous_update=False)
+    
+def plot_seasonal_decompose_2(df, column, period1, period2):
+    """
+    Interactively plot the seasonal decomposition of a selected feature of the input time series dataframe taking into account 2 periods.
+    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.seasonal.MSTL.html#statsmodels.tsa.seasonal.MSTL.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe
+        period1: 1st period of the series
+        period2: 2nd period of the series.
+    Returns:
+        Plotting of the seasonal decomposition.
+    """
+    def p_s_d_2(df, column, period1, period2):
+        result = MSTL(df[column], periods=(period1, period1*period2)).fit()
+        fig = result.plot()
+        fig.set_size_inches((10, 10))
+        fig.tight_layout()
+        plt.show()
+       
+    interact_manual(p_s_d_2, df=fixed(df), column=column, period1=period1, period2=period2)
+
+# Constants used in the fuction plot_unobserved_components
+local_linear_trend_model = {
+    'level': 'local linear trend', 'trend': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True
+}
+
+smooth_trend_model = {
+    'level': 'smooth trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True, 'trend': True
+}
+
+random_trend_model = {
+    'level': 'random trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True, 'trend': True
+}
+
+local_level_with_deterministic_trend_model = {
+    'level': 'local linear deterministic trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True
+}
+
+random_walk_with_drift_model = {
+    'level': 'random walk with drift', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
+    'stochastic_seasonal': True, 'cycle': True
+}
+
+model_uc = [('local linear trend', local_linear_trend_model), ('smooth trend', smooth_trend_model), 
+         ('random trend', random_trend_model), ('local linear deterministic trend', local_level_with_deterministic_trend_model), 
+         ('random walk with drift', random_walk_with_drift_model)
+        ]
+
+method = [('modified Powell’s method', 'powell'), ('Nelder-Mead', 'nm'), ('Broyden-Fletcher-Goldfarb-Shanno', 'bfgs'), 
+          ('limited-memory BFGS with optional box constraints','lbfgs'),  ('Newton-Raphson','newton'), 
+          ('conjugate gradient', 'cg'), ('Newton-conjugate gradient', 'ncg'), ('basin-hopping solver', 'basinhopping')]
+
+def plot_unobserved_components(df, column, model, method, confidence):
+    """
+    Interactively plot the univariate unobserved components of a selected feature of the input time series dataframe.
+    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.statespace.structural.UnobservedComponents.html#statsmodels.tsa.statespace.structural.UnobservedComponents.
+    Parameters:
+        df: a dataframe
+        column: a column of the dataframe
+        model: model used to compute the unobserved components
+        method: method used to compute the unobserved components
+        confidence: confidence intervals for the components.
+    Returns:
+        Plotting of the univariate unobserved components.
+    """    
+    def p_u_c(df, column, model, method, confidence):
+        qwargs = model
+        output_mod = UnobservedComponents(df[column], **qwargs)
+        output_res = output_mod.fit(method=method, disp=False)
+        output_res.plot_components(legend_loc='upper left', fig=plt.tight_layout(), figsize=(10, 16), alpha=1-confidence)
+        plt.show();
+        print(output_res.summary())
+       
+    interact_manual(p_u_c, df=fixed(df), column=column, model=model, method=method, confidence=confidence)
+
+def ts_dataframe_to_supervised(df, target, n_in=1, n_out=0, dropT=True):
+    """
+    Transform a time series dataframe into a supervised learning dataset.
+    Parameters:
+        df: a dataframe.
+        target: this is the target variable you intend to use in supervised learning
+        n_in: Number of lag observations as input (X).
+        n_out: Number of observations as output (y).
+        dropT: Boolean - whether or not to drop columns at time "t".
+    Returns:
+        Pandas DataFrame of series framed for supervised learning.
+    """
+    namevars = df.columns.tolist()
+    # input sequence (t-n, ... t-1)
+    drops = []
+    for i in range(n_in, -1, -1):
+        if i == 0:
+            for var in namevars:
+                addname = var+'_t'
+                df.rename(columns={var:addname},inplace=True)
+                drops.append(addname)
+        else:
+            for var in namevars:
+                addname = var+'_t_'+str(i)
+                df[addname] = df[var].shift(i)
+    # forecast sequence (t, t+1, ... t+n)
+    if n_out == 0:
+        n_out = False
+    for i in range(1, n_out):
+        for var in namevars:
+            addname = var+'_t_'+str(i)
+            df[addname] = df[var].shift(-i)
+    # drop rows with NaN values
+    df.dropna(inplace=True,axis=0)
+    # put it all together
+    target = target+'_t'
+    if dropT:
+        drops.remove(target)
+        df.drop(drops, axis=1, inplace=True)
+    preds = [x for x in list(df) if x not in [target]] 
+    return df, target, preds
+
+def timeseries_train_test_split(X, y, test_size):
+    """
+    Perform train-test split with respect to time series structure.
+    Parameters:
+        X: feature dataframe
+        y: target dataframe
+        test_size: proportion reserved for the test file.
+    Returns:
+        X_train: train set (features)
+        X_test: test set (features)
+        y_train: train set (target)
+        y_test: test set (target).
+    """
+    test_index = int(len(X) * (1 - test_size))
+    X_train = X[:test_index]
+    X_test = X[test_index:]
+    y_train = y[:test_index]
+    y_test = y[test_index:]
+    return X_train, X_test, y_train, y_test
+
+def mean_absolute_percentage_error(y_true, y_pred):
+    """
+    Compute the mean absolute percentage error .
+    Parameters:
+        y_true: correct target values
+        y_pred: predicted target values. 
+    Returns:
+        the mean absolute percentage error.
+    """
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+def plot_ts_results(X_train, y_train, X_test, y_test, model, confidence, plot_intervals, plot_anomalies):
+    """
+    Interactively plot:
+        - the modelled vs original values
+        - the prediction intervals according to a given confidence interval
+        - the anomalies (points that resides outside the confidence interval)
+    Parameters:
+        X_train: train feature dataframe
+        y_train: train target dataframe 
+        X_test: test feature dataframe
+        y_test: test target dataframe 
+        model: model used for predictions
+        confidence: confidence intervals
+        plot_intervals: Boolean for displaying confidence intervals
+        plot_anomalies: Boolean for displaying anomalies. 
+    Returns:
+        Plottings.
+    """    
+    def p_m_s(X_train, y_train, X_test, y_test, model, confidence, plot_intervals, plot_anomalies):
+        
+        prediction = model.predict(X_test)
+
+        plt.figure(figsize=(15, 7))
+
+        x = X_test.index.date
+        # x = range(prediction.size)
+        plt.plot(x, prediction, label='prediction', linewidth=2.0)
+        plt.plot(x, y_test, label='actual', linewidth=2.0)
+        if plot_intervals:
+            timeseries_cv = TimeSeriesSplit(n_splits=5)
+            cv = cross_val_score(model, X_train, y_train, 
+                                 cv=timeseries_cv, scoring='neg_mean_absolute_error')
+            mae = -1 * cv.mean()
+            deviation = cv.std()
+
+            # confidence interval computation
+            scale = stats.norm.ppf(confidence)
+            margin_error = mae + scale * deviation
+            lower = prediction - margin_error
+            upper = prediction + margin_error
+
+            fill_alpha = 0.2
+            fill_color = '#66C2D7'
+            plt.fill_between(x, lower, upper, color=fill_color, alpha=fill_alpha, label= str(confidence*100) + '% CI')      
+
+            if plot_anomalies:
+                anomalies = np.array([np.nan] * len(y_test))
+                anomalies[y_test < lower] = y_test[y_test < lower]
+                anomalies[y_test > upper] = y_test[y_test > upper]
+                plt.plot(anomalies, 'o', markersize=10, label='Anomalies')
+
+        error = mean_absolute_percentage_error(prediction, y_test)
+        plt.title('Mean absolute percentage error: {0:.2f}%'.format(error))
+        plt.legend(loc='best')
+        plt.tight_layout()
+        plt.grid(True)
+        
+    interact_manual(p_m_s, X_train=fixed(X_train), y_train=fixed(y_train), X_test=fixed(X_test), y_test=fixed(y_test), model=fixed(model), confidence=confidence, plot_intervals=plot_intervals, plot_anomalies=plot_anomalies)
+                
 # Fast API, Docker, Kubernetes functions
 def fastapi_server(model, model_name, X, y, port, Docker=False, with_keras=False):
     """
@@ -1235,278 +1508,5 @@ def store_data(name, path, threshold_corr, threshold_model, threshold_feature, t
     conn.commit()
     conn.close()
 
-# Functions used in time series analysis
-def plot_correlation(df, target_col, t=1):
-    """
-    Compute and plot the correlation and the hierarchical clustering of the features of the input time series dataframe
-    Parameters:
-        df: a dataframe,
-        t: distance threshold.
-    Returns:
-        Plotting of the correlation and the hierarchical clustering.
-    """
-    if df.shape[1] > 1:
-       print('Correlation matrix')
-       corr = df.corr()
-       display(corr.style.background_gradient(cmap='coolwarm'))
-       print('Hierarchical clustering')
-       selected_features_names = hierarchical_clustering(df.drop(target_col, axis=1), t=t)
-       print('selected_features_names = ', selected_features_names)
-    else:
-       print('No correlation for univariate time series') 
-    
-def plot_acf_pacf(df, column):
-    """
-    Compute and plot the autocorrelation and partial autocorrelation functions of a selected feature of the input time series dataframe.
-    For more information: 
-    - https://www.statsmodels.org/devel/generated/statsmodels.graphics.tsaplots.plot_acf.html
-    - https://www.statsmodels.org/devel/generated/statsmodels.graphics.tsaplots.plot_pacf.html.
-    Parameters:
-        df: a dataframe
-        column: a column of the dataframe interactively selected.
-    Returns:
-        Plotting of the autocorrelation and partial autocorrelation functions.
-    """
-    def p_a_p(df, column):
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-        plot_acf(df[column], ax=ax1)
-        plot_pacf(df[column], ax=ax2)
-        fig.suptitle("Autocorrelation information of " + str(column))
-        plt.show()
-        
-    interact(p_a_p, df=fixed(df), column=column)
-
-def plot_seasonal_decompose(df, column, model, period):
-    """
-    Interactively plot the seasonal decomposition of a selected feature of the input time series dataframe.
-    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.seasonal.seasonal_decompose.html.
-    Parameters:
-        df: a dataframe
-        column: a column of the dataframe
-        model: additive/multiplicative
-        period: period of the series.
-    Returns:
-        Plotting of the seasonal decomposition.
-    """    
-    def p_s_d(df, column, model, period):
-        result = seasonal_decompose(df[column], model=model, period=period)
-        fig = result.plot()
-        fig.set_size_inches((10, 10))
-        fig.tight_layout()
-        plt.show()
-       
-    interact(p_s_d, df=fixed(df), column=column, model=model, period=period, continuous_update=False)
-    
-def plot_seasonal_decompose_2(df, column, period1, period2):
-    """
-    Interactively plot the seasonal decomposition of a selected feature of the input time series dataframe taking into account 2 periods.
-    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.seasonal.MSTL.html#statsmodels.tsa.seasonal.MSTL.
-    Parameters:
-        df: a dataframe
-        column: a column of the dataframe
-        period1: 1st period of the series
-        period2: 2nd period of the series.
-    Returns:
-        Plotting of the seasonal decomposition.
-    """
-    def p_s_d_2(df, column, period1, period2):
-        result = MSTL(df[column], periods=(period1, period1*period2)).fit()
-        fig = result.plot()
-        fig.set_size_inches((10, 10))
-        fig.tight_layout()
-        plt.show()
-       
-    interact_manual(p_s_d_2, df=fixed(df), column=column, period1=period1, period2=period2)
-
-# Constants used in the fuction plot_unobserved_components
-local_linear_trend_model = {
-    'level': 'local linear trend', 'trend': True, 'damped_cycle': True, 'stochastic_cycle': True,
-    'stochastic_seasonal': True, 'cycle': True
-}
-
-smooth_trend_model = {
-    'level': 'smooth trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
-    'stochastic_seasonal': True, 'cycle': True, 'trend': True
-}
-
-random_trend_model = {
-    'level': 'random trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
-    'stochastic_seasonal': True, 'cycle': True, 'trend': True
-}
-
-local_level_with_deterministic_trend_model = {
-    'level': 'local linear deterministic trend', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
-    'stochastic_seasonal': True, 'cycle': True
-}
-
-random_walk_with_drift_model = {
-    'level': 'random walk with drift', 'cycle': True, 'damped_cycle': True, 'stochastic_cycle': True,
-    'stochastic_seasonal': True, 'cycle': True
-}
-
-model_uc = [('local linear trend', local_linear_trend_model), ('smooth trend', smooth_trend_model), 
-         ('random trend', random_trend_model), ('local linear deterministic trend', local_level_with_deterministic_trend_model), 
-         ('random walk with drift', random_walk_with_drift_model)
-        ]
-
-method = [('modified Powell’s method', 'powell'), ('Nelder-Mead', 'nm'), ('Broyden-Fletcher-Goldfarb-Shanno', 'bfgs'), 
-          ('limited-memory BFGS with optional box constraints','lbfgs'),  ('Newton-Raphson','newton'), 
-          ('conjugate gradient', 'cg'), ('Newton-conjugate gradient', 'ncg'), ('basin-hopping solver', 'basinhopping')]
-
-def plot_unobserved_components(df, column, model, method, confidence):
-    """
-    Interactively plot the univariate unobserved components of a selected feature of the input time series dataframe.
-    For more information: https://www.statsmodels.org/devel/generated/statsmodels.tsa.statespace.structural.UnobservedComponents.html#statsmodels.tsa.statespace.structural.UnobservedComponents.
-    Parameters:
-        df: a dataframe
-        column: a column of the dataframe
-        model: model used to compute the unobserved components
-        method: method used to compute the unobserved components
-        confidence: confidence intervals for the components.
-    Returns:
-        Plotting of the univariate unobserved components.
-    """    
-    def p_u_c(df, column, model, method, confidence):
-        qwargs = model
-        output_mod = UnobservedComponents(df[column], **qwargs)
-        output_res = output_mod.fit(method=method, disp=False)
-        output_res.plot_components(legend_loc='upper left', fig=plt.tight_layout(), figsize=(10, 16), alpha=1-confidence)
-        plt.show();
-        print(output_res.summary())
-       
-    interact_manual(p_u_c, df=fixed(df), column=column, model=model, method=method, confidence=confidence)
-
-def ts_dataframe_to_supervised(df, target, n_in=1, n_out=0, dropT=True):
-    """
-    Transform a time series dataframe into a supervised learning dataset.
-    Parameters:
-        df: a dataframe.
-        target: this is the target variable you intend to use in supervised learning
-        n_in: Number of lag observations as input (X).
-        n_out: Number of observations as output (y).
-        dropT: Boolean - whether or not to drop columns at time "t".
-    Returns:
-        Pandas DataFrame of series framed for supervised learning.
-    """
-    namevars = df.columns.tolist()
-    # input sequence (t-n, ... t-1)
-    drops = []
-    for i in range(n_in, -1, -1):
-        if i == 0:
-            for var in namevars:
-                addname = var+'_t'
-                df.rename(columns={var:addname},inplace=True)
-                drops.append(addname)
-        else:
-            for var in namevars:
-                addname = var+'_t_'+str(i)
-                df[addname] = df[var].shift(i)
-    # forecast sequence (t, t+1, ... t+n)
-    if n_out == 0:
-        n_out = False
-    for i in range(1, n_out):
-        for var in namevars:
-            addname = var+'_t_'+str(i)
-            df[addname] = df[var].shift(-i)
-    # drop rows with NaN values
-    df.dropna(inplace=True,axis=0)
-    # put it all together
-    target = target+'_t'
-    if dropT:
-        drops.remove(target)
-        df.drop(drops, axis=1, inplace=True)
-    preds = [x for x in list(df) if x not in [target]] 
-    return df, target, preds
-
-def timeseries_train_test_split(X, y, test_size):
-    """
-    Perform train-test split with respect to time series structure.
-    Parameters:
-        X: feature dataframe
-        y: target dataframe
-        test_size: proportion reserved for the test file.
-    Returns:
-        X_train: train set (features)
-        X_test: test set (features)
-        y_train: train set (target)
-        y_test: test set (target).
-    """
-    test_index = int(len(X) * (1 - test_size))
-    X_train = X[:test_index]
-    X_test = X[test_index:]
-    y_train = y[:test_index]
-    y_test = y[test_index:]
-    return X_train, X_test, y_train, y_test
-
-def mean_absolute_percentage_error(y_true, y_pred):
-    """
-    Compute the mean absolute percentage error .
-    Parameters:
-        y_true: correct target values
-        y_pred: predicted target values. 
-    Returns:
-        the mean absolute percentage error.
-    """
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
-def plot_ts_results(X_train, y_train, X_test, y_test, model, confidence, plot_intervals, plot_anomalies):
-    """
-    Interactively plot:
-        - the modelled vs original values
-        - the prediction intervals according to a given confidence interval
-        - the anomalies (points that resides outside the confidence interval)
-    Parameters:
-        X_train: train feature dataframe
-        y_train: train target dataframe 
-        X_test: test feature dataframe
-        y_test: test target dataframe 
-        model: model used for predictions
-        confidence: confidence intervals
-        plot_intervals: Boolean for displaying confidence intervals
-        plot_anomalies: Boolean for displaying anomalies. 
-    Returns:
-        Plottings.
-    """    
-    def p_m_s(X_train, y_train, X_test, y_test, model, confidence, plot_intervals, plot_anomalies):
-        
-        prediction = model.predict(X_test)
-
-        plt.figure(figsize=(15, 7))
-
-        x = X_test.index.date
-        # x = range(prediction.size)
-        plt.plot(x, prediction, label='prediction', linewidth=2.0)
-        plt.plot(x, y_test, label='actual', linewidth=2.0)
-        if plot_intervals:
-            timeseries_cv = TimeSeriesSplit(n_splits=5)
-            cv = cross_val_score(model, X_train, y_train, 
-                                 cv=timeseries_cv, scoring='neg_mean_absolute_error')
-            mae = -1 * cv.mean()
-            deviation = cv.std()
-
-            # confidence interval computation
-            scale = stats.norm.ppf(confidence)
-            margin_error = mae + scale * deviation
-            lower = prediction - margin_error
-            upper = prediction + margin_error
-
-            fill_alpha = 0.2
-            fill_color = '#66C2D7'
-            plt.fill_between(x, lower, upper, color=fill_color, alpha=fill_alpha, label= str(confidence*100) + '% CI')      
-
-            if plot_anomalies:
-                anomalies = np.array([np.nan] * len(y_test))
-                anomalies[y_test < lower] = y_test[y_test < lower]
-                anomalies[y_test > upper] = y_test[y_test > upper]
-                plt.plot(anomalies, 'o', markersize=10, label='Anomalies')
-
-        error = mean_absolute_percentage_error(prediction, y_test)
-        plt.title('Mean absolute percentage error: {0:.2f}%'.format(error))
-        plt.legend(loc='best')
-        plt.tight_layout()
-        plt.grid(True)
-        
-    interact_manual(p_m_s, X_train=fixed(X_train), y_train=fixed(y_train), X_test=fixed(X_test), y_test=fixed(y_test), model=fixed(model), confidence=confidence, plot_intervals=plot_intervals, plot_anomalies=plot_anomalies)
-    
 
 

@@ -76,6 +76,8 @@ Let $\bar A$ be another learning algorithm, $\bar M=T\left(\bar A,L_{CV}\right)$
 
 The level 0 models are retrained on the whole learning set $\lbrace M_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}=\lbrace T\left(A_{k},L\right)\rbrace_{k \in \lbrace 1,..,K\rbrace}$, and finally $\tilde{f}=\bar M\left( M_{1},..,M_{K} \right)$, which is the **stacked model**.
 
+What conditions ensure that : $S_{CV}\left(\tilde{f},L\right) \leq S_{CV}\left(M_{j},L\right)$, $\forall j$ ?
+
 ## Questioning
 ### Wolpert's black art 
 In his paper on classification and stacked generalization, D. Wolpert underlines 3 points:
@@ -97,11 +99,13 @@ So, if the initial set of level 0 learning algorithms is large enough, it can be
 
 ### About the Data 
 Until now, nothing has been said about the data, yet the proper training of a learning algorithm requires data analysis, this is the **exploratory data analysis** (or **EDA**) phase.
-#### Data quality
+#### Data quality and data protection
 Trivially, in some cases the **data** is **not usable**:
  * the rows for which the target is not specified must be deleted
  * if a given feature has a unique value, the corresponding column must be dropped
  * the features, for which the percentage of unspecified values is too high, should be deleted (if this percentage is quite low, missing values can be filled using imputation).
+ 
+On the other side, some **data** must **not be used** due to **protection laws** (e.g. personal information, health data...), the corresponding features must be dropped (or anonymized).
  
 Another important point is **outliers** (some data differs significantly from other observations), they can be detected using $Z$ score; it must be used with care, some important data can be lost.
 
@@ -502,7 +506,7 @@ As we have already seen, the server returns the consumption of each request, in 
 
 A test file for **Docker** (and **Kubernetes**) is also created, it is located in the directory associated with the Docker container.
 
-# Resources used for this project:
+# Resources used for this project
 * Stacking, Model importance and Others
   * [Machine Learning](http://www.cs.cmu.edu/~tom/files/MachineLearningTomMitchell.pdf), Tom Mitchell, McGraw Hill, 1997
   * [Stacked generalization](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231), David H. Wolpert, Neural Networks, Volume 5, Issue 2, 1992, Pages 241-259

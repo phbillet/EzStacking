@@ -42,10 +42,10 @@ def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pip
     """
 
     xls = pd.ExcelFile('./modules/ezstacking_config.ods', engine="odf")
-    meta_package = pd.read_excel(xls, 'meta_package')
-    package_source = pd.read_excel(xls, 'package_source')
-    package = pd.read_excel(xls, 'package')
-    document = pd.read_excel(xls, 'document')
+    meta_package = pd.read_excel(xls, 'meta_package', keep_default_na=False)
+    package_source = pd.read_excel(xls, 'package_source', keep_default_na=False)
+    package = pd.read_excel(xls, 'package', keep_default_na=False)
+    document = pd.read_excel(xls, 'document', keep_default_na=False)
     
     meta_package.loc[meta_package['meta_package_index'] == 'STACK', ['meta_package_valid']] = stacking
     meta_package.loc[meta_package['meta_package_index'] == 'KER', ['meta_package_valid']] = with_keras
@@ -212,19 +212,19 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     
     string = '' 
     for index, row in pd_pk_import.iterrows(): 
-        if row[2] == '*':
-           string = string + "from " + str(row[1]) + " import " +  str(row[2]) + "\n"
-        elif row[2] != 'None': 
-           string = string + "import " + str(row[1]) + " as " + str(row[2]) + "\n" 
-        elif row[1] != 'None':  
-           string = string + "import " + str(row[1]) + "\n"
+        if row.iloc[2] == '*':
+           string = string + "from " + str(row.iloc[1]) + " import " +  str(row.iloc[2]) + "\n"
+        elif row.iloc[2] != 'None': 
+           string = string + "import " + str(row.iloc[1]) + " as " + str(row.iloc[2]) + "\n" 
+        elif row.iloc[1] != 'None':  
+           string = string + "import " + str(row.iloc[1]) + "\n"
         else:
            pass 
-        if row[3] != 'None':
-           string = string + str(row[3]) + "\n"
+        if row.iloc[3] != 'None':
+           string = string + str(row.iloc[3]) + "\n"
         
     for index, row in pd_pk_from.iterrows():
-        string = string + "from " + str(row[1]) + " import " +  str(row[2]) + "\n"
+        string = string + "from " + str(row.iloc[1]) + " import " +  str(row.iloc[2]) + "\n"
         
     code = string
     nb['cells'].append(nbf.v4.new_code_cell(code))
@@ -263,24 +263,24 @@ def analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking
     
     for index, row in pd_document.iterrows():
 #        print('index:', index)
-#        print('row[0]:', row[0])
-#        print('row[1]:', row[1])
-#        print('row[2]:', row[2])
-#        print('("run" in row[2]):', ('run' in row[2]))
+#        print('row[0]:', row.iloc[0])
+#        print('row[1]:', row.iloc[1])
+#        print('row[2]:', row.iloc[2])
+#        print('("run" in row[2]):', ('run' in row.iloc[2]))
         
         if index == 1:
            # at index 1: prepare package preamble 
            nb = load_package(nb, pd_pk_import, pd_pk_from) 
-        if row[1] != 'None':
+        if row.iloc[1] != 'None':
            # title management
-           if row[0] == ' ': 
-              text = str(row[1])            
+           if row.iloc[0] == ' ': 
+              text = str(row.iloc[1])            
            else:
-              text = str(row[0]) + ' ' + str(row[1])
+              text = str(row.iloc[0]) + ' ' + str(row.iloc[1])
            nb['cells'].append(nbf.v4.new_markdown_cell(text))
-        if row[2] != 'None':
+        if row.iloc[2] != 'None':
            # code management
-           code = eval(row[2])
+           code = eval(row.iloc[2])
 #           print(code)
            nb['cells'].append(nbf.v4.new_code_cell(code))
 
@@ -404,7 +404,7 @@ def level_0(pd_level_0):
     """
     string = "level_0 = [ \n"
     for index, row in pd_level_0.iterrows():
-        string = string +  "          ('" + str(row[0]) + "', "  + str(row[1]) +  "), \n"  
+        string = string +  "          ('" + str(row.iloc[0]) + "', "  + str(row.iloc[1]) +  "), \n"  
     string = string + "          ]"
     return string
 
@@ -415,20 +415,20 @@ def pipe_level_0(pd_level_0):
     """
     string = "level_0 = [ \n"
     for index, row in pd_level_0.iterrows():
-        if row[2] == True:
-           string = string +  "          ('" + str(row[0]) + "', make_pipeline(tree_preprocessor, " \
-                    + str(row[1]) +  ")), \n"  
+        if row.iloc[2] == True:
+           string = string +  "          ('" + str(row.iloc[0]) + "', make_pipeline(tree_preprocessor, " \
+                    + str(row.iloc[1]) +  ")), \n"  
         else:
-           string = string +  "          ('" + str(row[0]) + "', make_pipeline(ntree_preprocessor, " \
-                    + str(row[1]) +  ")), \n"  
+           string = string +  "          ('" + str(row.iloc[0]) + "', make_pipeline(ntree_preprocessor, " \
+                    + str(row.iloc[1]) +  ")), \n"  
     string = string + "          ]"  
     return string
 
 def list_model(pd_level_0):
     string = ""
     for index, row in pd_level_0.iterrows():
-        if (row[1] != 'K_C') & (row[1] != 'K_R'): 
-           string = string + "# " + str(row[1]) + "\n"  
+        if (row.iloc[1] != 'K_C') & (row.iloc[1] != 'K_R'): 
+           string = string + "# " + str(row.iloc[1]) + "\n"  
        
     return string    
 

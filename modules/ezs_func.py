@@ -880,7 +880,7 @@ def K_r2(model, X_train, y_train, X_test, y_test):
     y_pred_test = model.predict(X_test)
     dr2={'train': [r2_score(y_train, y_pred_train)],\
          'test': [r2_score(y_test, y_pred_test)]}
-    display(pd.DataFrame(data=dr2).style.hide_index())
+    display(pd.DataFrame(data=dr2).style.hide())
     
 def K_mape(model, X_train, y_train, X_test, y_test):
     """
@@ -898,7 +898,7 @@ def K_mape(model, X_train, y_train, X_test, y_test):
     y_pred_test = model.predict(X_test)
     dmape={'train': [mean_absolute_percentage_error(y_train, y_pred_train)],\
            'test': [mean_absolute_percentage_error(y_test, y_pred_test)]}
-    display(pd.DataFrame(data=dmape).style.hide_index())
+    display(pd.DataFrame(data=dmape).style.hide())
      
 # Functions used in time series analysis
 def plot_correlation(df, target_col, t=1):
@@ -1210,9 +1210,9 @@ def fastapi_server(model, model_name, X, y, port, Docker=False, with_keras=False
         if str(X.dtypes[ind])[0:5]=='float':
            string = string + '      ' + X.columns[ind] + ': float\n'
         if str(X.dtypes[ind])[0:3]=='int':
-           string = string + '      ' + X.columns[ind] + ': int\n'
+           string = string + '      ' + X.columns[ind] + ': float\n'
         if str(X.dtypes[ind])[0:4]=='uint':
-           string = string + '      ' + X.columns[ind] + ': int\n'
+           string = string + '      ' + X.columns[ind] + ': float\n'
         if str(X.dtypes[ind])[0:6]=='object':
            string = string + '      ' + X.columns[ind] + ': str\n'
         if str(X.dtypes[ind])[0:4]=='bool':
@@ -1260,14 +1260,14 @@ def fastapi_server(model, model_name, X, y, port, Docker=False, with_keras=False
     string = string  + "    # Check input data\n"
     string = string  + "    data_err = []\n"
     string = string  + "    for ind in range(len(test_data[0])):\n"
-    string = string  + "        if schema.iloc[ind][1] == 'num':\n"
-    string = string  + "           interval = ast.literal_eval(schema.iloc[ind][2])\n"
+    string = string  + "        if schema.iloc[ind, 1] == 'num':\n"
+    string = string  + "           interval = ast.literal_eval(schema.iloc[ind, 2])\n"
     string = string  + "           if (test_data[0][ind] < interval[0]) | (test_data[0][ind] > interval[1]):\n"
-    string = string  + "              data_err.append(schema.iloc[ind][0])\n"
-    string = string  + "        if schema.iloc[ind][1] == 'cat':\n"
-    string = string  + "           domain = ast.literal_eval(schema.iloc[ind][2])\n"
+    string = string  + "              data_err.append(schema.iloc[ind, 0])\n"
+    string = string  + "        if schema.iloc[ind, 1] == 'cat':\n"
+    string = string  + "           domain = ast.literal_eval(schema.iloc[ind, 2])\n"
     string = string  + "           if not(np.isin(test_data[0][ind], domain)):\n"
-    string = string  + "              data_err.append(schema.iloc[ind][0])\n"
+    string = string  + "              data_err.append(schema.iloc[ind, 0])\n"
     string = string  + "\n"
 
                 
@@ -1328,7 +1328,7 @@ def dockerfile_generator(port):
         port: port of the server.   
     """   
     string = ""
-    string = string  + "FROM python:3.10\n"
+    string = string  + "FROM python:3.11\n"
     string = string  + "\n"
     string = string  + "WORKDIR /app\n"
     string = string  + "\n"

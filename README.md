@@ -76,9 +76,10 @@ Let $\bar A$ be another learning algorithm, $\bar M=T\left(\bar A,L_{CV}\right)$
 
 The level 0 models are retrained on the whole learning set $\lbrace M_{k}\rbrace_{k \in \lbrace 1,..,K\rbrace}=\lbrace T\left(A_{k},L\right)\rbrace_{k \in \lbrace 1,..,K\rbrace}$, and finally $\tilde{f}=\bar M\left( M_{1},..,M_{K} \right)$, which is the **stacked model**.
 
-What conditions ensure that : $S_{CV}\left(\tilde{f},L\right) \leq S_{CV}\left(M_{j},L\right)$, $\forall j$ ?
-
 ## Questioning
+
+What conditions ensure that: $S_{CV}\left(\tilde{f},L\right) \leq S_{CV}\left(M_{j},L\right)$, $\forall j$ ?
+
 ### Wolpert's black art 
 In his paper on classification and stacked generalization, D. Wolpert underlines 3 points:
  * no rules saying what level 0 learning algorithms one should use
@@ -341,6 +342,9 @@ Open a terminal in this folder and launch the following command to **build** the
 The container can be **run** directly in Docker Desktop, you can also use the following command line:
 * `docker run --rm -p 80:80 <project_name>`
 
+The container can be **tested** using the following command line:
+* `time bash test_d.sh`
+
 _**Note**:_ 
 * _**Models using Keras** will **not work** due to technical problem with SciKeras_
 
@@ -352,6 +356,9 @@ The program also generates a file for the API deployment in Kubernetes:
 
 **Control** the deployment of the service:
 * `kubectl get svc`
+
+**Test** the service (wait first for the full deployment in Docker Desktop):
+* `time bash test_d.sh`
 
 **Delete** the service:
 * `kubectl delete -f <project_name>_deployment.yaml`

@@ -1328,7 +1328,7 @@ def dockerfile_generator(port):
         port: port of the server.   
     """   
     string = ""
-    string = string  + "FROM python:3.11\n"
+    string = string  + "FROM python:3.12\n"
     string = string  + "\n"
     string = string  + "WORKDIR /app\n"
     string = string  + "\n"

@@ -12,7 +12,7 @@ from ipyfilechooser import FileChooser
 from zipfile import ZipFile
 
 def generate(project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, with_gauss, with_hgboost,\
-             with_keras, with_CPU, with_gb, with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
+             with_keras, with_batch_size, with_CPU, with_gb, with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
              with_random_forest, with_sgd, with_mlp, with_nn, with_svm, seaborn, ydata_profiling, fast_eda, file,\
              target_col, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
              undersampling, undersampler, level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state,\
@@ -23,7 +23,7 @@ def generate(project_name, problem_type, time_dep, lag_number, date_idx, stackin
     user_drop_cols=[]
     features_of_interest = []
     nb = analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, with_gauss, with_hgboost,\
-                 with_keras, with_CPU, with_gb, with_pipeline, yb,  skev,with_adaboost, with_bagging, with_decision_tree,\
+                 with_keras, with_batch_size, with_CPU, with_gb, with_pipeline, yb,  skev,with_adaboost, with_bagging, with_decision_tree,\
                  with_random_forest, with_sgd, with_mlp, with_nn, with_svm, seaborn, ydata_profiling, fast_eda, file,\
                  target_col, user_drop_cols, features_of_interest, threshold_NaN, threshold_cat, threshold_Z,\
                  test_size, threshold_entropy, undersampling, undersampler, level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state,\
@@ -33,7 +33,7 @@ def generate(project_name, problem_type, time_dep, lag_number, date_idx, stackin
          nbf.write(nb, f)
                 
 
-def set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb, with_pipeline, problem_type, time_dep, lag_number, date_idx,
+def set_config(with_gauss, with_hgboost, with_keras, with_batch_size, with_CPU, with_gb, with_pipeline, problem_type, time_dep, lag_number, date_idx,
                stacking, yb, skev, with_adaboost, with_bagging, with_decision_tree, with_random_forest, with_sgd, with_mlp, with_nn, with_svm,
                seaborn, ydata_profiling, fast_eda, data_size, level_1_model, level_1_model_pos, no_decorrelator, no_optimization):
     """
@@ -232,7 +232,7 @@ def load_package(nb, pd_pk_import, pd_pk_from):
     return nb
 
 def analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, with_gauss, with_hgboost,\
-            with_keras, with_CPU, with_gb, with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
+            with_keras, with_batch_size, with_CPU, with_gb, with_pipeline, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
             with_random_forest, with_sgd, with_mlp, with_nn, with_svm,seaborn, ydata_profiling, fast_eda, file, target_col,\
             user_drop_cols, features_of_interest, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy,\
             undersampling, undersampler, level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state, threshold_corr,\
@@ -241,7 +241,7 @@ def analyze(project_name, problem_type, time_dep, lag_number, date_idx, stacking
     """
     Analyze input data from GUI, set configuration, generate the different cells of the notebook
     """
-    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_CPU, with_gb,\
+    pd_pk_import, pd_pk_from, pd_level_0, pd_document, pd_tree = set_config(with_gauss, with_hgboost, with_keras, with_batch_size, with_CPU, with_gb,\
                                                                             with_pipeline,problem_type, time_dep, lag_number, date_idx,\
                                                                             stacking, yb, skev, with_adaboost, with_bagging, with_decision_tree,\
                                                                             with_random_forest, with_sgd, with_mlp, with_nn, with_svm, seaborn, ydata_profiling,\
@@ -318,7 +318,7 @@ def keras_nn(problem_type):
                  " \n" + \
                  "      def _keras_build_fn(self, compile_kwargs: Dict[str, Any]):\n" + \
                  "          model = keras.Sequential()\n" + \
-                 "          inp = keras.layers.Input(shape=(self.n_features_in_))\n" + \
+                 "          inp = keras.layers.Input(shape=(self.n_features_in_ ,))\n" + \
                  "          model.add(inp)\n" + \
                  "          for hidden_layer_size in (self.hidden_layer_sizes,):\n" + \
                  "              layer = keras.layers.Dense(hidden_layer_size, activation=self.activation)\n" + \
@@ -375,7 +375,7 @@ def keras_nn(problem_type):
                  " \n" + \
                  "      def _keras_build_fn(self, compile_kwargs: Dict[str, Any]):\n" + \
                  "          model = keras.Sequential()\n" + \
-                 "          inp = keras.layers.Input(shape=(self.n_features_in_))\n" + \
+                 "          inp = keras.layers.Input(shape=(self.n_features_in_ ,))\n" + \
                  "          model.add(inp)\n" + \
                  "          for hidden_layer_size in (self.hidden_layer_sizes,):\n" + \
                  "              layer = keras.layers.Dense(hidden_layer_size, activation=self.activation)\n" + \
@@ -765,15 +765,25 @@ CPU = widgets.Checkbox(
                 layout=widgets.Layout(width='100px', height='50px')
                 )
 
+batch_size = widgets.IntText(
+                value=64,
+                description='Batch size:',
+                description_tooltip='The batch size defines the number of samples that will be propagated through the network.',
+                disabled=False
+                )
+
 # interaction between keras and CPU checkboxes
 if keras.value == False:
    CPU.layout.display = 'none'
+   batch_size.layout.display = 'none'
 
 def remove_CPU(keras):
     if keras['new']:
        CPU.layout.display = 'flex'
+       batch_size.layout.display = 'flex'
     else:
        CPU.layout.display, CPU.value = 'none', False 
+       batch_size.layout.display, batch_size.value = 'none', 0 
 
 keras.observe(remove_CPU, names='value')
 
@@ -858,7 +868,7 @@ pipeline = widgets.Checkbox(
                 indent=False
                 )
 
-model_keras = widgets.HBox([keras, CPU])
+model_keras = widgets.HBox([keras, batch_size, CPU])
 
 # interaction between data_size radio button and level-0 model list
 def remove_small_model(data_size):
@@ -1026,20 +1036,20 @@ deployment_Docker_port = widgets.Text(
 
 deployment_fields = widgets.VBox([deployment, deployment_FastAPI_port, deployment_Docker_port])
 
-def on_run_clicked(b, project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, gauss, hgboost, keras, CPU, gboost,\
+def on_run_clicked(b, project_name, problem_type, time_dep, lag_number, date_idx, stacking, data_size, gauss, hgboost, keras, batch_size, CPU, gboost,\
                    pipeline, fc, yb, skev, adaboost, bagging, decision_tree, random_forest, sgd, mlp, nn, svm, seaborn, ydata_profiling,\
                    fast_eda, target, threshold_NaN, threshold_cat, threshold_Z, test_size, threshold_entropy, undersampling, undersampler,\
                    level_1_model, level_1_model_pos, no_decorrelator, no_optimization, random_state, threshold_corr, threshold_model, threshold_score,\
                    threshold_feature, output, deployment_FastAPI_port, deployment_Docker_port):
     generate(project_name.value, problem_type.value, time_dep.value, lag_number.value, date_idx.value, stacking.value, data_size.value, gauss.value, hgboost.value,\
-             keras.value, CPU.value, gboost.value, pipeline.value, yb.value, skev.value, adaboost.value, bagging.value, decision_tree.value, random_forest.value,\
+             keras.value, batch_size.value, CPU.value, gboost.value, pipeline.value, yb.value, skev.value, adaboost.value, bagging.value, decision_tree.value, random_forest.value,\
              sgd.value, mlp.value, nn.value, svm.value, seaborn.value, ydata_profiling.value, fast_eda.value, fc.selected, target_cl.value, threshold_NaN.value,\
              threshold_cat.value, threshold_Z.value, test_size.value, threshold_entropy.value, undersampling.value, undersampler.value, level_1_model.value,\
              level_1_model_pos.value, no_decorrelator.value, no_optimization.value, random_state.value, threshold_corr.value, threshold_model.value,\
              threshold_score.value, threshold_feature.value, output.value, deployment_FastAPI_port.value, deployment_Docker_port.value)
 
 run.on_click(functools.partial(on_run_clicked, project_name=project_name, problem_type=problem_type, time_dep=time_dep, lag_number=lag_number,\
-                               date_idx=date_idx,stacking=stacking, data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, CPU=CPU, gboost=gboost,\
+                               date_idx=date_idx,stacking=stacking, data_size=data_size, gauss=gauss, hgboost=hgboost, keras=keras, batch_size=batch_size, CPU=CPU, gboost=gboost,\
                                pipeline=pipeline, yb=yb, skev=skev, adaboost=adaboost, bagging=bagging, decision_tree=decision_tree, random_forest=random_forest,\
                                sgd=sgd, mlp=mlp, nn=nn, svm=svm, seaborn=seaborn, ydata_profiling=ydata_profiling, fast_eda=fast_eda, fc=fc, target=target,\
                                threshold_NaN=threshold_NaN, threshold_cat=threshold_cat, threshold_Z=threshold_Z,test_size = test_size, threshold_entropy=threshold_entropy,\

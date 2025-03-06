@@ -11,11 +11,11 @@ dependencies:
    - ipython==8.28.0
    - notebook==7.3.2
    - nbconvert==7.2.9
-   - matplotlib==3.10.1
+#   - matplotlib==3.10.1
    - threadpoolctl==3.5.0
    - pandas==2.2.3
    - yellowbrick==1.5
-   - ydata-profiling==4.12.2
+   - ydata-profiling==4.13.0
    - pyts==0.13.0
    - statsmodels==0.14.4
    - fasteda==1.0.1

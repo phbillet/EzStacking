@@ -185,7 +185,10 @@ First you have to:
 
 _Notes:_
 * `jupyter-lab` _is a comfortable development tool more flexible than_ `jupyter notebook`
-* _sometimes,_ `jupyter-lab` _uses a lot of ressources (the kernel is running even if the work is finished), it is certainly due to_ `varInspector` _, you can inactivate it using the command_ `jupyter nbextension disable varInspector/main`.
+* _sometimes,_ `jupyter-lab` _uses a lot of ressources (the kernel is running even if the work is finished), it is certainly due to _`jupyterlab_variableinspector`_:
+    * first you have to find the extension using the command _`jupyter labextension list`_,
+    * then you can inactivate it using the command _`jupyter labextension disable @lckr/jupyterlab_variableinspector`_ (the extension name could be different),
+    * last point, the extension must be locked using _`jupyter labextension lock @lckr/jupyterlab_variableinspector`_.
 
 ### How to uninstall it
 You simply have to: 

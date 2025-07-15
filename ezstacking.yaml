@@ -2,14 +2,14 @@ name: ezstacking
 channels:
  - defaults
 dependencies:
- - python=3.12
+ - python=3.12.7
  - anaconda
  - pip
  - pip:
-   - jupyterlab==4.2.5
+   - jupyterlab==4.3.5
    - jupyter==1.1.1
    - ipython==8.28.0
-   - notebook==7.2.2
+   - notebook==7.3.2
    - nbconvert==7.2.9
    - matplotlib
    - threadpoolctl==3.5.0
@@ -32,9 +32,9 @@ dependencies:
    - ipywidgets==8.1.5
    - ipyfilechooser==0.6.0
    - odfpy==1.4.1
-   - fastapi==0.115.2
-   - uvicorn==0.32.0
-   - nest_asyncio==1.5.6
-   - loguru==0.7.2
+   - fastapi==0.115.11
+   - uvicorn==0.34.0
+   - nest_asyncio==1.6.0
+   - loguru==0.7.3
    - absl-py==2.1.0
-   - six==1.16.0
+   - six==1.17.0
